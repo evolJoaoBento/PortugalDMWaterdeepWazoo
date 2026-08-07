@@ -101,6 +101,29 @@ html.webp .backdrop{background-image:
 a{color:inherit}
 .sprite{display:none}
 
+/* ═══ SCROLLBARS ═════════════════════════════════════════════════ */
+/* Brass on dark timber, so the edge of the window belongs to the same
+   city as the rest of it. Two syntaxes: the standard properties, which
+   Firefox has, and the WebKit pseudo-elements, which Chrome and Safari
+   have. Neither browser reads both, so both are set. */
+html{
+  scrollbar-width:thin;
+  scrollbar-color:#a8823a rgba(12,18,24,.55);
+}
+::-webkit-scrollbar{width:13px;height:13px}
+::-webkit-scrollbar-track{
+  background:rgba(12,18,24,.55);
+  box-shadow:inset 1px 0 0 rgba(201,162,74,.16);
+}
+::-webkit-scrollbar-thumb{
+  border-radius:8px;
+  border:3px solid transparent;      /* inset the thumb off the track */
+  background:linear-gradient(180deg,#c9a24a,#7d5f1d) padding-box;
+}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#e6c97e,#9a7724) padding-box}
+::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,#f0d79a,#a3801f) padding-box}
+::-webkit-scrollbar-corner{background:transparent}
+
 /* ═══ THE STREET ═════════════════════════════════════════════════ */
 /* plaster wall, half-timber uprights, lantern light from above */
 .street{

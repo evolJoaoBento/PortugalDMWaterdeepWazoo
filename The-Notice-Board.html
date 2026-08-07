@@ -239,7 +239,23 @@ dialog.reading::backdrop{
   position:relative;z-index:1;
   max-height:88vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
   padding:clamp(34px,4.4vw,52px) clamp(26px,3.6vw,46px) clamp(28px,3.2vw,40px);
+  /* the brass bar of the page would be wrong on parchment — this one is
+     ink on paper, and held off the torn edges by the track's margin */
+  scrollbar-width:thin;
+  scrollbar-color:#8c6c22 rgba(120,92,48,.16);
 }
+.reading .leaf::-webkit-scrollbar{width:11px}
+.reading .leaf::-webkit-scrollbar-track{
+  background:rgba(120,92,48,.14);
+  border-radius:6px;
+  margin:20px 0;
+}
+.reading .leaf::-webkit-scrollbar-thumb{
+  border-radius:6px;
+  border:2px solid transparent;
+  background:linear-gradient(180deg,#a8873a,#6d5216) padding-box;
+}
+.reading .leaf::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#c2a052,#7d5f1d) padding-box}
 .reading .kind{
   display:block;font-family:"Cinzel",serif;font-size:10px;letter-spacing:.26em;
   text-transform:uppercase;color:#8a6a24;margin:0 0 9px;
