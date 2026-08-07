@@ -102,9 +102,11 @@ a{color:inherit}
 .hero .eyebrow{
   font-family:"Cinzel",serif;font-weight:600;
   font-size:clamp(10px,1.5vw,12px);letter-spacing:.34em;text-transform:uppercase;
-  color:var(--brass);margin:0 0 14px;
-  text-shadow:0 1px 12px rgba(0,0,0,.8);
+  color:#e6c97e;margin:0 0 14px;
+  /* the sky behind this is bright — it needs a real scrim, not a glow */
+  text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 18px rgba(0,0,0,.9);
 }
+@media(max-width:620px){.hero .eyebrow{letter-spacing:.2em}}
 .hero h1{
   font-family:"Cinzel",serif;font-weight:700;
   font-size:clamp(36px,7.4vw,84px);line-height:1.02;
@@ -342,6 +344,12 @@ a{color:inherit}
 
 .map-head{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;justify-content:space-between}
 .rose{flex:0 0 auto;opacity:.8}
+/* stacked, the rose would leave a hole between the lede and the chart */
+@media(max-width:720px){
+  .map-head{gap:0}
+  .map-head .sect-lede{margin-bottom:0}
+  .rose{width:52px;height:52px;margin:-14px 0 0 auto}
+}
 
 .map-frame{
   margin-top:26px;position:relative;
@@ -361,10 +369,47 @@ a{color:inherit}
 .map-frame .pin.bl{bottom:-5px;left:-5px}
 .map-frame .pin.br{bottom:-5px;right:-5px}
 
-.map-frame iframe{
+.map-live{position:relative}
+.map-live iframe{
   display:block;width:100%;height:min(72vh,660px);border:0;background:#e8dcc0;
+  /* Leaflet swallows wheel and touch, so a reader scrolling past the
+     section would pan the map instead of the page. The chart stays inert
+     until it is deliberately woken. */
+  pointer-events:none;
 }
-@media(max-width:640px){.map-frame iframe{height:64vh}}
+@media(max-width:640px){.map-live iframe{height:62vh}}
+.map-live.live iframe{pointer-events:auto}
+
+.map-veil{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  font-family:inherit;cursor:pointer;
+  border:0;width:100%;
+  background:linear-gradient(180deg,rgba(38,28,10,.34),rgba(38,28,10,.52));
+  color:#f6ecd4;text-align:center;padding:20px;
+  transition:background .2s ease;
+}
+.map-veil:hover,.map-veil:focus-visible{background:linear-gradient(180deg,rgba(38,28,10,.24),rgba(38,28,10,.42));outline:none}
+.map-veil:focus-visible{box-shadow:inset 0 0 0 3px var(--brass)}
+.map-veil b{
+  font-family:"Cinzel",serif;font-weight:700;font-size:clamp(13px,2.4vw,17px);
+  letter-spacing:.16em;text-transform:uppercase;
+  text-shadow:0 2px 14px rgba(0,0,0,.8);
+}
+.map-veil small{
+  font-size:14px;font-style:italic;color:#e0d0ad;max-width:34ch;
+  text-shadow:0 1px 10px rgba(0,0,0,.8);
+}
+.map-live.live .map-veil{display:none}
+
+.map-release{
+  display:none;margin-top:10px;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#7a5c1c;background:none;border:1px solid rgba(122,92,28,.5);
+  padding:7px 13px;cursor:pointer;
+}
+.map-release:hover{background:rgba(122,92,28,.12)}
+.map-live.live+.map-release{display:inline-block}
 
 .map-foot{
   display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:space-between;align-items:baseline;
@@ -476,11 +521,18 @@ a{color:inherit}
 
     <div class="map-frame">
       <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
-      <iframe
-        src="https://www.aidedd.org/atlas/waterdeep"
-        title="Interactive atlas of Waterdeep, hosted by aidedd.org"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="map-live" id="map-live">
+        <iframe
+          src="https://www.aidedd.org/atlas/waterdeep"
+          title="Interactive atlas of Waterdeep, hosted by aidedd.org"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <button class="map-veil" type="button" id="map-veil">
+          <b>Unroll the chart</b>
+          <small>It takes over scrolling while it is live &mdash; tap anywhere off the chart to roll it up again.</small>
+        </button>
+      </div>
+      <button class="map-release" type="button" id="map-release">Roll the chart up</button>
     </div>
 
     <p class="map-foot">
@@ -666,6 +718,31 @@ a{color:inherit}
       build(slim);
     })
     .catch(function () { build(FALLBACK); });
+})();
+
+/* The chart is inert until woken, so scrolling past the section does not
+   get eaten by Leaflet. Waking it is one tap; any tap off it rolls it up. */
+(function () {
+  var live    = document.getElementById('map-live');
+  var veil    = document.getElementById('map-veil');
+  var release = document.getElementById('map-release');
+  if (!live || !veil || !release) return;
+
+  function open()  { live.classList.add('live'); }
+  function close() { live.classList.remove('live'); }
+
+  veil.addEventListener('click', open);
+  release.addEventListener('click', close);
+
+  // A tap outside rolls it up. The iframe eats its own clicks, so this
+  // only ever fires for the page around it.
+  document.addEventListener('click', function (e) {
+    if (!live.contains(e.target) && e.target !== release) close();
+  });
+  // Escape works too, for anyone driving by keyboard.
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
 })();
 
 /* Serve the backdrop as WebP where it is supported — 4 KB against 10 KB.
