@@ -143,7 +143,8 @@ textarea{
   <button id="btn-new">New issue</button>
   <span class="spacer"></span>
   <span class="hint" id="save-state">—</span>
-  <button id="btn-export" class="primary">Export broadsheet</button>
+  <button id="btn-export">Export broadsheet</button>
+  <button id="btn-city" class="primary">Publish to the city…</button>
 </div>
 
 <div class="split">
@@ -1361,6 +1362,286 @@ function injectPaperCSS(){
   render();
   $("#save-state").textContent="ready";
   if(!idbOK) toast("This browser won't keep images across reloads here — export before you close the tab.", 7000);
+})();
+</script>
+
+<!-- ══ PUBLISHING ══════════════════════════════════════════════════ -->
+<style>
+#city{
+  position:fixed;inset:auto 0 0 0;z-index:60;max-height:78vh;overflow:auto;
+  background:#141009;color:#e6dcc8;border-top:3px double #4a3c26;
+  box-shadow:0 -20px 50px rgba(0,0,0,.6);
+  font:15px/1.6 "EB Garamond",Georgia,serif;padding:18px 22px 22px;display:none;
+}
+#city.on{display:block}
+#city h3{font-family:"Cinzel",serif;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#d8ae5f;margin:0 0 12px}
+#city .hint{color:#a89070;margin:0 0 12px;max-width:94ch}
+#city .hint code{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:#d8ae5f}
+#city .cols{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin:0 0 12px}
+#city .cols>*{flex:1 1 220px}
+#city label{display:block;font-family:"Cinzel",serif;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#a89070;margin:0 0 5px}
+#city input,#city select{width:100%;font:inherit;color:#f0e6d2;background:#0e0b06;border:1px solid #3a2c1b;padding:8px 10px;border-radius:2px}
+#city button{font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#f2e4c6;background:linear-gradient(180deg,#6d4a2b,#4a2e18);border:1px solid #241608;
+  border-radius:2px;padding:9px 14px;cursor:pointer}
+#city button.gold{background:linear-gradient(180deg,#b1892f,#7d5f1d);color:#fff6e4}
+#city button[disabled]{opacity:.4;cursor:not-allowed}
+#city .log{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.65;color:#a89070;
+  background:#0b0805;border:1px solid #2b2014;padding:11px 13px;max-height:200px;overflow:auto;white-space:pre-wrap;margin:12px 0 0}
+#city .log b{color:#8fb069;font-weight:400}
+#city .log i{color:#c9736a;font-style:normal}
+#city .shut{position:absolute;top:12px;right:16px}
+</style>
+
+<div id="city" aria-label="Publish to the city">
+  <button class="shut" id="city-shut" type="button">Close</button>
+  <h3>Publish to the city</h3>
+  <p class="hint">
+    Publishing writes the issue straight into the repository: the page itself, its pictures
+    as separate files under <code>assets/issues/</code>, and the source of the issue under
+    <code>data/issues/</code> so it can be opened and edited again later &mdash; from any
+    browser, not only this one. Live about a minute afterwards.
+    <b>Export</b> is unchanged and still gives you one self-contained file.
+  </p>
+
+  <div class="cols">
+    <div>
+      <label for="city-tok">Token &mdash; shared with the Scriptorium</label>
+      <input type="password" id="city-tok" placeholder="github_pat_&hellip;" autocomplete="off" spellcheck="false">
+    </div>
+    <div style="flex:0 0 auto"><button id="city-tok-save" type="button">Unseal</button></div>
+    <div>
+      <label for="city-open">Past issues</label>
+      <select id="city-open"><option value="">&mdash;</option></select>
+    </div>
+    <div style="flex:0 0 auto"><button id="city-load" type="button">Open this one</button></div>
+    <div style="flex:0 0 auto"><button id="city-go" class="gold" type="button">Publish</button></div>
+  </div>
+  <p class="hint" id="city-target" style="margin:0"></p>
+  <div class="log" id="city-log">Waiting.</div>
+</div>
+
+<script src="assets/keyring.js"></script>
+<script>
+/* =========================================================================
+   Publishing an issue.
+
+   The forge already knows how to build a whole broadsheet. The only
+   thing publishing changes is where the pictures live. Export inlines
+   them as data URIs, which is what makes one portable file — and what
+   made the Flamerule issue 35.8 MB, of which the newspaper was 0.02 MB
+   and six pictures were the rest.
+
+   So publish writes each picture as its own file and points the HTML at
+   it. The page drops to tens of kilobytes, every API call stays small,
+   readers stop downloading a film, and link previews start working.
+
+   One limit, stated plainly: a browser can re-encode a still image to
+   WebP through a canvas, but it cannot encode an animated one — there
+   is no API for it, and a WASM encoder would weigh more than the
+   pictures do. Animated GIFs are published as they are, with their size
+   called out in the log so it is never a surprise. Ask Claude to
+   convert them and they come back about a third of the size with the
+   motion intact.
+   ========================================================================= */
+(function(){
+  "use strict";
+  const $c = s => document.querySelector(s);
+  const panel = $c("#city");
+
+  function say(msg, kind){
+    const l = $c("#city-log");
+    const t = kind==="ok" ? "b" : kind==="err" ? "i" : "span";
+    l.innerHTML += "\n<"+t+">"+String(msg).replace(/[<>]/g,"")+"</"+t+">";
+    l.scrollTop = l.scrollHeight;
+  }
+
+  /* The archive parses issue filenames, so the stem has to match the
+     shape it looks for: The-Waterdeep-Wazoo-<month>-<day>-<year>. */
+  function issueStem(){
+    const title = (doc.masthead.title||"Broadsheet").trim()
+      .replace(/[^A-Za-z0-9 ]+/g,"").split(/\s+/).filter(Boolean).join("-");
+    /* Datelines come both ways round — "Flamerule 8, 1492 DR" and
+       "12 Ches, 1492 DR" — so pick the month by being the word, and
+       tell day from year by length rather than by position. */
+    const d = String(doc.masthead.dateline||"");
+    const month = (d.match(/[A-Za-z]{3,}/g)||[]).find(w=>!/^(DR|CR)$/i.test(w));
+    const nums = (d.match(/\d+/g)||[]).map(Number);
+    if(!month || nums.length < 2) return null;
+    const year = nums.find(n=>n>=100) ?? nums[nums.length-1];
+    const day  = nums.find(n=>n<100)  ?? nums[0];
+    return title+"-"+month.toLowerCase()+"-"+day+"-"+year;
+  }
+
+  function showTarget(){
+    const stem = issueStem();
+    $c("#city-target").innerHTML = stem
+      ? "Will publish as <code>"+stem+".html</code>"
+      : "<i style='color:#c9736a'>The dateline needs a month, a day and a year &mdash; &ldquo;Flamerule 8, 1492 DR&rdquo; &mdash; before this can be published.</i>";
+  }
+
+  /* Stills re-encode to WebP in a canvas; animations cannot, so they go
+     up untouched. */
+  async function encode(md){
+    const anim = /gif/i.test(md.mime||"");
+    if(anim || /webp/i.test(md.mime||"")){
+      const bytes = await (await fetch(md.dataUrl)).arrayBuffer();
+      return { bytes:new Uint8Array(bytes), ext:anim?"gif":"webp", converted:false, anim };
+    }
+    let img;
+    try{
+      img = await new Promise((res,rej)=>{
+        const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=md.dataUrl;
+      });
+    }catch(e){ img = null; }
+    if(img){
+      const cv = document.createElement("canvas");
+      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+      cv.getContext("2d").drawImage(img,0,0);
+      const blob = await new Promise(r=>cv.toBlob(r,"image/webp",0.84));
+      if(blob) return { bytes:new Uint8Array(await blob.arrayBuffer()), ext:"webp", converted:true, anim:false };
+    }
+    const bytes = await (await fetch(md.dataUrl)).arrayBuffer();
+    return { bytes:new Uint8Array(bytes), ext:(md.mime||"image/png").split("/")[1]||"png", converted:false, anim:false };
+  }
+
+  const MB = n => (n/1048576).toFixed(2)+" MB";
+
+  async function publish(){
+    const stem = issueStem();
+    if(!stem){ say("No usable dateline — nothing published.","err"); return; }
+    if(!Keyring.has()){ say("No token — nothing to publish with.","err"); return; }
+
+    const btn = $c("#city-go"); btn.disabled = true;
+    try{
+      const used = [...media.values()];
+      const urls = new Map();
+      let before=0, after=0;
+
+      for(let i=0;i<used.length;i++){
+        const md = used[i];
+        const enc = await encode(md);
+        const name = String(i+1).padStart(2,"0")+"."+enc.ext;
+        const path = "assets/issues/"+stem+"/"+name;
+        const wasBytes = Math.round((md.dataUrl.length - md.dataUrl.indexOf(",") - 1) * 3/4);
+        before += wasBytes; after += enc.bytes.length;
+
+        say("picture "+(i+1)+"/"+used.length+" — "+MB(enc.bytes.length)+
+            (enc.converted ? " (converted to WebP)"
+             : enc.anim ? " (animated, published as-is — ask Claude to convert it)" : ""));
+        await City.write(path, enc.bytes, "issue "+stem+": picture "+name);
+        urls.set(md.id, path);
+      }
+      if(used.length) say("pictures: "+MB(before)+" → "+MB(after), "ok");
+
+      /* buildExport reads md.dataUrl for every picture, so point those at
+         the published files, build, then put the data URIs back. */
+      const keep = new Map();
+      media.forEach((md,id)=>{ keep.set(id, md.dataUrl); if(urls.has(id)) md.dataUrl = urls.get(id); });
+      let html;
+      try{ html = buildExport(); }
+      finally{ media.forEach((md,id)=>{ md.dataUrl = keep.get(id); }); }
+
+      say("page — "+(html.length/1024).toFixed(1)+" KB");
+      await City.write(stem+".html", html, "issue "+stem+": the broadsheet");
+
+      /* The source, so this issue can be opened and edited again later. */
+      const source = {
+        _comment:"Penny Press source for "+stem+". Open it from the forge's publish panel.",
+        stem: stem,
+        masthead: doc.masthead,
+        style: doc.style,
+        markdown: doc.markdown,
+        slots: doc.slots,
+        media: used.map(md=>({ id:md.id, name:md.name, w:md.w, h:md.h, file:urls.get(md.id)||null }))
+      };
+      await City.write("data/issues/"+stem+".json", JSON.stringify(source,null,2)+"\n",
+                       "issue "+stem+": source");
+
+      /* The press room's front card reads this beside the issue. */
+      const cover = used.length ? (urls.get(used[0].id)||"preview.jpg") : "preview.jpg";
+      await City.write(stem+".json", JSON.stringify({
+        headline: doc.masthead.title||"The Waterdeep Wazoo",
+        dek: doc.masthead.tagline||"",
+        cover: cover
+      },null,2)+"\n", "issue "+stem+": front card");
+
+      City.forgetCaches();
+      say("Published. Live in about a minute, once Pages rebuilds.","ok");
+    }catch(e){
+      say("Publish failed: "+e.message,"err");
+    }finally{ btn.disabled = false; }
+  }
+
+  /* ── opening a past issue ───────────────────────────────────────── */
+  async function listIssues(){
+    if(!Keyring.has()) return;
+    try{
+      const files = await City.list("data/issues");
+      const sel = $c("#city-open");
+      sel.innerHTML = '<option value="">—</option>';
+      files.filter(f=>/\.json$/i.test(f.name)).forEach(f=>{
+        const o=document.createElement("option");
+        o.value=f.name; o.textContent=f.name.replace(/\.json$/,"");
+        sel.appendChild(o);
+      });
+      say(files.length+" past issue(s) in the city.");
+    }catch(e){ say("Could not list past issues: "+e.message,"err"); }
+  }
+
+  async function openIssue(){
+    const name = $c("#city-open").value;
+    if(!name) return;
+    if(!confirm("Open “"+name.replace(/\.json$/,"")+"”?\n\nThe issue open in this forge will be replaced.")) return;
+    try{
+      say("Fetching "+name+"…");
+      const src = await (await fetch("data/issues/"+name+"?t="+Date.now(),{cache:"no-store"})).json();
+
+      Object.assign(doc.masthead, src.masthead||{});
+      Object.assign(doc.style, src.style||{});
+      doc.markdown = src.markdown||"";
+      doc.slots.length = 0; (src.slots||[]).forEach(s=>doc.slots.push(s));
+
+      media.clear();
+      for(const m of (src.media||[])){
+        if(!m.file) continue;
+        const blob = await (await fetch(m.file+"?t="+Date.now(),{cache:"no-store"})).blob();
+        const dataUrl = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(blob); });
+        media.set(m.id,{ id:m.id, name:m.name, mime:blob.type, dataUrl:dataUrl, w:m.w, h:m.h });
+      }
+
+      /* put the masthead fields back on screen */
+      ["title","tagline","dateline","price","issue","lang"].forEach(k=>{
+        const el = document.getElementById("f-"+k);
+        if(el && k in doc.masthead) el.value = doc.masthead[k];
+      });
+      const mdBox = document.getElementById("md");
+      if(mdBox) mdBox.value = doc.markdown;
+
+      render(); scheduleSave(); showTarget();
+      say("Opened "+name.replace(/\.json$/,"")+" — "+media.size+" picture(s).","ok");
+    }catch(e){ say("Could not open it: "+e.message,"err"); }
+  }
+
+  /* ── wiring ─────────────────────────────────────────────────────── */
+  document.getElementById("btn-city").addEventListener("click",()=>{
+    panel.classList.add("on");
+    $c("#city-tok").value = Keyring.get();
+    showTarget();
+    listIssues();
+  });
+  $c("#city-shut").addEventListener("click",()=>panel.classList.remove("on"));
+  $c("#city-tok-save").addEventListener("click",()=>{
+    Keyring.set($c("#city-tok").value.trim());
+    say(Keyring.has() ? "Token kept in this browser." : "No token given.", Keyring.has()?"ok":"err");
+    listIssues();
+  });
+  $c("#city-go").addEventListener("click",publish);
+  $c("#city-load").addEventListener("click",openIssue);
+  ["f-title","f-dateline"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("input",showTarget);
+  });
 })();
 </script>
 </body>
