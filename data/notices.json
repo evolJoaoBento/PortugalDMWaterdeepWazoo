@@ -1,0 +1,78 @@
+{
+  "_comment": "The board at the Yawning Portal. Edited through scriptorium.html; hand-editing this file works too. variant: plain | sealed | scrap. body is HTML.",
+  "updated": "1492-07-08",
+  "notices": [
+    {
+      "id": "hunt-for-magic-items-and-spellbooks",
+      "variant": "plain",
+      "kind": "Buying · Coin waiting",
+      "title": "Hunt for Magic Items and Spellbooks",
+      "body": "<p>I am <strong>Obaya Uday</strong>, priest of Waukeen, come from Port Nyanzaru in Chult on the business of the merchant-wizard <strong>Wakanga O’tamu</strong>. I am buying enchanted goods, and I am not haggling.</p>\n<p>Bring me what you drag up out of the Undermountain and have no use for. My funds are lodged with Waterdhavian banks and I settle within hours, in platinum, so that you are not obliged to cart a chest of silver across the city.</p>\n<table class=\"rate\">\n  <caption>For an enchanted item</caption>\n  <thead><tr><th>Rarity</th><th>Paid</th></tr></thead>\n  <tbody>\n    <tr><td>Common</td><td>10 pp</td></tr>\n    <tr><td>Uncommon</td><td>50 pp</td></tr>\n    <tr><td>Rare</td><td>500 pp</td></tr>\n    <tr><td>Very rare</td><td>5,000 pp</td></tr>\n  </tbody>\n</table>\n<p>I want spellbooks besides, for my patron’s library. A book is priced by the highest working written in it.</p>\n<table class=\"rate\">\n  <caption>For a spellbook</caption>\n  <thead><tr><th>Highest spell</th><th>Paid</th></tr></thead>\n  <tbody>\n    <tr><td>1st level</td><td>5 pp</td></tr>\n    <tr><td>2nd or 3rd</td><td>25 pp</td></tr>\n    <tr><td>4th or 5th</td><td>100 pp</td></tr>\n    <tr><td>6th or 7th</td><td>250 pp</td></tr>\n    <tr><td>8th or 9th</td><td>500 pp</td></tr>\n  </tbody>\n</table>\n<p>My prices are fixed and my temper is even. You will not find another buyer in this city who pays what I pay, and I say that without pride — it is simply true.</p>\n<p>I have taken a room upstairs and will keep it until my commission is filled. When I have bought some seven thousand five hundred platinum’s worth, I hire guards, book passage south, and you will have to sell your trinkets to Waterdhavians again.</p>\n<blockquote>“Waukeen does not bless the hoarder. Bring it to me and let it move.”</blockquote>",
+      "signed": ""
+    },
+    {
+      "id": "terms-for-the-descent",
+      "variant": "sealed",
+      "kind": "House rule · The Yawning Portal",
+      "title": "Terms for the Descent",
+      "body": "<p>The well in the taproom floor goes down into <strong>Undermountain</strong>. Durnan will lower you on the winch for <strong>one gold piece the head</strong>, and haul you up for the same, provided there is something left to haul.</p>\n<p>The rope is sound. The winch is sound. What waits at the bottom is neither, and the house makes no promises about it.</p>\n<ul>\n  <li>No refunds. Not for any reason, and least of all for that one.</li>\n  <li>Weapons stay peace-bonded in the taproom. Below, do as you like.</li>\n  <li>Shout up if you are coming back. The winch is not lowered on a hunch.</li>\n  <li>Anything you bring up is yours. Anything you bring up that follows you is also yours, and you will take it back down.</li>\n</ul>\n<blockquote>“Two parties went down this tenday. The winch works fine, so that is not the problem.”</blockquote>",
+      "signed": ""
+    },
+    {
+      "id": "capable-persons-for-a-small-matter",
+      "variant": "plain",
+      "kind": "Wanted · Discreet",
+      "title": "Capable Persons, for a Small Matter",
+      "body": "<p>Sought: three or four sensible heads, not too well known to the Watch, willing to spend an evening on a matter that is entirely legal and only a little strange.</p>\n<p>You will not be asked to kill anyone. You may be asked to carry something. You will certainly be asked to keep your mouth shut afterwards, and paid enough that keeping it shut is easy.</p>\n<p>Ask at the Yawning Portal for the gentleman in the plum doublet with the very good hat. He will find you before you find him — he generally does.</p>\n<blockquote>“A modest job. A generous purse. An interesting evening. Two of the three are guaranteed.”</blockquote>",
+      "signed": ""
+    },
+    {
+      "id": "concerning-spellwork-in-public-streets",
+      "variant": "sealed",
+      "kind": "By order of the Watch",
+      "title": "Concerning Spellwork in Public Streets",
+      "body": "<p>Be it known to all visitors and newly arrived: the casting of spells within the walls is watched, and the <strong>Watchful Order of Magists and Protectors</strong> watches it.</p>\n<p>Working magic in the open that alarms the citizenry — fire, force, summonings, or anything that leaves a mark on a wall — will see you fined, and seeing you fined twice will see you before a magister.</p>\n<p>Defensive castings and the ordinary conveniences of a licensed spellcaster are exempt. If you do not know whether your working is ordinary, assume it is not.</p>\n<p>Enquiries and licences at the guildhall, Trades Ward. Bring coin and patience.</p>",
+      "signed": "Signed, the Watch · Castle Ward post"
+    },
+    {
+      "id": "the-cellars-want-clearing",
+      "variant": "scrap",
+      "kind": "Work · Foul but honest",
+      "title": "The Cellars Want Clearing",
+      "body": "<p>Something is in the drains beneath Coach Street, and the Cellarers’ and Plumbers’ Guild is short of anyone who will go down and look at it twice.</p>\n<p>Pay is <strong>30 gp the head</strong>, in advance if you insist, and the guild covers boots and lanterns. It also covers burial, which is mentioned only because a previous crew asked.</p>\n<p>They took the cat first. Then they took the lad who went after the cat. Bring back the lad and there is another twenty in it.</p>\n<p>Ask for Ulmo Larkspur, mornings, at the Bent Nail.</p>",
+      "signed": ""
+    },
+    {
+      "id": "a-tavern-empty-these-long-years",
+      "variant": "plain",
+      "kind": "For sale · As it stands",
+      "title": "A Tavern, Empty These Long Years",
+      "body": "<p>Freehold in <strong>Trollskull Alley</strong>, North Ward. Three floors, a taproom, a yard behind, and a roof that is more optimistic than watertight.</p>\n<p>Shut since the last owner’s misfortune. The neighbours are pleasant, the alley is quiet, and the noises upstairs are, the seller assures us, entirely settled.</p>\n<p>Sold as it stands. The city will want its taxes whether you open the doors or not.</p>\n<blockquote>“Wants nothing but a scrub, a licence, and somebody brave about ladders.”</blockquote>",
+      "signed": ""
+    },
+    {
+      "id": "berths-south-and-a-warning-with-them",
+      "variant": "plain",
+      "kind": "Passage · Dock Ward",
+      "title": "Berths South, and a Warning With Them",
+      "body": "<p>Merchant bottoms are taking passengers for <strong>Baldur’s Gate</strong>, <strong>Calimport</strong> and, for those with a death wish and the fare, <strong>Port Nyanzaru</strong>.</p>\n<p>Chult-bound crews are asking double this season and will not sail short-handed. Anyone with a strong back and no fear of the fever coast should present themselves at the Sea Maiden’s Faire berth by dawn bell.</p>\n<p>Understand what you are buying. Ships to Chult go out full and come back light.</p>",
+      "signed": ""
+    },
+    {
+      "id": "ask-about-the-stone-giants",
+      "variant": "scrap",
+      "kind": "Rumour · Unsigned",
+      "title": "Ask About the Stone Giants",
+      "body": "<p>Somebody has been paying good coin for old talk about the <strong>Walking Statues</strong> — where they stand, which ones still move, and who holds the words that wake them.</p>\n<p>Not a scholar. Did not want the histories. Wanted names.</p>\n<p>Whoever it is pays in Waterdhavian gold and asks the same four questions in four different taverns. If you have an answer, be certain you want to be the one who gave it.</p>",
+      "signed": ""
+    },
+    {
+      "id": "rules-of-this-board",
+      "variant": "sealed",
+      "kind": "House rules",
+      "title": "Rules of This Board",
+      "body": "<p>Postings are cleared at each tenday’s turn. The house keeps no record of who took what, and remembers nothing if asked.</p>\n<ol>\n  <li>One tag per hand.</li>\n  <li>Blood spilled over a posting is blood spilled in the Portal, and Durnan settles that himself.</li>\n  <li>Patrons who do not pay are not posted twice.</li>\n  <li>Nothing goes up over a notice that is still good. Take it down or leave it be.</li>\n</ol>",
+      "signed": ""
+    }
+  ]
+}

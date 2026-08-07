@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>The Scriptorium — Waterdeep</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   The Scriptorium — where the board is written.
+
+   This page is public, like every other file in a public repository.
+   It is not protected by being hard to find, and it could not be: any
+   password checked here would be sitting in source anyone can read.
+   What protects the city is the token. Without one this page can read
+   and rearrange things on screen and change nothing; with one it
+   commits to the repository, and GitHub decides whether that is
+   allowed. The token lives in this browser's localStorage and is never
+   written into the page or the repo.
+   ═══════════════════════════════════════════════════════════════════ */
+body{background:#141009;color:#e6dcc8}
+
+.desk{max-width:1180px;margin:0 auto;padding:26px 22px 70px}
+@media(max-width:640px){.desk{padding:18px 14px 50px}}
+
+.desk-head{
+  display:flex;flex-wrap:wrap;gap:12px 22px;align-items:baseline;justify-content:space-between;
+  border-bottom:3px double #4a3c26;padding-bottom:16px;margin-bottom:22px;
+}
+.desk-head h1{
+  font-family:"Cinzel",serif;font-weight:700;font-size:clamp(20px,3vw,30px);
+  letter-spacing:.06em;margin:0;color:#f6e6c6;
+}
+.desk-head .sub{font-family:"IM Fell English",serif;font-style:italic;color:#a8907036;color:#a89070;margin:4px 0 0}
+.desk-head a{color:var(--brass);font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(201,162,74,.4)}
+
+.panel{
+  border:1px solid #3a2c1b;border-radius:2px;
+  background:linear-gradient(180deg,rgba(255,225,175,.045),rgba(0,0,0,.22));
+  padding:18px 20px;margin:0 0 20px;
+}
+.panel h2{
+  font-family:"Cinzel",serif;font-weight:700;font-size:12px;letter-spacing:.22em;
+  text-transform:uppercase;margin:0 0 14px;color:#d8ae5f;
+}
+.panel .hint{font-size:15px;color:#a89070;margin:0 0 14px;line-height:1.55}
+.panel .hint code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#d8ae5f}
+
+label{display:block;font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#a89070;margin:0 0 5px}
+input[type=text],input[type=password],select,textarea{
+  width:100%;font:inherit;font-size:16px;color:#f0e6d2;
+  background:#0e0b06;border:1px solid #3a2c1b;border-radius:2px;
+  padding:9px 11px;
+}
+textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.6;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brass);box-shadow:0 0 0 2px rgba(201,162,74,.2)}
+
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:0 0 14px}
+.row>*{flex:1 1 200px;min-width:0}
+.row .tight{flex:0 0 auto}
+
+button{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#f2e4c6;background:linear-gradient(180deg,#6d4a2b,#4a2e18);
+  border:1px solid #241608;border-radius:2px;padding:10px 15px;cursor:pointer;
+  transition:background .16s ease;
+}
+button:hover{background:linear-gradient(180deg,#7c5631,#5b3a20)}
+button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--brass)}
+button[disabled]{opacity:.42;cursor:not-allowed}
+button.gold{background:linear-gradient(180deg,#b1892f,#7d5f1d);border-color:#4a3610;color:#fff6e4}
+button.gold:hover{background:linear-gradient(180deg,#c9a24a,#8a6a24)}
+button.quiet{background:none;border-color:#3a2c1b;color:#a89070}
+button.quiet:hover{background:rgba(201,162,74,.1);color:#e6c97e}
+button.danger{background:linear-gradient(180deg,#7e2f21,#54190f);border-color:#33120a}
+button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
+
+.state{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 10px;border:1px solid currentColor;border-radius:2px;display:inline-block;
+}
+.state.locked{color:#a8746a}
+.state.open{color:#8fb069}
+.state.dirty{color:#d8ae5f}
+
+/* ── the two columns ────────────────────────────────────────────── */
+.work{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.work{grid-template-columns:1fr}}
+
+.list{list-style:none;margin:0;padding:0;max-height:62vh;overflow:auto}
+.list li{
+  border:1px solid #33261a;border-radius:2px;margin:0 0 8px;
+  background:rgba(0,0,0,.2);
+}
+.list .pick{
+  display:block;width:100%;text-align:left;background:none;border:0;border-radius:0;
+  padding:11px 12px;cursor:pointer;text-transform:none;letter-spacing:0;
+  font-family:"EB Garamond",serif;font-size:16px;color:#e6dcc8;
+}
+.list .pick:hover{background:rgba(201,162,74,.12)}
+.list li.on{border-color:var(--brass);background:rgba(201,162,74,.14)}
+.list .pick .tag{
+  display:block;font-family:"Cinzel",serif;font-size:8.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:#8a6a24;margin-bottom:3px;
+}
+.list .move{display:flex;gap:4px;padding:0 8px 8px}
+.list .move button{padding:4px 9px;font-size:9px}
+
+.preview{
+  border:1px solid #3a2c1b;border-radius:2px;padding:20px 22px;
+  background:linear-gradient(172deg,#f3e9cf,#e0cfa8);color:#2a2114;
+  max-height:46vh;overflow:auto;
+}
+.preview h3{font-family:"IM Fell English",serif;font-size:22px;margin:0 0 8px;color:#1c1408}
+.preview .kind{font-family:"Cinzel",serif;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:#8a6a24;display:block;margin-bottom:6px}
+.preview table{width:100%;table-layout:fixed;border-collapse:collapse;margin:4px 0 12px;font-size:15px}
+.preview th,.preview td{padding:5px 9px;border-bottom:1px solid rgba(74,60,38,.28);text-align:left}
+.preview td:last-child,.preview th:last-child{text-align:right}
+.preview blockquote{margin:10px 0;padding-left:14px;border-left:3px solid rgba(140,47,29,.5);font-family:"IM Fell English",serif;font-style:italic}
+.preview ol,.preview ul{padding-left:22px}
+
+.log{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;
+  color:#a89070;background:#0b0805;border:1px solid #2b2014;border-radius:2px;
+  padding:12px 14px;max-height:190px;overflow:auto;margin:14px 0 0;white-space:pre-wrap;
+}
+.log b{color:#8fb069;font-weight:400}
+.log i{color:#c9736a;font-style:normal}
+</style>
+</head>
+<body>
+
+<div class="desk">
+
+  <header class="desk-head">
+    <div>
+      <h1>The Scriptorium</h1>
+      <p class="sub">Where the board is written, and the city reads it a minute later.</p>
+    </div>
+    <div>
+      <span class="state locked" id="lock">Sealed &mdash; no token</span>
+      <a href="./" style="margin-left:14px">Back to the street &#8599;</a>
+    </div>
+  </header>
+
+  <!-- ══ the key ═════════════════════════════════════════════════ -->
+  <section class="panel">
+    <h2>The Key</h2>
+    <p class="hint">
+      This page is public &mdash; every file in a public repository is, and no password
+      written here could change that, since it would be sitting in source anyone can read.
+      What decides whether anything can be changed is the token below. GitHub checks it,
+      not this page.<br><br>
+      Make a <b>fine-grained personal access token</b> scoped to
+      <code>PortugalDMWaterdeepWazoo</code> alone, with <code>Contents: Read and write</code>
+      and nothing else. It is kept in this browser only, and never written into the page
+      or the repository.
+    </p>
+    <div class="row">
+      <div>
+        <label for="tok">Token</label>
+        <input type="password" id="tok" placeholder="github_pat_&hellip;" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="tight">
+        <button id="tok-save" class="gold">Unseal</button>
+        <button id="tok-drop" class="quiet">Forget it</button>
+      </div>
+    </div>
+    <p class="hint" style="margin:0">
+      <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:#d8ae5f">Make a token &#8599;</a>
+      &mdash; expiry is up to you; when it lapses, publishing fails loudly and you make another.
+    </p>
+  </section>
+
+  <!-- ══ the board ═══════════════════════════════════════════════ -->
+  <section class="panel">
+    <h2>The Notice Board</h2>
+    <p class="hint">
+      Postings appear on the board in this order. Nothing here touches the city until
+      you publish: publishing writes <code>data/notices.json</code> as a commit, so every
+      change is dated, attributed and revertable in the repository&rsquo;s history.
+    </p>
+
+    <div class="row">
+      <div class="tight"><button id="add">New posting</button></div>
+      <div class="tight"><button id="publish" class="gold">Publish to the city</button></div>
+      <div class="tight"><button id="reload" class="quiet">Discard, reload from the city</button></div>
+      <div style="text-align:right">
+        <span class="state" id="dirty" style="display:none">Unpublished changes</span>
+      </div>
+    </div>
+
+    <div class="work">
+      <div>
+        <label>Postings</label>
+        <ul class="list" id="list"></ul>
+      </div>
+
+      <div>
+        <div class="row">
+          <div>
+            <label for="f-title">Heading</label>
+            <input type="text" id="f-title" placeholder="What the posting is called">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="f-kind">Kind &mdash; the small line above</label>
+            <input type="text" id="f-kind" placeholder="Work &middot; Foul but honest">
+          </div>
+          <div style="flex:0 0 170px">
+            <label for="f-variant">Paper</label>
+            <select id="f-variant">
+              <option value="plain">Plain, nailed</option>
+              <option value="sealed">Official, wax-sealed</option>
+              <option value="scrap">Torn scrap</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="f-signed">Signed &mdash; optional</label>
+            <input type="text" id="f-signed" placeholder="Signed, the Watch &middot; Castle Ward post">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="f-body">Body &mdash; HTML</label>
+            <textarea id="f-body" rows="14" placeholder="&lt;p&gt;What the notice says.&lt;/p&gt;"></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="tight"><button id="del" class="danger">Take this one down</button></div>
+        </div>
+
+        <label>As it will look</label>
+        <div class="preview" id="preview"></div>
+      </div>
+    </div>
+
+    <div class="log" id="log">Waiting.</div>
+  </section>
+
+  <!-- ══ still to come ═══════════════════════════════════════════ -->
+  <section class="panel">
+    <h2>The Wazoo</h2>
+    <p class="hint" style="margin:0">
+      Issues are still forged in <a href="editor.html" style="color:#d8ae5f">the Penny Press</a>
+      and published by hand. Wiring it to this page &mdash; articles with their own pages, and
+      the back-number archive &mdash; is the next stage, and wants one decision first: a
+      37&nbsp;MB self-contained issue is about 50&nbsp;MB once encoded for the API, which is
+      asking a lot of a browser. Splitting images out into their own files at publish time
+      would fix that, and shrink the issue for readers besides.
+    </p>
+  </section>
+
+</div>
+
+<script>
+/* ────────────────────────────────────────────────────────────────
+   The Scriptorium.
+
+   Reads data/notices.json from the site, edits it in memory, and
+   publishes by committing it back through GitHub's contents API —
+   which accepts authenticated writes from a browser origin, so no
+   server is needed anywhere in this.
+
+   Two mechanics that are easy to get wrong:
+
+   - Updating an existing file requires the blob's current sha. The
+     flow is always GET (keep the sha) then PUT (send it back). If
+     the sha is stale GitHub answers 409, which means someone else
+     changed the file, and the honest response is to re-read rather
+     than overwrite.
+   - Content must be base64, and btoa alone mangles anything outside
+     Latin-1 — every curly quote on the board. Encode to UTF-8 bytes
+     first.
+   ──────────────────────────────────────────────────────────────── */
+(function () {
+  var REPO   = 'evolJoaoBento/PortugalDMWaterdeepWazoo';
+  var BRANCH = 'main';
+  var FILE   = 'data/notices.json';
+  var LS_TOK = 'wazoo-scriptorium-token';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var doc   = { notices: [] };   // what we are editing
+  var sha   = null;              // the blob we read, so we can write over it
+  var cur   = -1;                // which posting is selected
+  var dirty = false;
+  var token = '';
+
+  /* ── the log, which is the only place this page tells the truth ── */
+  function say(msg, kind) {
+    var l = $('log');
+    var tag = kind === 'ok' ? 'b' : kind === 'err' ? 'i' : 'span';
+    l.innerHTML += '\n<' + tag + '>' + msg.replace(/[<>]/g, '') + '</' + tag + '>';
+    l.scrollTop = l.scrollHeight;
+  }
+
+  /* ── the key ──────────────────────────────────────────────────── */
+  function setLock() {
+    var el = $('lock');
+    el.className = 'state ' + (token ? 'open' : 'locked');
+    el.textContent = token ? 'Unsealed — can publish' : 'Sealed — no token';
+    $('publish').disabled = !token;
+  }
+  function loadToken() {
+    try { token = localStorage.getItem(LS_TOK) || ''; } catch (e) { token = ''; }
+    if (token) $('tok').value = token;
+    setLock();
+  }
+  $('tok-save').addEventListener('click', function () {
+    token = $('tok').value.trim();
+    try { localStorage.setItem(LS_TOK, token); } catch (e) {}
+    setLock();
+    say(token ? 'Token kept in this browser.' : 'No token given.', token ? 'ok' : 'err');
+  });
+  $('tok-drop').addEventListener('click', function () {
+    token = '';
+    $('tok').value = '';
+    try { localStorage.removeItem(LS_TOK); } catch (e) {}
+    setLock();
+    say('Token forgotten.', 'ok');
+  });
+
+  /* ── GitHub ───────────────────────────────────────────────────── */
+  function api(path) {
+    return 'https://api.github.com/repos/' + REPO + '/contents/' + path;
+  }
+  function headers() {
+    return {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': 'Bearer ' + token,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json'
+    };
+  }
+  // btoa works a byte at a time; anything above U+00FF throws, and the
+  // board is full of curly quotes and em dashes.
+  function toBase64(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+
+  function markDirty(on) {
+    dirty = on;
+    $('dirty').style.display = on ? 'inline-block' : 'none';
+    $('dirty').className = 'state dirty';
+  }
+
+  /* ── reading the board ────────────────────────────────────────── */
+  function readBoard() {
+    say('Reading the board…');
+    // Straight off the site, so it matches what a reader sees.
+    return fetch(FILE + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(FILE + ' — ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        doc = d && d.notices ? d : { notices: [] };
+        cur = doc.notices.length ? 0 : -1;
+        markDirty(false);
+        drawList(); drawForm();
+        say(doc.notices.length + ' posting(s) on the board.', 'ok');
+      })
+      .catch(function (e) { say('Could not read the board: ' + e.message, 'err'); });
+  }
+
+  /* ── the list ─────────────────────────────────────────────────── */
+  function drawList() {
+    var ul = $('list');
+    ul.textContent = '';
+    doc.notices.forEach(function (n, i) {
+      var li = document.createElement('li');
+      if (i === cur) li.className = 'on';
+
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pick';
+      b.innerHTML = '<span class="tag">' + (n.variant || 'plain') +
+                    (n.kind ? ' · ' + n.kind.replace(/[<>]/g, '') : '') + '</span>' +
+                    (n.title || 'Untitled').replace(/[<>]/g, '');
+      b.addEventListener('click', function () { cur = i; drawList(); drawForm(); });
+      li.appendChild(b);
+
+      if (i === cur) {
+        var mv = document.createElement('div');
+        mv.className = 'move';
+        mv.innerHTML = '<button type="button" data-up>↑ Up</button>' +
+                       '<button type="button" data-down>↓ Down</button>';
+        mv.querySelector('[data-up]').addEventListener('click', function () { move(-1); });
+        mv.querySelector('[data-down]').addEventListener('click', function () { move(1); });
+        li.appendChild(mv);
+      }
+      ul.appendChild(li);
+    });
+  }
+
+  function move(d) {
+    var j = cur + d;
+    if (cur < 0 || j < 0 || j >= doc.notices.length) return;
+    var tmp = doc.notices[cur];
+    doc.notices[cur] = doc.notices[j];
+    doc.notices[j] = tmp;
+    cur = j;
+    markDirty(true); drawList();
+  }
+
+  /* ── the form ─────────────────────────────────────────────────── */
+  var fields = { title: 'f-title', kind: 'f-kind', signed: 'f-signed',
+                 body: 'f-body', variant: 'f-variant' };
+
+  function drawForm() {
+    var n = doc.notices[cur];
+    var has = !!n;
+    Object.keys(fields).forEach(function (k) {
+      var el = $(fields[k]);
+      el.value = has ? (n[k] || (k === 'variant' ? 'plain' : '')) : '';
+      el.disabled = !has;
+    });
+    $('del').disabled = !has;
+    drawPreview();
+  }
+
+  function readForm() {
+    var n = doc.notices[cur];
+    if (!n) return;
+    Object.keys(fields).forEach(function (k) { n[k] = $(fields[k]).value; });
+    if (!n.id) n.id = slug(n.title);
+    markDirty(true);
+  }
+
+  function slug(t) {
+    return String(t || 'posting').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'posting';
+  }
+
+  Object.keys(fields).forEach(function (k) {
+    $(fields[k]).addEventListener('input', function () { readForm(); drawPreview(); drawList(); });
+    $(fields[k]).addEventListener('change', function () { readForm(); drawPreview(); drawList(); });
+  });
+
+  function drawPreview() {
+    var n = doc.notices[cur];
+    var p = $('preview');
+    if (!n) { p.innerHTML = '<em style="color:#6d5a3d">Nothing selected.</em>'; return; }
+    p.innerHTML =
+      (n.kind ? '<span class="kind">' + n.kind.replace(/[<>]/g, '') + '</span>' : '') +
+      '<h3>' + (n.title || 'Untitled').replace(/[<>]/g, '') + '</h3>' +
+      (n.body || '') +
+      (n.signed ? '<p style="margin-top:14px;font-family:Cinzel,serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6d5a3d">' +
+                  n.signed.replace(/[<>]/g, '') + '</p>' : '');
+  }
+
+  $('add').addEventListener('click', function () {
+    doc.notices.unshift({
+      id: 'new-posting', variant: 'plain', kind: 'Work · Ask within',
+      title: 'A new posting', body: '<p>What the notice says.</p>', signed: ''
+    });
+    cur = 0;
+    markDirty(true); drawList(); drawForm();
+    $('f-title').focus(); $('f-title').select();
+  });
+
+  $('del').addEventListener('click', function () {
+    var n = doc.notices[cur];
+    if (!n) return;
+    if (!confirm('Take down “' + (n.title || 'Untitled') + '”?\n\n' +
+                 'It goes when you publish. Until then nothing has changed in the city, ' +
+                 'and the repository keeps every earlier version regardless.')) return;
+    doc.notices.splice(cur, 1);
+    cur = Math.min(cur, doc.notices.length - 1);
+    markDirty(true); drawList(); drawForm();
+  });
+
+  $('reload').addEventListener('click', function () {
+    if (dirty && !confirm('Throw away the unpublished changes and read the city again?')) return;
+    readBoard();
+  });
+
+  /* ── publishing ───────────────────────────────────────────────── */
+  $('publish').addEventListener('click', async function () {
+    if (!token) { say('No token — nothing to publish with.', 'err'); return; }
+    var btn = this;
+    btn.disabled = true;
+    try {
+      say('Fetching the current file…');
+      var head = await fetch(api(FILE) + '?ref=' + BRANCH, { headers: headers() });
+      if (head.status === 404) {
+        sha = null;                        // first write, nothing to overwrite
+        say('No file yet — this will create it.');
+      } else if (!head.ok) {
+        throw new Error('read ' + head.status + ' ' + (await head.text()).slice(0, 140));
+      } else {
+        sha = (await head.json()).sha;
+        say('Current version ' + sha.slice(0, 7) + '.');
+      }
+
+      var out = {
+        _comment: doc._comment ||
+          'The board at the Yawning Portal. Edited through scriptorium.html; hand-editing works too. variant: plain | sealed | scrap. body is HTML.',
+        updated: new Date().toISOString().slice(0, 10),
+        notices: doc.notices
+      };
+      var text = JSON.stringify(out, null, 2) + '\n';
+
+      var body = {
+        message: 'board: ' + doc.notices.length + ' posting(s), edited in the scriptorium',
+        content: toBase64(text),
+        branch: BRANCH
+      };
+      if (sha) body.sha = sha;
+
+      say('Committing ' + text.length + ' bytes…');
+      var put = await fetch(api(FILE), {
+        method: 'PUT', headers: headers(), body: JSON.stringify(body)
+      });
+
+      if (put.status === 409 || put.status === 422) {
+        throw new Error('the file changed under us (' + put.status +
+                        ') — reload from the city and redo the edit');
+      }
+      if (!put.ok) throw new Error('write ' + put.status + ' ' + (await put.text()).slice(0, 200));
+
+      var res = await put.json();
+      sha = res.content && res.content.sha;
+      markDirty(false);
+
+      // The press room caches the repo listing; without this the author's
+      // own browser keeps showing yesterday's board.
+      try { sessionStorage.removeItem('wazoo-files-v3'); } catch (e) {}
+
+      say('Committed ' + (res.commit && res.commit.sha || '').slice(0, 7) +
+          '. Live in about a minute, once Pages rebuilds.', 'ok');
+    } catch (e) {
+      say('Publish failed: ' + e.message, 'err');
+    } finally {
+      btn.disabled = !token;
+    }
+  });
+
+  addEventListener('beforeunload', function (e) {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  loadToken();
+  readBoard();
+})();
+</script>
+</body>
+</html>

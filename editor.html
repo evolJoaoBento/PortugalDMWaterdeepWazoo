@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Penny Press — magical broadsheet forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ---------- editor chrome ---------- */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:#141009;color:#f2e6cf;
+  font:14px/1.45 system-ui,"Segoe UI",Roboto,sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.toolbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 12px;background:#1c1710;border-bottom:1px solid #3a2f1e;
+}
+.brand{font-family:Cinzel,serif;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  font-size:13px;color:#d8b46a;margin-right:6px;white-space:nowrap}
+button,select,input[type=text]{
+  background:#2a2216;color:#f2e6cf;border:1px solid #4a3c26;border-radius:4px;
+  padding:5px 9px;font:inherit;font-size:13px;cursor:pointer;
+}
+button:hover{background:#3a2f1e;border-color:#6b5636}
+button.primary{background:#5a3d18;border-color:#8a6a2f;color:#ffeec4}
+button.primary:hover{background:#6e4c1e}
+input[type=text]{cursor:text}
+.spacer{flex:1}
+.hint{font-size:12px;color:#9a8a6a}
+.split{flex:1;display:grid;grid-template-columns:minmax(300px,32%) 1fr;min-height:0}
+.pane{min-height:0;display:flex;flex-direction:column}
+.pane-left{border-right:1px solid #3a2f1e;background:#191309}
+.fields{padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid #3a2f1e}
+.fields label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#9a8a6a;
+  text-transform:uppercase;letter-spacing:.08em}
+.fields label.wide{grid-column:1/-1}
+.fields input,.fields select{width:100%}
+.md-head{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:11px;
+  text-transform:uppercase;letter-spacing:.1em;color:#9a8a6a;border-bottom:1px solid #2a2216}
+textarea{
+  flex:1;resize:none;border:0;outline:none;padding:12px 14px;
+  background:#12100a;color:#e8dcc0;
+  font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:13px;line-height:1.6;
+}
+.pane-right{background:#0e0b06;overflow:auto;padding:22px 22px 120px}
+.preview-shell{display:flex;justify-content:center}
+
+/* paper styling itself lives in PAPER_CSS (JS) and is injected at boot,
+   so preview and exported file cannot drift apart */
+
+/* insert gaps + slot controls (editor only) */
+.paper .gap{
+  position:relative;height:14px;margin:2px 0;cursor:pointer;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s;
+}
+.paper:hover .gap{opacity:.35}
+.paper .gap:hover,.paper .gap.drag{opacity:1;background:rgba(120,70,20,.14)}
+@media print{.paper .gap,.paper figure.slot .slotbar,.orphans{display:none!important}}
+.paper .gap::after{
+  content:"+ image";font:600 10px/1 system-ui;letter-spacing:.1em;text-transform:uppercase;
+  color:#7a5a2a;border:1px dashed #a3803f;border-radius:3px;padding:3px 7px;background:#f3e8ce;
+}
+.paper figure.slot{position:relative}
+.paper figure.slot.sel{outline:2px solid #b5762a;outline-offset:3px}
+.paper figure.slot .slotbar{
+  position:absolute;top:2px;right:2px;display:none;gap:3px;z-index:5;
+}
+.paper figure.slot:hover .slotbar,.paper figure.slot.sel .slotbar{display:flex}
+.paper figure.slot .slotbar button{
+  padding:2px 6px;font-size:11px;line-height:1.4;background:#2a2216cc;color:#f2e6cf;
+  border:1px solid #6b5636;border-radius:3px;
+}
+.orphans{
+  border:1px dashed #b5762a;background:#f6ecd4;color:#5a3d18;padding:8px 10px;margin:0 0 14px;
+  font:13px/1.4 system-ui;border-radius:4px;
+}
+.orphans b{font-weight:700}
+.orphans .o-item{display:flex;align-items:center;gap:8px;margin-top:6px}
+.orphans img{height:34px;width:auto;border:1px solid #b59a63}
+
+/* style panel */
+.style-panel{flex:none;border-bottom:1px solid #3a2f1e;background:#1a140b;max-height:38vh;overflow:auto}
+.style-panel>summary{
+  cursor:pointer;padding:6px 12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:#d8b46a;user-select:none;list-style:none;display:flex;align-items:center;gap:8px;
+}
+.style-panel>summary::before{content:"▸";font-size:10px;transition:transform .12s}
+.style-panel[open]>summary::before{transform:rotate(90deg)}
+.style-panel .sgrid{padding:2px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:7px 10px}
+.style-panel .sgroup{
+  grid-column:1/-1;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7d6a48;
+  border-top:1px solid #2a2216;padding-top:7px;margin-top:2px;
+}
+.style-panel .sgrid label{display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:#9a8a6a;
+  text-transform:uppercase;letter-spacing:.06em}
+.style-panel .sgrid label.ck{flex-direction:row;align-items:center;gap:6px;text-transform:none;
+  letter-spacing:0;font-size:12px;color:#c8b58c;padding-top:12px}
+.style-panel input[type=range]{width:100%;accent-color:#b5762a}
+.style-panel input[type=color]{width:100%;height:26px;padding:1px;background:#2a2216}
+.style-panel select{width:100%}
+.style-panel .val{color:#d8b46a;font-weight:600;font-size:10.5px;float:right}
+.style-panel .row{grid-column:1/-1;display:flex;gap:6px}
+
+/* inspector */
+.inspector{
+  position:fixed;right:18px;bottom:18px;width:290px;z-index:50;
+  background:#1c1710;border:1px solid #6b5636;border-radius:6px;padding:12px;
+  box-shadow:0 10px 30px #000a;display:none;
+}
+.inspector.open{display:block}
+.inspector h4{margin:0 0 8px;font:600 11px/1 system-ui;letter-spacing:.12em;
+  text-transform:uppercase;color:#d8b46a}
+.inspector label{display:block;font-size:11px;color:#9a8a6a;margin:8px 0 3px;
+  text-transform:uppercase;letter-spacing:.08em}
+.inspector input[type=text],.inspector select{width:100%}
+.inspector .row{display:flex;gap:6px;margin-top:10px}
+.inspector .row button{flex:1}
+.danger{border-color:#7a2f22;color:#ffb4a2}
+.danger:hover{background:#5a2318}
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99;
+  background:#2a2216;border:1px solid #8a6a2f;color:#ffeec4;padding:9px 16px;border-radius:5px;
+  box-shadow:0 8px 24px #000a;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.toast.show{opacity:1}
+#tests{position:fixed;inset:0;background:#0e0b06;color:#e8dcc0;padding:24px;overflow:auto;
+  font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
+@media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="brand">Penny Press</span>
+  <button id="btn-import">Import .md</button>
+  <button id="btn-sample">Load sample</button>
+  <button id="btn-new">New issue</button>
+  <span class="spacer"></span>
+  <span class="hint" id="save-state">—</span>
+  <button id="btn-export" class="primary">Export broadsheet</button>
+</div>
+
+<div class="split">
+  <div class="pane pane-left">
+    <div class="fields">
+      <label class="wide">Masthead title
+        <input type="text" id="f-title" placeholder="The Waterdeep Wazoo">
+      </label>
+      <label class="wide">Tagline
+        <input type="text" id="f-tagline" placeholder="Ink still wet, truth still cheap">
+      </label>
+      <label>Dateline
+        <input type="text" id="f-dateline" placeholder="12 Ches, 1492 DR">
+      </label>
+      <label>Price
+        <input type="text" id="f-price" placeholder="one copper">
+      </label>
+      <label>Issue
+        <input type="text" id="f-issue" placeholder="No. 47">
+      </label>
+      <label>Paper language
+        <select id="f-lang">
+          <option value="en">English</option>
+          <option value="pt">Português (pt-PT)</option>
+        </select>
+      </label>
+    </div>
+    <details class="style-panel" open>
+      <summary>Style</summary>
+      <div class="sgrid">
+
+        <div class="sgroup">Masthead</div>
+        <label>Font
+          <select data-style="mastFont">
+            <option value="fell">IM Fell English</option>
+            <option value="cinzel">Cinzel</option>
+            <option value="garamond">EB Garamond</option>
+            <option value="georgia">Georgia</option>
+            <option value="sans">Sans</option>
+          </select>
+        </label>
+        <label>Title size <b class="val"></b>
+          <input type="range" min="24" max="140" step="1" data-style="mast">
+        </label>
+        <label>Tagline size <b class="val"></b>
+          <input type="range" min="10" max="30" step="1" data-style="tag">
+        </label>
+        <label class="ck"><input type="checkbox" data-style="mastCase"> All caps title</label>
+
+        <div class="sgroup">Headlines</div>
+        <label>Font
+          <select data-style="headFont">
+            <option value="cinzel">Cinzel</option>
+            <option value="fell">IM Fell English</option>
+            <option value="garamond">EB Garamond</option>
+            <option value="georgia">Georgia</option>
+            <option value="sans">Sans</option>
+          </select>
+        </label>
+        <label>## size <b class="val"></b>
+          <input type="range" min="12" max="48" step="1" data-style="h2">
+        </label>
+        <label>### size <b class="val"></b>
+          <input type="range" min="10" max="30" step="1" data-style="h3">
+        </label>
+        <label class="ck"><input type="checkbox" data-style="headCase"> All caps</label>
+        <label class="ck"><input type="checkbox" data-style="headRule"> Rule under headline</label>
+
+        <div class="sgroup">Body text</div>
+        <label>Font
+          <select data-style="bodyFont">
+            <option value="garamond">EB Garamond</option>
+            <option value="fell">IM Fell English</option>
+            <option value="georgia">Georgia</option>
+            <option value="cinzel">Cinzel</option>
+            <option value="sans">Sans</option>
+          </select>
+        </label>
+        <label>Text size <b class="val"></b>
+          <input type="range" min="11" max="26" step="0.5" data-style="body">
+        </label>
+        <label>Line height <b class="val"></b>
+          <input type="range" min="1.1" max="2.1" step="0.05" data-style="lh">
+        </label>
+        <label>Drop cap <b class="val"></b>
+          <input type="range" min="0" max="6" step="0.1" data-style="drop">
+        </label>
+        <label class="ck"><input type="checkbox" data-style="justify"> Justify columns</label>
+
+        <div class="sgroup">Page &amp; columns</div>
+        <label>Columns <b class="val"></b>
+          <input type="range" min="1" max="5" step="1" data-style="cols">
+        </label>
+        <label>Column gap <b class="val"></b>
+          <input type="range" min="8" max="70" step="1" data-style="colGap">
+        </label>
+        <label>Page width <b class="val"></b>
+          <input type="range" min="480" max="1500" step="10" data-style="maxw">
+        </label>
+        <label>Margins <b class="val"></b>
+          <input type="range" min="6" max="80" step="1" data-style="pad">
+        </label>
+        <label class="ck"><input type="checkbox" data-style="colRule"> Rule between columns</label>
+
+        <div class="sgroup">Illusion press</div>
+        <label style="grid-column:1/-1">Default enchantment for new pictures
+          <select data-style="fxDefault" id="s-fxdefault"></select>
+        </label>
+        <label>Default strength <b class="val"></b>
+          <input type="range" min="0" max="100" step="5" data-style="fxAmount">
+        </label>
+        <label class="ck"><input type="checkbox" data-style="animate"> Illusions move</label>
+
+        <div class="sgroup">Ink &amp; paper</div>
+        <label>Paper<input type="color" data-style="paper"></label>
+        <label>Ink<input type="color" data-style="ink"></label>
+        <label>Drop cap colour<input type="color" data-style="accent"></label>
+        <label>Rules<input type="color" data-style="rule"></label>
+
+        <div class="row"><button id="btn-style-reset">Reset style</button></div>
+      </div>
+    </details>
+
+    <div class="md-head">
+      <span>Markdown</span>
+      <span class="spacer"></span>
+      <span class="hint">## headline · **bold** · *italic* · &gt; quote · - list · <b style="color:#d8b46a">!para</b> = drop cap</span>
+    </div>
+    <textarea id="md" spellcheck="false" placeholder="## Fire on Dock Ward&#10;&#10;Lorem ipsum..."></textarea>
+  </div>
+
+  <div class="pane pane-right">
+    <div class="preview-shell"><div id="paper" class="paper"></div></div>
+  </div>
+</div>
+
+<div class="inspector" id="inspector">
+  <h4>Moving picture</h4>
+  <label>Caption</label>
+  <input type="text" id="i-caption" placeholder="The blaze, as seen by our artist">
+  <label>Width</label>
+  <select id="i-width">
+    <option value="column">Column width</option>
+    <option value="full">Full width (spans columns)</option>
+  </select>
+  <label>Illusion</label>
+  <select id="i-fx"></select>
+  <label>Strength <b class="val" id="i-fx-val"></b></label>
+  <input type="range" id="i-fxamount" min="0" max="100" step="5" style="width:100%">
+  <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c">
+    <input type="checkbox" id="i-frame" style="width:auto"> Aged photo frame
+  </label>
+  <div class="row">
+    <button id="i-replace">Replace</button>
+    <button id="i-delete" class="danger">Delete</button>
+  </div>
+  <div class="row"><button id="i-close">Close</button></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="tests"></div>
+
+<input type="file" id="file-md" accept=".md,.markdown,.txt,text/markdown" hidden>
+<input type="file" id="file-img" accept="image/*" hidden>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   PAPER CSS — shared by live preview and export, so WYSIWYG holds
+   ========================================================================= */
+const PAPER_CSS = `
+.paper{
+  /* every knob below is overridable per-issue by the Style panel (inline style attr) */
+  --ink:#241c12; --paper:#e9dcbf; --rule:#8a7146; --accent:#5a2d18;
+  --ink-soft:color-mix(in srgb, var(--ink) 74%, #a9946a);
+  --maxw:940px; --pad:34px;
+  --bodyfont:"EB Garamond",Garamond,Georgia,serif;
+  --headfont:Cinzel,Georgia,serif;
+  --mastfont:"IM Fell English",Georgia,serif;
+  --body:17px; --lh:1.5; --mast:64px; --tag:15px; --h2:23px; --h3:16px;
+  --cols:3; --colgap:30px; --colrule:1px solid #b8a271; --align:justify;
+  --dropcap:3.1em; --dropfloat:left; --dropgap:.09em;
+  --mastcase:uppercase; --headcase:uppercase; --headrule:1px solid var(--rule);
+  width:100%;max-width:var(--maxw);background:var(--paper);color:var(--ink);
+  padding:var(--pad) calc(var(--pad) + 4px) calc(var(--pad) + 12px);border-radius:2px;
+  font-family:var(--bodyfont);font-size:var(--body);line-height:var(--lh);
+  box-shadow:0 18px 48px #000b, 0 0 0 1px #00000022;
+  background-image:
+    radial-gradient(ellipse at 12% 8%, #00000010 0%, transparent 55%),
+    radial-gradient(ellipse at 88% 92%, #00000012 0%, transparent 55%),
+    repeating-linear-gradient(0deg,#0000000a 0 1px,transparent 1px 3px);
+}
+.paper .masthead{text-align:center;border-bottom:3px double var(--rule);padding-bottom:10px;margin-bottom:6px}
+.paper .masthead h1{
+  font-family:var(--mastfont);font-weight:700;
+  font-size:min(var(--mast),13vw);line-height:.95;margin:0;
+  letter-spacing:.04em;text-transform:var(--mastcase);color:var(--ink);
+}
+.paper .tagline{font-style:italic;color:var(--ink-soft);margin:6px 0 0;font-size:var(--tag)}
+.paper .dateline{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  margin:10px 0 18px;padding:5px 2px;
+  font-family:var(--headfont);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+}
+.paper .body{column-count:var(--cols);column-gap:var(--colgap);column-rule:var(--colrule);
+  text-align:var(--align);hyphens:auto}
+.paper .body>*{break-inside:avoid-column}
+.paper .body p{margin:0 0 .72em;break-inside:auto;orphans:2;widows:2}
+.paper h2{
+  font-family:var(--headfont);font-weight:700;font-size:var(--h2);line-height:1.12;
+  margin:.5em 0 .18em;text-transform:var(--headcase);letter-spacing:.02em;
+  border-bottom:var(--headrule);padding-bottom:5px;text-align:left;
+}
+.paper .body>h2:first-child{margin-top:0}
+.paper h3{font-family:var(--headfont);font-weight:600;font-size:var(--h3);margin:.7em 0 .2em;
+  letter-spacing:.05em;color:var(--ink-soft);text-align:left}
+.paper h4,.paper h5,.paper h6{font-family:var(--headfont);font-size:calc(var(--h3) * .88);
+  margin:.7em 0 .2em;letter-spacing:.06em;text-align:left}
+.paper .kicker{font-style:italic;color:var(--ink-soft);margin:0 0 .5em;font-size:var(--tag)}
+.paper p.lede::first-letter{
+  float:var(--dropfloat);font-family:var(--mastfont);font-size:var(--dropcap);line-height:.82;
+  padding:.06em var(--dropgap) 0 0;color:var(--accent);
+}
+.paper blockquote{
+  margin:.6em 0;padding:.35em 0 .35em .9em;border-left:3px solid var(--rule);
+  font-style:italic;color:var(--ink-soft);
+}
+.paper ul,.paper ol{margin:0 0 .75em;padding-left:1.35em}
+.paper li{margin:.15em 0}
+.paper hr{border:0;border-top:1px solid var(--rule);margin:1.1em 0;position:relative;overflow:visible}
+.paper hr::after{
+  content:"\\2766";position:absolute;left:50%;top:-.72em;transform:translateX(-50%);
+  background:var(--paper);padding:0 .5em;color:var(--rule);font-size:15px;
+}
+.paper code{font-family:ui-monospace,Consolas,monospace;font-size:.86em;background:#00000010;padding:0 3px;border-radius:2px}
+.paper pre{background:#00000010;padding:.6em .7em;border-left:2px solid var(--rule);overflow-x:auto}
+.paper pre code{background:none;padding:0}
+.paper a{color:var(--accent);text-decoration:underline dotted}
+.paper strong{font-weight:700}
+.paper del{opacity:.7}
+
+.paper figure{margin:.35em 0 .9em;break-inside:avoid}
+.paper figure .plate{position:relative;overflow:hidden;line-height:0;isolation:isolate}
+.paper figure .plate::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:2}
+.paper figure img{display:block;width:100%;height:auto;background:#cbbb95}
+.paper figure.framed img{border:1px solid #8a7146;padding:5px;background:#f2e7cd;
+  box-shadow:0 2px 6px #00000026}
+.paper figure figcaption{
+  font-size:12.5px;font-style:italic;color:var(--ink-soft);
+  margin-top:5px;padding-bottom:4px;border-bottom:1px solid #b8a271;text-align:left;
+}
+.paper figure.full{column-span:all;margin:.9em 0 1.1em}
+.paper figure.full figcaption{text-align:center}
+
+/* ---------- illusion-press effects ----------
+   Pure CSS + custom properties, so an exported broadsheet keeps them with no
+   script at all. --fx is the per-picture strength (0-1), --fxplay pauses every
+   animation at once when the issue is set to "still". */
+.paper figure.slot{--fx:.75}
+.paper figure .plate,.paper figure .plate::after,.paper figure img{animation-play-state:var(--fxplay,running)}
+
+/* INKED — the picture sinks into the paper like a woodcut pulled on the press */
+.paper figure.fx-ink .plate{background:var(--paper)}
+.paper figure.fx-ink img{
+  filter:grayscale(1) sepia(calc(var(--fx) * .55)) contrast(calc(1 + var(--fx) * .45))
+         brightness(calc(1 + var(--fx) * .22));
+  mix-blend-mode:multiply;
+}
+.paper figure.fx-ink .plate::after{
+  background:repeating-linear-gradient(0deg,
+    color-mix(in srgb, var(--ink) calc(var(--fx) * 9%), transparent) 0 1px, transparent 1px 3px);
+  mix-blend-mode:multiply;
+}
+
+/* SCRYSHEEN — a sheen of the binding spell crosses the plate */
+.paper figure.fx-sheen img{
+  filter:sepia(calc(var(--fx) * .38)) saturate(calc(1 + var(--fx) * .35)) contrast(1.06);
+}
+.paper figure.fx-sheen .plate::after{
+  background:linear-gradient(115deg, transparent 34%,
+    color-mix(in srgb, var(--accent) calc(var(--fx) * 60%), transparent) 47%,
+    color-mix(in srgb, #fff6d8 calc(var(--fx) * 70%), transparent) 50%,
+    transparent 64%);
+  background-size:280% 100%;background-repeat:no-repeat;
+  mix-blend-mode:screen;animation:fx-sheen 5.5s linear infinite;
+}
+@keyframes fx-sheen{from{background-position:170% 0}to{background-position:-170% 0}}
+
+/* WEAVE — the illusion's warp, drifting like a loom in motion */
+.paper figure.fx-weave img{filter:sepia(calc(var(--fx) * .42)) contrast(1.06) saturate(1.05)}
+.paper figure.fx-weave .plate::after{
+  background:repeating-linear-gradient(0deg,
+    color-mix(in srgb, var(--ink) calc(var(--fx) * 26%), transparent) 0 1px, transparent 1px 4px);
+  mix-blend-mode:multiply;animation:fx-weave 2.6s linear infinite;
+}
+@keyframes fx-weave{from{transform:translateY(-4px)}to{transform:translateY(0)}}
+
+/* GHOSTLIGHT — the plate breathes its own faint light */
+.paper figure.fx-ghost .plate{
+  box-shadow:0 0 calc(var(--fx) * 30px) color-mix(in srgb, var(--accent) 60%, transparent),
+             inset 0 0 calc(var(--fx) * 24px) color-mix(in srgb, #ffdca6 45%, transparent);
+  animation:fx-ghost 4.6s ease-in-out infinite;
+}
+.paper figure.fx-ghost img{filter:sepia(calc(var(--fx) * .3)) saturate(1.15) brightness(1.04)}
+@keyframes fx-ghost{
+  0%,100%{opacity:calc(1 - var(--fx) * .1)}
+  50%{opacity:1}
+}
+
+/* UNSTABLE — a cheap conjuration, forever about to fail */
+.paper figure.fx-unstable img{
+  filter:sepia(calc(var(--fx) * .3)) contrast(1.06)
+         drop-shadow(calc(var(--fx) * 2px) 0 0 rgba(150,40,30,.45))
+         drop-shadow(calc(var(--fx) * -2px) 0 0 rgba(30,80,140,.42));
+  animation:fx-unstable 7s steps(1,end) infinite;
+}
+.paper figure.fx-unstable .plate::after{
+  background:color-mix(in srgb, var(--accent) calc(var(--fx) * 14%), transparent);
+  mix-blend-mode:overlay;
+}
+@keyframes fx-unstable{
+  0%,88%{opacity:1;transform:translateX(0)}
+  89%{opacity:.62;transform:translateX(1.5px)}
+  91%{opacity:1;transform:translateX(-1.5px)}
+  93%{opacity:.78;transform:translateX(.5px)}
+  95%,100%{opacity:1;transform:translateX(0)}
+}
+
+/* FADING — the spell is running out, edges dissolving back into the page */
+.paper figure.fx-fading .plate::after{
+  background:radial-gradient(ellipse at center,
+    transparent 45%, color-mix(in srgb, var(--paper) calc(var(--fx) * 92%), transparent) 88%);
+  animation:fx-fading 6.5s ease-in-out infinite;
+}
+.paper figure.fx-fading img{filter:sepia(calc(var(--fx) * .3)) contrast(1.04)}
+@keyframes fx-fading{0%,100%{opacity:.55}50%{opacity:1}}
+
+@media(prefers-reduced-motion:reduce){
+  .paper figure .plate,.paper figure .plate::after,.paper figure img{animation:none!important}
+}
+.paper .colophon{
+  margin-top:20px;padding-top:8px;border-top:3px double var(--rule);
+  font-family:var(--headfont);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);text-align:center;column-span:all;
+}
+@media(max-width:1000px){.paper .body{column-count:min(var(--cols),2);column-gap:min(var(--colgap),24px)}}
+@media(max-width:720px){
+  .paper{padding:22px 18px 30px}
+  .paper .body{column-count:1}
+  .paper .dateline{justify-content:center;font-size:10px;gap:6px}
+}
+@media print{
+  body{background:#fff}
+  .paper{box-shadow:none;max-width:none;width:100%;padding:0}
+}
+`;
+
+const READER_CSS = `
+html,body{margin:0;background:#0e0b06}
+body{display:flex;justify-content:center;padding:26px 16px 60px}
+@media(max-width:720px){body{padding:10px 6px 30px}}
+@media print{body{padding:0;display:block}}
+`;
+
+/* =========================================================================
+   i18n — paper furniture only (editor chrome stays English)
+   ========================================================================= */
+const L = {
+  en:{price:"Price", issue:"Issue", printed:"Printed in Waterdeep · all rumours sold as heard"},
+  pt:{price:"Preço", issue:"Edição", printed:"Impresso em Waterdeep · rumores vendidos tal como ouvidos"}
+};
+
+/* =========================================================================
+   Markdown subset parser
+   Blocks: h1-h6, hr, blockquote, ul, ol, fenced code, paragraph
+   Inline: **b** *i* _i_ `code` [l](u) ![a](u) ~~s~~
+   ========================================================================= */
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function safeUrl(u){
+  const t = String(u || "").trim();
+  if(/^(https?:|mailto:|data:image\/|#|\.|\/)/i.test(t)) return t;
+  return "#";
+}
+function inline(src){
+  const code=[];
+  let s = String(src).replace(/`([^`]+)`/g, (m,c)=>{ code.push(c); return "%%C"+(code.length-1)+"%%"; });
+  s = esc(s);
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    (m,alt,u,t)=>'<img src="'+esc(safeUrl(u))+'" alt="'+alt+'"'+(t?' title="'+t+'"':'')+'>');
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
+    (m,txt,u)=>'<a href="'+esc(safeUrl(u))+'" target="_blank" rel="noopener">'+txt+'</a>');
+  s = s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+  s = s.replace(/(^|[\s(])\*([^*\n]+)\*/g,"$1<em>$2</em>");
+  s = s.replace(/(^|[\s(])_([^_\n]+)_/g,"$1<em>$2</em>");
+  s = s.replace(/~~([^~]+)~~/g,"<del>$1</del>");
+  s = s.replace(/ {2,}\n/g,"<br>\n");
+  s = s.replace(/%%C(\d+)%%/g,(m,i)=>"<code>"+esc(code[+i])+"</code>");
+  return s;
+}
+function hashOf(str){
+  let h=5381;
+  for(let i=0;i<str.length;i++){ h=((h<<5)+h+str.charCodeAt(i))|0; }
+  return (h>>>0).toString(36);
+}
+function parseBlocks(md){
+  const lines = String(md).replace(/\r\n?/g,"\n").split("\n");
+  const out=[]; let i=0; let afterH2=false;
+  const push=(type,raw,html)=>out.push({type:type,raw:raw,html:html,hash:hashOf(type+"|"+raw)});
+  while(i<lines.length){
+    const line=lines[i];
+    if(!line.trim()){ i++; continue; }
+    // fenced code
+    if(/^\s*(```|~~~)/.test(line)){
+      const fence = line.trim().slice(0,3);
+      const buf=[]; i++;
+      while(i<lines.length && lines[i].trim().indexOf(fence)!==0){ buf.push(lines[i]); i++; }
+      i++;
+      push("code", buf.join("\n"), "<pre><code>"+esc(buf.join("\n"))+"</code></pre>");
+      afterH2=false; continue;
+    }
+    // heading
+    let m = line.match(/^(#{1,6})\s+(.*)$/);
+    if(m){
+      const lvl=m[1].length;
+      push("h"+lvl, line, "<h"+lvl+">"+inline(m[2].trim())+"</h"+lvl+">");
+      afterH2 = (lvl<=2);
+      i++; continue;
+    }
+    // hr
+    if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){
+      push("hr", line, "<hr>"); afterH2=false; i++; continue;
+    }
+    // blockquote
+    if(/^\s*>/.test(line)){
+      const buf=[]; const raw=[];
+      while(i<lines.length && /^\s*>/.test(lines[i])){
+        raw.push(lines[i]); buf.push(lines[i].replace(/^\s*>\s?/,"")); i++;
+      }
+      push("quote", raw.join("\n"), "<blockquote>"+inline(buf.join("\n")).replace(/\n/g,"<br>")+"</blockquote>");
+      afterH2=false; continue;
+    }
+    // unordered list
+    if(/^\s*[-*+]\s+/.test(line)){
+      const items=[]; const raw=[];
+      while(i<lines.length && /^\s*[-*+]\s+/.test(lines[i])){
+        raw.push(lines[i]); items.push(lines[i].replace(/^\s*[-*+]\s+/,"")); i++;
+      }
+      push("ul", raw.join("\n"), "<ul>"+items.map(t=>"<li>"+inline(t)+"</li>").join("")+"</ul>");
+      afterH2=false; continue;
+    }
+    // ordered list
+    if(/^\s*\d+[.)]\s+/.test(line)){
+      const items=[]; const raw=[];
+      while(i<lines.length && /^\s*\d+[.)]\s+/.test(lines[i])){
+        raw.push(lines[i]); items.push(lines[i].replace(/^\s*\d+[.)]\s+/,"")); i++;
+      }
+      push("ol", raw.join("\n"), "<ol>"+items.map(t=>"<li>"+inline(t)+"</li>").join("")+"</ol>");
+      afterH2=false; continue;
+    }
+    // paragraph
+    const buf=[];
+    while(i<lines.length && lines[i].trim() &&
+          !/^\s*(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|```|~~~)/.test(lines[i]) &&
+          !/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i])){
+      buf.push(lines[i]); i++;
+    }
+    if(buf.length){
+      const raw=buf.join("\n");
+      // leading "!" = hypercapitalise the first letter (drop cap). "\!" prints a literal "!".
+      let text=raw, cls="";
+      if(/^!(?!\[)/.test(text)){ cls=' class="lede"'; text=text.slice(1); }
+      else if(/^\\!/.test(text)){ text=text.slice(1); }
+      push("p", raw, "<p"+cls+">"+inline(text)+"</p>");
+    }
+  }
+  return out;
+}
+
+/* =========================================================================
+   Anchor resolution — slots survive markdown edits
+   ========================================================================= */
+function snippetOf(block){ return (block.raw||"").replace(/\s+/g," ").trim().slice(0,40); }
+
+function resolveSlots(blocks, slots){
+  const placed = new Map();   // blockIndex -> [slot]
+  const orphans = [];
+  const byHash = new Map();
+  blocks.forEach((b,idx)=>{
+    if(!byHash.has(b.hash)) byHash.set(b.hash,[]);
+    byHash.get(b.hash).push(idx);
+  });
+  const top=[];
+  for(const slot of slots){
+    const a = slot.anchor || {};
+    if(a.idx === -1){ top.push(slot); continue; }
+    let idx = -2;
+    const cands = byHash.get(a.hash);
+    if(cands && cands.length){
+      idx = cands.reduce((best,c)=>Math.abs(c-a.idx)<Math.abs(best-a.idx)?c:best, cands[0]);
+    }else if(a.snippet){
+      let best=-2, bestD=1e9;
+      blocks.forEach((b,j)=>{
+        const s = snippetOf(b);
+        if(s && (s.indexOf(a.snippet)===0 || a.snippet.indexOf(s)===0)){
+          const d=Math.abs(j-a.idx);
+          if(d<bestD){ bestD=d; best=j; }
+        }
+      });
+      idx=best;
+    }
+    if(idx>=0){
+      if(!placed.has(idx)) placed.set(idx,[]);
+      placed.get(idx).push(slot);
+    }else{
+      orphans.push(slot);
+    }
+  }
+  return {placed:placed, top:top, orphans:orphans};
+}
+
+/* =========================================================================
+   Style — every knob becomes a CSS custom property on .paper, so the
+   preview and the exported file are styled by the exact same string.
+   ========================================================================= */
+const FONTS = {
+  fell:'"IM Fell English",Georgia,serif',
+  cinzel:'Cinzel,Georgia,serif',
+  garamond:'"EB Garamond",Garamond,Georgia,serif',
+  georgia:'Georgia,"Times New Roman",serif',
+  sans:'system-ui,"Segoe UI",Roboto,sans-serif'
+};
+const STYLE_DEFAULTS = {
+  mastFont:"fell", mast:64, tag:15, mastCase:true,
+  headFont:"cinzel", h2:23, h3:16, headCase:true, headRule:true,
+  bodyFont:"garamond", body:17, lh:1.5, drop:3.1, justify:true,
+  cols:3, colGap:30, maxw:940, pad:34, colRule:true,
+  paper:"#e9dcbf", ink:"#241c12", accent:"#5a2d18", rule:"#8a7146",
+  fxDefault:"ink", fxAmount:75, animate:true
+};
+const FX = [
+  ["ink","Inked woodcut — sinks into the page"],
+  ["sheen","Scrysheen — spell-light crosses the plate"],
+  ["weave","Illusory weave — drifting warp lines"],
+  ["ghost","Ghostlight — breathing glow"],
+  ["unstable","Unstable conjuration — flicker and split"],
+  ["fading","Fading charm — edges dissolve"],
+  ["none","No enchantment — plain picture"]
+];
+const STYLE_UNITS = {mast:"px",tag:"px",h2:"px",h3:"px",body:"px",colGap:"px",maxw:"px",pad:"px",
+  drop:"em",fxAmount:"%"};
+function styleVars(st){
+  const s = Object.assign({}, STYLE_DEFAULTS, st||{});
+  const v = [
+    "--mastfont:"+(FONTS[s.mastFont]||FONTS.fell),
+    "--headfont:"+(FONTS[s.headFont]||FONTS.cinzel),
+    "--bodyfont:"+(FONTS[s.bodyFont]||FONTS.garamond),
+    "--mast:"+s.mast+"px", "--tag:"+s.tag+"px",
+    "--h2:"+s.h2+"px", "--h3:"+s.h3+"px",
+    "--body:"+s.body+"px", "--lh:"+s.lh,
+    "--cols:"+s.cols, "--colgap:"+s.colGap+"px",
+    "--maxw:"+s.maxw+"px", "--pad:"+s.pad+"px",
+    "--paper:"+s.paper, "--ink:"+s.ink, "--accent:"+s.accent, "--rule:"+s.rule,
+    "--align:"+(s.justify?"justify":"left"),
+    "--mastcase:"+(s.mastCase?"uppercase":"none"),
+    "--headcase:"+(s.headCase?"uppercase":"none"),
+    "--headrule:"+(s.headRule?"1px solid var(--rule)":"none"),
+    "--colrule:"+(s.colRule?"1px solid color-mix(in srgb, var(--rule) 55%, var(--paper))":"none"),
+    "--fxplay:"+(s.animate?"running":"paused")
+  ];
+  if(+s.drop > 0) v.push("--dropcap:"+s.drop+"em","--dropfloat:left","--dropgap:.09em");
+  else v.push("--dropcap:1em","--dropfloat:none","--dropgap:0");
+  return v.join(";");
+}
+
+/* =========================================================================
+   State
+   ========================================================================= */
+const doc = {
+  masthead:{title:"", tagline:"", dateline:"", price:"", issue:"", lang:"en"},
+  style:Object.assign({}, STYLE_DEFAULTS),
+  markdown:"",
+  slots:[]
+};
+const media = new Map();     // id -> {id,name,mime,dataUrl,w,h}
+let selectedSlot = null;
+let pendingGap = null;       // {idx, hash, snippet} awaiting file pick
+let replacingSlot = null;
+let blocksCache = [];
+
+const $ = s=>document.querySelector(s);
+const uid = ()=> "m" + Math.random().toString(36).slice(2,9) + (uidCounter++).toString(36);
+let uidCounter = 0;
+
+/* =========================================================================
+   IndexedDB — media bytes (localStorage quota is too small for base64)
+   ========================================================================= */
+const DB_NAME="pennypress", STORE="media";
+let idbOK = true;   // false ⇒ images live only in this tab (some browsers block IDB on file://)
+function idb(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded = ()=>{ r.result.createObjectStore(STORE,{keyPath:"id"}); };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+  });
+}
+async function idbPut(rec){
+  try{
+    const db = await idb();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction(STORE,"readwrite");
+      tx.objectStore(STORE).put(rec);
+      tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+    });
+  }catch(e){ console.warn("idb put failed",e); }
+}
+async function idbAll(){
+  try{
+    const db = await idb();
+    idbOK = true;
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction(STORE,"readonly");
+      const rq=tx.objectStore(STORE).getAll();
+      rq.onsuccess=()=>res(rq.result||[]);
+      rq.onerror=()=>rej(rq.error);
+    });
+  }catch(e){ idbOK=false; return []; }
+}
+async function idbDel(id){
+  try{
+    const db = await idb();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction(STORE,"readwrite");
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+    });
+  }catch(e){}
+}
+
+/* =========================================================================
+   Autosave
+   ========================================================================= */
+const LS_KEY="pennypress.doc";
+let saveTimer=null;
+function scheduleSave(){
+  $("#save-state").textContent="saving…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify(doc));
+      $("#save-state").textContent = idbOK ? "saved" : "saved (text only — images live in this tab)";
+    }catch(e){
+      $("#save-state").textContent="save failed";
+    }
+  },500);
+}
+async function loadSaved(){
+  let raw=null;
+  try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
+  if(raw){
+    try{
+      const d=JSON.parse(raw);
+      Object.assign(doc.masthead, d.masthead||{});
+      Object.assign(doc.style, d.style||{});   // older saves simply keep the defaults
+      doc.markdown = d.markdown||"";
+      doc.slots = Array.isArray(d.slots)? d.slots : [];
+    }catch(e){}
+  }
+  const recs = await idbAll();
+  recs.forEach(r=>media.set(r.id,r));
+  // drop media no slot points at any more
+  const used = new Set(doc.slots.map(s=>s.mediaId));
+  for(const id of Array.from(media.keys())){
+    if(!used.has(id)){ media.delete(id); idbDel(id); }
+  }
+}
+
+/* =========================================================================
+   Render
+   ========================================================================= */
+function mastheadHTML(m, lang){
+  const t = L[lang]||L.en;
+  const bits=[];
+  if(m.dateline) bits.push('<span>'+esc(m.dateline)+'</span>');
+  const mid=[];
+  if(m.issue) mid.push(esc(t.issue)+" "+esc(m.issue));
+  bits.push('<span>'+(mid.join(" · ")||"&nbsp;")+'</span>');
+  if(m.price) bits.push('<span>'+esc(t.price)+": "+esc(m.price)+'</span>');
+  return '<header class="masthead">'+
+    '<h1>'+esc(m.title||"Untitled Broadsheet")+'</h1>'+
+    (m.tagline?'<p class="tagline">'+esc(m.tagline)+'</p>':"")+
+    '</header>'+
+    '<div class="dateline">'+bits.join("")+'</div>';
+}
+function figureHTML(slot, editing){
+  const md = media.get(slot.mediaId);
+  const fx = slot.fx && slot.fx!=="none" ? "fx-"+slot.fx : "";
+  const cls = ["slot", slot.width==="full"?"full":"", slot.frame?"framed":"", fx].filter(Boolean).join(" ");
+  const fxVar = ' style="--fx:'+(((slot.fxAmount==null?75:slot.fxAmount)/100).toFixed(2))+'"';
+  if(!md){
+    return editing
+      ? '<figure class="'+cls+'" data-slot="'+slot.id+'"><figcaption>[missing image]</figcaption></figure>'
+      : "";
+  }
+  const dims = (md.w&&md.h) ? ' width="'+md.w+'" height="'+md.h+'"' : "";
+  const bar = editing
+    ? '<div class="slotbar"><button data-act="width" data-slot="'+slot.id+'" title="Toggle width">↔</button>'
+      + '<button data-act="del" data-slot="'+slot.id+'" title="Delete">✕</button></div>'
+    : "";
+  return '<figure class="'+cls+'" data-slot="'+slot.id+'"'+fxVar+'>'+bar+
+    '<div class="plate"><img src="'+md.dataUrl+'" alt="'+esc(slot.caption||md.name||"")+'"'+dims+' loading="lazy"></div>'+
+    (slot.caption?'<figcaption>'+inline(slot.caption)+'</figcaption>':"")+
+    '</figure>';
+}
+function gapHTML(idx, hash, snippet){
+  return '<div class="gap" data-idx="'+idx+'" data-hash="'+esc(hash)+'" data-snip="'+esc(snippet)+'"></div>';
+}
+function buildBody(blocks, resolved, editing){
+  const parts=[];
+  if(editing) parts.push(gapHTML(-1,"",""));
+  (resolved.top||[]).forEach(s=>parts.push(figureHTML(s,editing)));
+  blocks.forEach((b,idx)=>{
+    parts.push(b.html);
+    const here = resolved.placed.get(idx);
+    if(here) here.forEach(s=>parts.push(figureHTML(s,editing)));
+    if(editing) parts.push(gapHTML(idx, b.hash, snippetOf(b)));
+  });
+  return parts.join("\n");
+}
+function render(){
+  blocksCache = parseBlocks(doc.markdown);
+  const resolved = resolveSlots(blocksCache, doc.slots);
+  const lang = doc.masthead.lang||"en";
+  let html = mastheadHTML(doc.masthead, lang);
+  if(resolved.orphans.length){
+    html += '<div class="orphans"><b>'+resolved.orphans.length+' image(s) lost their spot</b> '+
+      '— the text they sat next to changed. Click a <i>+ image</i> gap after picking one, or delete.'+
+      resolved.orphans.map(s=>{
+        const md=media.get(s.mediaId);
+        return '<div class="o-item">'+(md?'<img src="'+md.dataUrl+'" alt="">':"")+
+          '<span>'+esc(s.caption||(md&&md.name)||s.id)+'</span>'+
+          '<button data-act="reattach" data-slot="'+s.id+'">Place here →</button>'+
+          '<button data-act="del" data-slot="'+s.id+'" class="danger">Delete</button></div>';
+      }).join("")+'</div>';
+  }
+  html += '<div class="body">'+buildBody(blocksCache, resolved, true)+'</div>';
+  $("#paper").innerHTML = html;
+  applyStyle();
+  if(selectedSlot){
+    const el = $('#paper figure[data-slot="'+selectedSlot+'"]');
+    if(el) el.classList.add("sel");
+  }
+}
+
+/* =========================================================================
+   Media intake
+   ========================================================================= */
+const MAX_BYTES = 15*1024*1024;
+function toast(msg, ms){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"), ms||2600);
+}
+function readImage(file){
+  return new Promise((res,rej)=>{
+    if(!/^image\//.test(file.type)) return rej(new Error("Not an image: "+(file.type||file.name)));
+    if(file.size > MAX_BYTES) return rej(new Error(file.name+" is "+(file.size/1048576).toFixed(1)+" MB — keep under 15 MB"));
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const dataUrl=fr.result;
+      const img=new Image();
+      img.onload=()=>res({id:uid(),name:file.name,mime:file.type,dataUrl:dataUrl,w:img.naturalWidth,h:img.naturalHeight});
+      img.onerror=()=>res({id:uid(),name:file.name,mime:file.type,dataUrl:dataUrl,w:0,h:0});
+      img.src=dataUrl;
+    };
+    fr.onerror=()=>rej(new Error("Could not read "+file.name));
+    fr.readAsDataURL(file);
+  });
+}
+async function addMediaAt(file, anchor){
+  try{
+    const rec = await readImage(file);
+    media.set(rec.id, rec);
+    idbPut(rec);
+    const slot = {
+      id:"s"+uid(), anchor:anchor, mediaId:rec.id,
+      caption:"", width:"column", frame:true,
+      fx:doc.style.fxDefault||"ink", fxAmount:doc.style.fxAmount==null?75:doc.style.fxAmount
+    };
+    doc.slots.push(slot);
+    selectedSlot = slot.id;
+    render(); openInspector(slot); scheduleSave();
+    toast("Placed "+rec.name);
+  }catch(e){ toast(e.message, 4200); }
+}
+async function replaceMedia(file, slot){
+  try{
+    const rec = await readImage(file);
+    const old = slot.mediaId;
+    media.set(rec.id, rec); idbPut(rec);
+    slot.mediaId = rec.id;
+    if(old && !doc.slots.some(s=>s.mediaId===old)){ media.delete(old); idbDel(old); }
+    render(); scheduleSave(); toast("Replaced with "+rec.name);
+  }catch(e){ toast(e.message, 4200); }
+}
+function deleteSlot(id){
+  const i = doc.slots.findIndex(s=>s.id===id);
+  if(i<0) return;
+  const mid = doc.slots[i].mediaId;
+  doc.slots.splice(i,1);
+  if(mid && !doc.slots.some(s=>s.mediaId===mid)){ media.delete(mid); idbDel(mid); }
+  if(selectedSlot===id){ selectedSlot=null; closeInspector(); }
+  render(); scheduleSave();
+}
+
+/* =========================================================================
+   Inspector
+   ========================================================================= */
+function slotById(id){ return doc.slots.find(s=>s.id===id); }
+function fxOptionsHTML(){
+  return FX.map(f=>'<option value="'+f[0]+'">'+esc(f[1])+'</option>').join("");
+}
+function openInspector(slot){
+  selectedSlot = slot.id;
+  $("#i-caption").value = slot.caption||"";
+  $("#i-width").value = slot.width||"column";
+  $("#i-fx").value = slot.fx||"ink";
+  $("#i-fxamount").value = slot.fxAmount==null?75:slot.fxAmount;
+  $("#i-fx-val").textContent = $("#i-fxamount").value+"%";
+  $("#i-frame").checked = !!slot.frame;
+  $("#inspector").classList.add("open");
+  render();
+}
+function closeInspector(){ $("#inspector").classList.remove("open"); selectedSlot=null; render(); }
+
+/* =========================================================================
+   Export
+   ========================================================================= */
+function slug(s){
+  return String(s||"broadsheet").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,50) || "broadsheet";
+}
+function buildExport(){
+  const blocks = parseBlocks(doc.markdown);
+  const resolved = resolveSlots(blocks, doc.slots);
+  const lang = doc.masthead.lang||"en";
+  const t = L[lang]||L.en;
+  const bodyHTML = buildBody(blocks, resolved, false);
+  const lostNote = resolved.orphans.length
+    ? "\n<!-- "+resolved.orphans.length+" image(s) were unplaced in the editor and are not included -->" : "";
+  return '<!doctype html>\n<html lang="'+(lang==="pt"?"pt-PT":"en")+'">\n<head>\n'+
+    '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n'+
+    '<title>'+esc(doc.masthead.title||"Broadsheet")+(doc.masthead.dateline?" — "+esc(doc.masthead.dateline):"")+'</title>\n'+
+    '<link rel="preconnect" href="https://fonts.googleapis.com">\n'+
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'+
+    '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">\n'+
+    '<style>'+READER_CSS+PAPER_CSS+'</style>\n</head>\n<body>'+lostNote+'\n'+
+    '<div class="paper" style="'+styleVars(doc.style)+'">\n'+ mastheadHTML(doc.masthead, lang) +'\n<div class="body">\n'+
+    bodyHTML +'\n<div class="colophon">'+esc(t.printed)+'</div>\n</div>\n</div>\n</body>\n</html>\n';
+}
+function doExport(){
+  const html = buildExport();
+  const mb = html.length/1048576;
+  if(mb > 45 && !confirm("Export is "+mb.toFixed(1)+" MB — browsers get sluggish past ~50 MB. Continue?")) return;
+  const blob = new Blob([html],{type:"text/html;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = slug(doc.masthead.title)+(doc.masthead.dateline?"-"+slug(doc.masthead.dateline):"")+".html";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast("Exported "+a.download+" ("+mb.toFixed(1)+" MB)", 3800);
+}
+
+/* =========================================================================
+   Wiring
+   ========================================================================= */
+function applyStyle(){ $("#paper").setAttribute("style", styleVars(doc.style)); }
+function readCtl(el){
+  if(el.type==="checkbox") return el.checked;
+  if(el.type==="range"||el.type==="number") return +el.value;
+  return el.value;
+}
+function showVal(el){
+  const out = el.parentElement && el.parentElement.querySelector(".val");
+  if(!out) return;
+  const key=el.dataset.style, v=readCtl(el);
+  out.textContent = (key==="drop" && +v===0) ? "off" : v + (STYLE_UNITS[key]||"");
+}
+function syncStyle(){
+  document.querySelectorAll("[data-style]").forEach(el=>{
+    const v = doc.style[el.dataset.style];
+    if(v===undefined) return;
+    if(el.type==="checkbox") el.checked = !!v; else el.value = v;
+    showVal(el);
+  });
+}
+function wireStyle(){
+  document.querySelectorAll("[data-style]").forEach(el=>{
+    const handler = ()=>{
+      doc.style[el.dataset.style] = readCtl(el);
+      showVal(el); applyStyle(); scheduleSave();
+    };
+    el.addEventListener("input", handler);
+    el.addEventListener("change", handler);
+  });
+  $("#btn-style-reset").addEventListener("click",()=>{
+    doc.style = Object.assign({}, STYLE_DEFAULTS);
+    syncStyle(); applyStyle(); scheduleSave(); toast("Style reset");
+  });
+}
+function bindField(sel, key){
+  const el=$(sel);
+  el.addEventListener("input",()=>{ doc.masthead[key]=el.value; render(); scheduleSave(); });
+}
+function syncFields(){
+  $("#f-title").value=doc.masthead.title||"";
+  $("#f-tagline").value=doc.masthead.tagline||"";
+  $("#f-dateline").value=doc.masthead.dateline||"";
+  $("#f-price").value=doc.masthead.price||"";
+  $("#f-issue").value=doc.masthead.issue||"";
+  $("#f-lang").value=doc.masthead.lang||"en";
+  $("#md").value=doc.markdown||"";
+  syncStyle();
+}
+
+const SAMPLE = [
+"## Fire Guts Three Warehouses on Dock Ward",
+"",
+"!Flame took the Sail Street stores an hour before dawn, and the bucket-lines of the",
+"Watch could do little but keep it from the ropewalk. *Three* warehouses are ash.",
+"Cargo-masters swear the crates held salt fish and nothing stranger.",
+"",
+"> \"Salt fish does not burn green,\" said one dockhand, who would not give a name.",
+"",
+"### What the Watch Says",
+"",
+"- No dead found, four burned",
+"- The blaze began inside, not on the wharf",
+"- A reward of **50 gold** stands for the arsonist",
+"",
+"---",
+"",
+"## Gondsmen Unveil Singing Clock",
+"",
+"!The House of Inspired Hands has hung a clock upon the Market that hums a different",
+"note each hour. Neighbours describe the noon note as \"unpleasantly persuasive\".",
+"",
+"## Notices",
+"",
+"1. Lost: one tressym, answers to Pickle, bites",
+"2. Wanted: quiet hands for wet work, ask at the Bloody Fist",
+"3. For sale: map of the Undermountain, only *mostly* wrong"
+].join("\n");
+
+function wire(){
+  $("#i-fx").innerHTML = fxOptionsHTML();
+  $("#s-fxdefault").innerHTML = fxOptionsHTML();
+  wireStyle();
+  bindField("#f-title","title"); bindField("#f-tagline","tagline");
+  bindField("#f-dateline","dateline"); bindField("#f-price","price");
+  bindField("#f-issue","issue");
+  $("#f-lang").addEventListener("change",()=>{ doc.masthead.lang=$("#f-lang").value; render(); scheduleSave(); });
+
+  $("#md").addEventListener("input",()=>{ doc.markdown=$("#md").value; render(); scheduleSave(); });
+
+  // import markdown
+  $("#btn-import").addEventListener("click",()=>$("#file-md").click());
+  $("#file-md").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ doc.markdown=fr.result; $("#md").value=doc.markdown; render(); scheduleSave(); toast("Imported "+f.name); };
+    fr.readAsText(f);
+    e.target.value="";
+  });
+  // drop .md on the textarea
+  $("#md").addEventListener("dragover",e=>e.preventDefault());
+  $("#md").addEventListener("drop",e=>{
+    const f=e.dataTransfer.files[0]; if(!f) return;
+    e.preventDefault();
+    const fr=new FileReader();
+    fr.onload=()=>{ doc.markdown=fr.result; $("#md").value=doc.markdown; render(); scheduleSave(); toast("Imported "+f.name); };
+    fr.readAsText(f);
+  });
+
+  $("#btn-sample").addEventListener("click",()=>{
+    doc.markdown=SAMPLE;
+    if(!doc.masthead.title) doc.masthead.title="The Waterdeep Wazoo";
+    if(!doc.masthead.tagline) doc.masthead.tagline="Ink still wet, truth still cheap";
+    if(!doc.masthead.dateline) doc.masthead.dateline="12 Ches, 1492 DR";
+    if(!doc.masthead.price) doc.masthead.price="one copper";
+    if(!doc.masthead.issue) doc.masthead.issue="No. 47";
+    syncFields(); render(); scheduleSave();
+  });
+
+  $("#btn-new").addEventListener("click",()=>{
+    if(!confirm("Clear masthead, markdown and every placed image?")) return;
+    doc.slots.slice().forEach(s=>deleteSlot(s.id));
+    doc.markdown=""; doc.slots=[];
+    doc.masthead={title:"",tagline:"",dateline:"",price:"",issue:"",lang:doc.masthead.lang};
+    syncFields(); closeInspector(); render(); scheduleSave();
+  });
+
+  $("#btn-export").addEventListener("click",doExport);
+
+  // ---- preview interactions ----
+  const paper = $("#paper");
+  paper.addEventListener("click",e=>{
+    const actBtn = e.target.closest("button[data-act]");
+    if(actBtn){
+      const id=actBtn.dataset.slot, s=slotById(id);
+      if(!s) return;
+      if(actBtn.dataset.act==="del") deleteSlot(id);
+      else if(actBtn.dataset.act==="width"){ s.width = s.width==="full"?"column":"full"; render(); scheduleSave(); }
+      else if(actBtn.dataset.act==="reattach"){ selectedSlot=id; toast("Now click a + image gap to place it"); }
+      e.stopPropagation(); return;
+    }
+    const gap = e.target.closest(".gap");
+    if(gap){
+      const anchor={idx:+gap.dataset.idx, hash:gap.dataset.hash, snippet:gap.dataset.snip};
+      const s = selectedSlot && slotById(selectedSlot);
+      // re-place an orphaned slot instead of picking a new file
+      const resolved = resolveSlots(blocksCache, doc.slots);
+      if(s && resolved.orphans.some(o=>o.id===s.id)){
+        s.anchor=anchor; render(); scheduleSave(); toast("Placed"); return;
+      }
+      pendingGap=anchor; replacingSlot=null; $("#file-img").click(); return;
+    }
+    const fig = e.target.closest("figure.slot");
+    if(fig){ const s=slotById(fig.dataset.slot); if(s) openInspector(s); return; }
+  });
+  // drag image files straight onto a gap
+  paper.addEventListener("dragover",e=>{
+    const gap=e.target.closest(".gap"); if(!gap) return;
+    e.preventDefault(); gap.classList.add("drag");
+  });
+  paper.addEventListener("dragleave",e=>{
+    const gap=e.target.closest(".gap"); if(gap) gap.classList.remove("drag");
+  });
+  paper.addEventListener("drop",e=>{
+    const gap=e.target.closest(".gap"); if(!gap) return;
+    e.preventDefault(); gap.classList.remove("drag");
+    const f=e.dataTransfer.files[0]; if(!f) return;
+    addMediaAt(f,{idx:+gap.dataset.idx, hash:gap.dataset.hash, snippet:gap.dataset.snip});
+  });
+
+  $("#file-img").addEventListener("change",e=>{
+    const f=e.target.files[0]; e.target.value="";
+    if(!f) return;
+    if(replacingSlot){ const s=slotById(replacingSlot); replacingSlot=null; if(s) replaceMedia(f,s); return; }
+    if(pendingGap){ const a=pendingGap; pendingGap=null; addMediaAt(f,a); }
+  });
+
+  // inspector
+  $("#i-caption").addEventListener("input",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    s.caption=$("#i-caption").value; render(); scheduleSave();
+  });
+  $("#i-width").addEventListener("change",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    s.width=$("#i-width").value; render(); scheduleSave();
+  });
+  $("#i-frame").addEventListener("change",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    s.frame=$("#i-frame").checked; render(); scheduleSave();
+  });
+  $("#i-fx").addEventListener("change",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    s.fx=$("#i-fx").value; render(); scheduleSave();
+  });
+  $("#i-fxamount").addEventListener("input",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    s.fxAmount=+$("#i-fxamount").value;
+    $("#i-fx-val").textContent = s.fxAmount+"%";
+    const fig=$('#paper figure[data-slot="'+s.id+'"]');
+    if(fig) fig.style.setProperty("--fx",(s.fxAmount/100).toFixed(2));   // live, no re-render
+    scheduleSave();
+  });
+  $("#i-replace").addEventListener("click",()=>{
+    if(!selectedSlot) return;
+    replacingSlot=selectedSlot; pendingGap=null; $("#file-img").click();
+  });
+  $("#i-delete").addEventListener("click",()=>{ if(selectedSlot) deleteSlot(selectedSlot); });
+  $("#i-close").addEventListener("click",closeInspector);
+}
+
+/* =========================================================================
+   Self-tests:  editor.html?test=1
+   ========================================================================= */
+function runTests(){
+  const out=[]; let pass=0, fail=0;
+  const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
+
+  let b=parseBlocks("## Fire\n\nSmoke rose.");
+  ok("heading + paragraph", b.length===2 && b[0].type==="h2" && b[1].type==="p", JSON.stringify(b));
+  ok("no drop cap without !", !/class="lede"/.test(b[1].html), b[1].html);
+
+  b=parseBlocks("## Fire\n\n!Smoke rose.");
+  ok("! gives drop cap", /class="lede"/.test(b[1].html), b[1].html);
+  ok("! is stripped from text", b[1].html.indexOf(">Smoke rose.<")>-1, b[1].html);
+  ok("! keeps raw for anchoring", b[1].raw==="!Smoke rose.", b[1].raw);
+  ok("inline image not a drop cap",
+     !/class="lede"/.test(parseBlocks("![a](https://x/y.gif)")[0].html),
+     parseBlocks("![a](https://x/y.gif)")[0].html);
+  ok("escaped \\! prints literal !",
+     (()=>{const h=parseBlocks("\\!Stop.")[0].html; return h.indexOf(">!Stop.<")>-1 && !/lede/.test(h);})(),
+     parseBlocks("\\!Stop.")[0].html);
+
+  b=parseBlocks("- one\n- two\n\n1. a\n2. b");
+  ok("ul then ol", b.length===2 && b[0].type==="ul" && b[1].type==="ol", JSON.stringify(b.map(x=>x.type)));
+  ok("ul items", (b[0].html.match(/<li>/g)||[]).length===2, b[0].html);
+
+  ok("bold", inline("a **b** c").indexOf("<strong>b</strong>")>-1, inline("a **b** c"));
+  ok("italic", inline("a *b* c").indexOf("<em>b</em>")>-1, inline("a *b* c"));
+  ok("code span not parsed", inline("x `**y**` z").indexOf("<code>**y**</code>")>-1, inline("x `**y**` z"));
+  ok("html escaped", inline("<script>x</scr"+"ipt>").indexOf("&lt;script&gt;")===0, inline("<script>"));
+  ok("link", inline("[t](https://a.b)").indexOf('href="https://a.b"')>-1, inline("[t](https://a.b)"));
+  ok("js: url neutered", inline("[t](javascript:alert(1))").indexOf('href="#"')>-1, inline("[t](javascript:alert(1))"));
+  ok("quote", parseBlocks("> hi\n> there")[0].type==="quote");
+  ok("hr", parseBlocks("---")[0].type==="hr");
+  ok("fence", parseBlocks("```\nraw **x**\n```")[0].html.indexOf("<pre><code>raw **x**")===0, parseBlocks("```\nraw **x**\n```")[0].html);
+
+  const b1=parseBlocks("## A\n\nOne.\n\n## B\n\nTwo.");
+  const slot={id:"s1", anchor:{idx:1, hash:b1[1].hash, snippet:snippetOf(b1[1])}, mediaId:"m1"};
+  let r=resolveSlots(b1,[slot]);
+  ok("anchor exact hash", r.placed.get(1) && r.placed.get(1)[0]===slot);
+
+  // markdown edited above the anchor: block shifts, hash still matches
+  const b2=parseBlocks("## Intro\n\nNew para.\n\n## A\n\nOne.\n\n## B\n\nTwo.");
+  r=resolveSlots(b2,[slot]);
+  ok("anchor survives insert above", r.placed.get(3) && r.placed.get(3)[0]===slot, "placed="+JSON.stringify([...r.placed.keys()]));
+
+  // anchored text lightly edited: falls back to snippet match
+  const b3=parseBlocks("## A\n\nOne. Now with more words.\n\n## B\n\nTwo.");
+  const slot2={id:"s2", anchor:{idx:1, hash:"deadbeef", snippet:"One."}, mediaId:"m1"};
+  r=resolveSlots(b3,[slot2]);
+  ok("snippet fallback", r.placed.get(1) && r.placed.get(1)[0]===slot2, "orphans="+r.orphans.length);
+
+  // anchored text deleted entirely: orphan, never silently dropped
+  r=resolveSlots(parseBlocks("## Z\n\nNothing alike here."),[{id:"s3",anchor:{idx:1,hash:"nope",snippet:"One."},mediaId:"m1"}]);
+  ok("orphan when block gone", r.orphans.length===1, JSON.stringify(r.orphans));
+
+  ok("top anchor", resolveSlots(b1,[{id:"s4",anchor:{idx:-1,hash:"",snippet:""},mediaId:"m1"}]).top.length===1);
+  ok("slug", slug("The Waterdeep Wazoo — Ches 12")==="the-waterdeep-wazoo-ches-12", slug("The Waterdeep Wazoo — Ches 12"));
+
+  // style knobs
+  let sv = styleVars({cols:2, mast:80, justify:false, drop:0, headRule:false, paper:"#fff"});
+  ok("style: columns", sv.indexOf("--cols:2")>-1, sv);
+  ok("style: title size", sv.indexOf("--mast:80px")>-1, sv);
+  ok("style: justify off", sv.indexOf("--align:left")>-1, sv);
+  ok("style: drop cap off", sv.indexOf("--dropfloat:none")>-1, sv);
+  ok("style: headline rule off", sv.indexOf("--headrule:none")>-1, sv);
+  ok("style: paper colour", sv.indexOf("--paper:#fff")>-1, sv);
+  ok("style: defaults fill gaps", styleVars({}).indexOf("--cols:3")>-1, styleVars({}));
+  ok("style: font key maps to stack", styleVars({bodyFont:"sans"}).indexOf("--bodyfont:system-ui")>-1);
+  ok("style: unknown font falls back", styleVars({bodyFont:"nope"}).indexOf("--bodyfont:\"EB Garamond\"")>-1);
+
+  // illusion effects
+  media.set("mtest",{id:"mtest",name:"x.webp",mime:"image/webp",dataUrl:"data:image/webp;base64,AA",w:10,h:6});
+  const figFx = figureHTML({id:"sX",mediaId:"mtest",fx:"sheen",fxAmount:40,width:"full",frame:true},false);
+  ok("fx: class applied", figFx.indexOf("fx-sheen")>-1, figFx);
+  ok("fx: strength var", figFx.indexOf('--fx:0.40')>-1, figFx);
+  ok("fx: plate wrapper", figFx.indexOf('<div class="plate">')>-1, figFx);
+  const figPlain = figureHTML({id:"sY",mediaId:"mtest",fx:"none",fxAmount:75},false);
+  ok("fx: none adds no class", figPlain.indexOf("fx-")===-1, figPlain);
+  ok("fx: missing fxAmount defaults to 75",
+     figureHTML({id:"sZ",mediaId:"mtest",fx:"ink"},false).indexOf('--fx:0.75')>-1);
+  ok("fx: animation pause switch", styleVars({animate:false}).indexOf("--fxplay:paused")>-1);
+  ok("fx: animation runs by default", styleVars({}).indexOf("--fxplay:running")>-1);
+  media.delete("mtest");
+
+  doc.masthead={title:"T",tagline:"",dateline:"D",price:"1cp",issue:"7",lang:"en"};
+  doc.style=Object.assign({},STYLE_DEFAULTS,{cols:4});
+  doc.markdown="## H\n\n!Body."; doc.slots=[];
+  const html=buildExport();
+  ok("export carries style vars", html.indexOf('class="paper" style="')>-1 && html.indexOf("--cols:4")>-1);
+  ok("export keeps drop cap class", html.indexOf('class="lede"')>-1);
+  ok("export has doctype", html.indexOf("<!doctype html>")===0);
+  ok("export has no gaps", html.indexOf('class="gap"')===-1);
+  ok("export has no slotbar", html.indexOf("slotbar")===-1);
+  ok("export inlines paper css", html.indexOf(".paper .body{column-count:var(--cols)")>-1);
+  ok("export ships the illusion keyframes",
+     ["fx-sheen","fx-weave","fx-ghost","fx-unstable","fx-fading"].every(k=>html.indexOf("@keyframes "+k)>-1));
+  ok("export respects reduced motion", html.indexOf("prefers-reduced-motion")>-1);
+
+  const el=document.getElementById("tests");
+  el.style.display="block";
+  el.textContent = "Penny Press self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
+    "\n"+"=".repeat(46)+"\n"+pass+" passed, "+fail+" failed\n";
+  document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Penny Press tests";
+}
+
+/* =========================================================================
+   Boot
+   ========================================================================= */
+function injectPaperCSS(){
+  let el=document.getElementById("paper-style");
+  if(!el){ el=document.createElement("style"); el.id="paper-style"; document.head.appendChild(el); }
+  el.textContent = PAPER_CSS;
+}
+(async function boot(){
+  injectPaperCSS();
+  if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  wire();
+  await loadSaved();
+  if(!doc.markdown && !doc.masthead.title){
+    doc.masthead={title:"The Waterdeep Wazoo", tagline:"Ink still wet, truth still cheap",
+      dateline:"12 Ches, 1492 DR", price:"one copper", issue:"No. 47", lang:"en"};
+    doc.markdown=SAMPLE;
+  }
+  syncFields();
+  render();
+  $("#save-state").textContent="ready";
+  if(!idbOK) toast("This browser won't keep images across reloads here — export before you close the tab.", 7000);
+})();
+</script>
+</body>
+</html>
