@@ -94,14 +94,33 @@
     background:radial-gradient(circle at 45% 55%,rgba(120,246,236,.24),transparent 68%);
     animation:ward-drift-a 39s ease-in-out infinite alternate-reverse;
   }
-  /* the fibrous sheet */
-  .ward-smoke::after{
-    content:"";position:absolute;inset:-10%;
-    opacity:.22;mix-blend-mode:screen;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='.006 .011' numOctaves='5' seed='7'/><feColorMatrix type='matrix' values='0 0 0 0 0.25  0 0 0 0 0.82  0 0 0 0 0.86  0 0 0 -1.1 1'/></filter><rect width='700' height='700' filter='url(%23s)'/></svg>");
-    background-size:1400px 1400px;
-    animation:ward-creep 90s linear infinite;
+  /* One continuous field of noise, not a tile. feTurbulence is
+     rendered once across a box far larger than the window, so there is
+     no repeat and therefore no seam; the drift translates that box,
+     which moves the filter's cached output rather than recomputing the
+     noise every frame. Its own rectangle is masked away at the edges so
+     the field never shows a border of its own. */
+  .ward-fog{
+    position:absolute;top:50%;left:50%;
+    width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;
+    pointer-events:none;mix-blend-mode:screen;will-change:transform;
+    -webkit-mask-image:radial-gradient(closest-side,#000 30%,rgba(0,0,0,.55) 62%,transparent 88%);
+    mask-image:radial-gradient(closest-side,#000 30%,rgba(0,0,0,.55) 62%,transparent 88%);
   }
+  .ward-fog.a{opacity:.55;animation:ward-fog-a 120s linear infinite}
+  .ward-fog.b{opacity:.38;animation:ward-fog-b 190s linear infinite}
+  @keyframes ward-fog-a{
+    from{transform:translate3d(-6%,-3%,0) rotate(0deg)}
+    to  {transform:translate3d(6%,4%,0) rotate(360deg)}
+  }
+  @keyframes ward-fog-b{
+    from{transform:translate3d(5%,4%,0) rotate(360deg)}
+    to  {transform:translate3d(-5%,-4%,0) rotate(0deg)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .ward-fog{animation:none}
+  }
+
   @keyframes ward-drift-a{
     from{transform:translate3d(0,0,0) scale(1)}
     to  {transform:translate3d(9vw,-6vh,0) scale(1.22)}
@@ -113,10 +132,6 @@
   @keyframes ward-drift-c{
     from{transform:translate3d(0,0,0) scale(.95)}
     to  {transform:translate3d(7vw,-9vh,0) scale(1.25)}
-  }
-  @keyframes ward-creep{
-    from{background-position:0 0}
-    to  {background-position:1400px -700px}
   }
   @media(prefers-reduced-motion:reduce){
     .ward-smoke span,.ward-smoke::after{animation:none}
@@ -238,6 +253,8 @@
     var ward = el(
       '<div class="ward" id="ward" role="dialog" aria-modal="true" aria-labelledby="ward-title">' +
         '<div class="ward-smoke" aria-hidden="true"><span></span><span></span><span></span><span></span></div>' +
+        '<svg class="ward-fog a" aria-hidden="true">' + '<filter id="ward-noise-a" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">' + '<feTurbulence type="fractalNoise" baseFrequency="0.0022 0.0035" numOctaves="4" seed="5" result="t"/>' + '<feGaussianBlur in="t" stdDeviation="7" result="b"/>' + '<feColorMatrix in="b" type="matrix" values="0 0 0 0 0.16  0 0 0 0 0.80  0 0 0 0 0.84  0 0 0 0.85 -0.16"/>' + '</filter>' + '<rect width="100%" height="100%" filter="url(#ward-noise-a)"/></svg>' +
+        '<svg class="ward-fog b" aria-hidden="true">' + '<filter id="ward-noise-b" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">' + '<feTurbulence type="fractalNoise" baseFrequency="0.0009 0.0016" numOctaves="5" seed="19" result="t"/>' + '<feGaussianBlur in="t" stdDeviation="12" result="b"/>' + '<feColorMatrix in="b" type="matrix" values="0 0 0 0 0.30  0 0 0 0 0.66  0 0 0 0 0.92  0 0 0 0.8 -0.20"/>' + '</filter>' + '<rect width="100%" height="100%" filter="url(#ward-noise-b)"/></svg>' +
         '<div class="ward-door">' + SIGIL +
           '<p class="whence">A ward stands upon this door</p>' +
           '<h2 id="ward-title">You Are Behind the Press</h2>' +
