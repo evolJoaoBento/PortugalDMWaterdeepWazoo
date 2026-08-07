@@ -4,28 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Waterdeep Wazoo — Chronicle of the City of Splendors</title>
-<meta name="description" content="The campaign chronicle of Waterdeep: every issue of the Wazoo, the notice board, the campaign roll and the atlas of the City of Splendors.">
+<meta name="description" content="The campaign chronicle of Waterdeep: every issue of the Wazoo, the market of ways in, and the cartographer's table.">
 
-<!-- Open Graph: what WhatsApp, Discord, Signal and Facebook read for the link preview -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Waterdeep Wazoo">
 <meta property="og:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
-<meta property="og:description" content="Ink still wet, truth still cheap. Every issue, the notice board, the campaign roll and the atlas of Waterdeep.">
+<meta property="og:description" content="Ink still wet, truth still cheap. Every issue, the ways in, and the whole city on the cartographer's table.">
 <meta property="og:url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
 <meta property="og:locale" content="en_GB">
-<meta property="og:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
-<meta property="og:image:secure_url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
+<meta property="og:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/assets/waterdeep-panorama.jpg">
+<meta property="og:image:secure_url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/assets/waterdeep-panorama.jpg">
 <meta property="og:image:type" content="image/jpeg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="629">
-<meta property="og:image:alt" content="Front page of The Waterdeep Wazoo, a fantasy broadsheet newspaper">
+<meta property="og:image:width" content="1555">
+<meta property="og:image:height" content="810">
+<meta property="og:image:alt" content="Waterdeep seen from the sea: the harbour, the city walls and Mount Waterdeep">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
-<meta name="twitter:description" content="Ink still wet, truth still cheap. A magical broadsheet of the City of Splendors.">
-<meta name="twitter:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
+<meta name="twitter:description" content="Ink still wet, truth still cheap. A chronicle of the City of Splendors.">
+<meta name="twitter:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/assets/waterdeep-panorama.jpg">
 
-<meta name="theme-color" content="#0e0b06">
+<meta name="theme-color" content="#131c24">
 <link rel="canonical" href="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,324 +32,519 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 
 <style>
+/* ═══════════════════════════════════════════════════════════════════
+   Palette lifted off the panorama: sea-slate, harbour blue, sun-baked
+   stone, terracotta roofs. Each section then overrides these with its
+   own material — newsprint, market timber, cartographer's vellum.
+   ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --ink:#241a0e;
-  --ink-soft:#4a3a24;
-  --ink-faint:#6d5a3d;
-  --gold:#8a6a24;
-  --gold-bright:#d8b46a;
-  --rule:#4a3c26;
-  --dark:#0e0b06;
-  --paper:#e9dcbe;
-  --paper-hi:#f4ead2;
-  --paper-lo:#d9c69f;
+  --sea-deep:#16242e;
+  --sea:#2f5b6d;
+  --sea-light:#5f8fa2;
+  --mist:#c6d4de;
+  --sky:#e4ecf1;
+  --stone:#c9b79c;
+  --terracotta:#b0674a;
+  --brass:#c9a24a;
+  --night:#101820;
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--dark)}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
 body{
-  font:17px/1.62 "EB Garamond",Georgia,"Times New Roman",serif;
-  color:var(--ink);
-  padding:26px 16px 60px;
-  display:flex;justify-content:center;
+  margin:0;
+  font:18px/1.7 "EB Garamond",Georgia,"Times New Roman",serif;
+  color:var(--mist);
+  background:var(--night);
   -webkit-text-size-adjust:100%;
 }
-@media(max-width:720px){body{padding:10px 6px 34px}}
 
-/* ── the sheet ──────────────────────────────────────────────────── */
-.paper{
-  width:100%;max-width:1120px;
+/* The panorama sits behind everything, blurred and dimmed, so the page
+   always feels like it is happening in front of the city. */
+.backdrop{
+  position:fixed;inset:0;z-index:-2;
   background:
-    radial-gradient(120% 80% at 12% 0%,rgba(255,255,255,.42),transparent 55%),
-    radial-gradient(100% 70% at 88% 100%,rgba(120,88,40,.20),transparent 60%),
-    linear-gradient(180deg,var(--paper-hi),var(--paper) 40%,var(--paper-lo));
-  box-shadow:0 22px 60px rgba(0,0,0,.72),0 0 0 1px rgba(60,44,20,.55);
-  padding:34px 40px 46px;
-  position:relative;
-  isolation:isolate;
+    linear-gradient(180deg,rgba(16,24,32,.55),rgba(16,24,32,.86)),
+    url("assets/waterdeep-backdrop.jpg") center/cover no-repeat;
 }
-@media(max-width:720px){.paper{padding:20px 16px 30px}}
+.backdrop.webp{background-image:
+    linear-gradient(180deg,rgba(16,24,32,.55),rgba(16,24,32,.86)),
+    url("assets/waterdeep-backdrop.webp");}
 
-/* paper grain */
-.paper::before{
-  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  opacity:.30;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.5'/></svg>");
-}
-/* burnt edges */
-.paper::after{
-  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  box-shadow:inset 0 0 90px rgba(90,62,22,.45),inset 0 0 22px rgba(60,38,10,.35);
-}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+@media(max-width:640px){.wrap{padding:0 15px}}
 
-/* ── masthead ───────────────────────────────────────────────────── */
-.masthead{text-align:center;padding-bottom:10px}
-.pre-rule,.post-rule{border:0;border-top:3px double var(--rule);margin:0 0 12px}
-.post-rule{margin:12px 0 0}
+a{color:inherit}
 
-.masthead .kicker{
-  font-family:"IM Fell English",serif;font-style:italic;
-  color:var(--ink-faint);font-size:15px;letter-spacing:.04em;margin:0 0 6px;
+/* ═══ HERO ═══════════════════════════════════════════════════════ */
+.hero{
+  position:relative;min-height:min(88vh,760px);
+  display:flex;align-items:flex-end;
+  overflow:hidden;
 }
-.masthead h1{
-  font-family:"IM Fell English","EB Garamond",serif;
-  font-size:clamp(38px,8.4vw,86px);
-  line-height:.96;margin:0;
-  letter-spacing:.01em;
-  color:#1c1408;
-  text-shadow:0 1px 0 rgba(255,255,255,.35);
+.hero picture,.hero img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 62%;
+  z-index:-1;
 }
-.masthead .sub{
+/* Sea haze at the top, deep water at the bottom, so the headline sits
+   on something dark enough to read against. */
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(20,32,42,.42) 0%,rgba(20,32,42,0) 30%),
+    linear-gradient(0deg,rgba(14,22,29,.94) 0%,rgba(14,22,29,.55) 30%,rgba(14,22,29,0) 62%);
+}
+.hero .wrap{position:relative;z-index:1;padding-bottom:clamp(38px,7vw,84px);width:100%}
+
+.hero .eyebrow{
   font-family:"Cinzel",serif;font-weight:600;
-  font-size:clamp(10px,1.8vw,13px);letter-spacing:.34em;text-transform:uppercase;
-  color:var(--gold);margin:12px 0 0;
+  font-size:clamp(10px,1.5vw,12px);letter-spacing:.34em;text-transform:uppercase;
+  color:var(--brass);margin:0 0 14px;
+  text-shadow:0 1px 12px rgba(0,0,0,.8);
 }
-.dateline{
-  display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-soft);margin:14px 0 0;
-}
-.dateline span{white-space:nowrap}
-
-/* ── section headings ───────────────────────────────────────────── */
-.sec{margin:38px 0 0}
-.sec-head{
-  display:flex;align-items:center;gap:14px;margin:0 0 18px;
-}
-.sec-head::after{content:"";flex:1;height:0;border-top:1px solid rgba(74,60,38,.5)}
-.sec-head h2{
+.hero h1{
   font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(13px,2.2vw,16px);letter-spacing:.22em;text-transform:uppercase;
-  margin:0;color:#2b1f10;white-space:nowrap;
+  font-size:clamp(36px,7.4vw,84px);line-height:1.02;
+  margin:0;color:#f2f6f8;
+  text-shadow:0 2px 28px rgba(0,0,0,.85),0 1px 3px rgba(0,0,0,.7);
 }
-.sec-note{
-  font-style:italic;color:var(--ink-faint);font-size:15px;margin:-8px 0 18px;
+.hero .tagline{
+  font-family:"IM Fell English",serif;font-style:italic;
+  font-size:clamp(17px,2.4vw,24px);
+  margin:16px 0 0;color:#dbe6ed;max-width:34ch;
+  text-shadow:0 1px 16px rgba(0,0,0,.85);
 }
-
-/* ── the three doors ────────────────────────────────────────────── */
-.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:800px){.doors{grid-template-columns:1fr}}
-
-.door{
-  display:block;text-decoration:none;color:inherit;
-  border:1px solid rgba(74,60,38,.55);
-  background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(160,124,64,.10));
-  padding:20px 20px 18px;
-  position:relative;
-  transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
-}
-.door:hover,.door:focus-visible{
-  transform:translateY(-3px);
-  box-shadow:0 12px 26px rgba(40,26,6,.28);
-  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(160,124,64,.16));
-  outline:none;
-}
-.door:focus-visible{box-shadow:0 0 0 2px var(--gold),0 12px 26px rgba(40,26,6,.28)}
-.door .glyph{font-size:26px;line-height:1;display:block;margin-bottom:10px;filter:sepia(.5) saturate(.8)}
-.door h3{
-  font-family:"Cinzel",serif;font-weight:700;font-size:15px;letter-spacing:.12em;
-  text-transform:uppercase;margin:0 0 6px;color:#2b1f10;
-}
-.door p{margin:0;font-size:15px;color:var(--ink-soft);line-height:1.5}
-.door .ext{
-  display:block;margin-top:10px;font-family:"Cinzel",serif;font-size:10px;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+.hero .credit{
+  position:absolute;right:16px;bottom:8px;z-index:1;
+  font-size:11px;letter-spacing:.06em;color:rgba(220,232,240,.42);
 }
 
-/* ── featured issue ─────────────────────────────────────────────── */
-.featured{
-  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:26px;align-items:center;
-  border:1px solid rgba(74,60,38,.5);
-  background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(160,124,64,.08));
-  padding:22px;
+.jump{
+  display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 0;padding:0;list-style:none;
 }
-@media(max-width:800px){.featured{grid-template-columns:1fr;padding:16px}}
-.featured img{
+.jump a{
+  display:inline-block;text-decoration:none;
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:#eaf1f5;padding:9px 16px;
+  border:1px solid rgba(230,240,246,.35);
+  background:rgba(12,20,27,.42);
+  backdrop-filter:blur(3px);
+  transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+.jump a:hover,.jump a:focus-visible{
+  background:rgba(201,162,74,.22);border-color:var(--brass);transform:translateY(-2px);outline:none;
+}
+
+/* ═══ SHARED SECTION SCAFFOLD ════════════════════════════════════ */
+.sect{position:relative;padding:clamp(46px,7vw,88px) 0}
+.sect-title{
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 6px;
+}
+.sect-title h2{
+  font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(21px,3.4vw,32px);letter-spacing:.06em;margin:0;
+}
+.sect-title .n{
+  font-family:"Cinzel",serif;font-weight:600;font-size:12px;letter-spacing:.16em;
+  border:1px solid currentColor;padding:4px 9px;line-height:1;opacity:.85;
+  align-self:center;
+}
+.sect-lede{font-style:italic;opacity:.82;margin:0 0 30px;max-width:60ch}
+
+/* ═══ SECTION I — THE PRESS ROOM (newsprint) ═════════════════════ */
+.press{
+  background:#efe9dc;
+  color:#1d1a15;
+}
+/* halftone: the dots you only see when you lean in */
+.press::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(circle at 1px 1px,rgba(40,34,24,.16) 1px,transparent 0);
+  background-size:4px 4px;
+}
+.press>*{position:relative}
+.press .sect-title h2{color:#171310;font-family:"IM Fell English",serif;letter-spacing:0}
+.press .sect-title .n{color:#8a6a24}
+.press .sect-lede{color:#4c4136}
+
+.press-rule{border:0;border-top:1px solid #1d1a15;border-bottom:3px double #1d1a15;height:5px;margin:0 0 26px}
+
+/* featured issue: front-page slot */
+.front{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px;align-items:center;
+  padding:0 0 34px;border-bottom:1px solid rgba(29,26,21,.22);
+}
+@media(max-width:820px){.front{grid-template-columns:1fr;gap:20px}}
+.front .cover{display:block;position:relative}
+.front img{
   width:100%;height:auto;display:block;
-  border:1px solid var(--rule);
-  box-shadow:0 10px 26px rgba(30,18,4,.45);
+  filter:saturate(.92) contrast(1.04);
+  box-shadow:0 14px 34px rgba(20,14,4,.36);
+  border:1px solid rgba(29,26,21,.4);
+  transition:transform .2s ease,box-shadow .2s ease;
 }
-.featured .stamp{
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.24em;text-transform:uppercase;
-  color:#8c2f1d;border:1px solid #8c2f1d;display:inline-block;padding:3px 9px;margin:0 0 12px;
-  transform:rotate(-1.2deg);
+.front .cover:hover img{transform:translateY(-3px);box-shadow:0 20px 44px rgba(20,14,4,.44)}
+.front .stamp{
+  display:inline-block;font-family:"Cinzel",serif;font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:#8c2f1d;border:1px solid #8c2f1d;padding:3px 10px;
+  transform:rotate(-1.4deg);margin:0 0 14px;
 }
-.featured h3{
-  font-family:"IM Fell English",serif;font-size:clamp(24px,3.6vw,34px);
-  line-height:1.1;margin:0 0 8px;color:#1c1408;
+.front h3{
+  font-family:"IM Fell English",serif;font-size:clamp(26px,4.2vw,42px);line-height:1.08;
+  margin:0 0 10px;color:#120f0b;
 }
-.featured .meta{
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-faint);margin:0 0 12px;
+.front .when{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:#6d5a3d;margin:0 0 14px;
 }
-.featured p.dek{margin:0 0 18px;font-size:17px;color:var(--ink-soft)}
+.front .dek{margin:0 0 22px;color:#3b332a;font-size:19px}
 
-.btn{
+.ink-btn{
   display:inline-block;text-decoration:none;
   font-family:"Cinzel",serif;font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
-  color:#f4ead2;background:#2b1f10;border:1px solid #1c1408;
-  padding:11px 20px;transition:background .16s ease,transform .16s ease;
+  color:#f3efe4;background:#1d1a15;border:1px solid #000;
+  padding:12px 22px;transition:background .18s ease,transform .18s ease;
 }
-.btn:hover,.btn:focus-visible{background:#4a3a24;transform:translateY(-1px);outline:none}
-.btn:focus-visible{box-shadow:0 0 0 2px var(--gold)}
-.btn .weight{opacity:.6;font-size:10px;letter-spacing:.1em}
+.ink-btn:hover,.ink-btn:focus-visible{background:#3d372c;transform:translateY(-2px);outline:none}
+.ink-btn .w{opacity:.62;font-size:10px;letter-spacing:.1em}
 
-/* ── archive list ───────────────────────────────────────────────── */
-.archive{list-style:none;margin:0;padding:0;border-top:1px solid rgba(74,60,38,.35)}
-.archive li{border-bottom:1px solid rgba(74,60,38,.35)}
+/* archive */
+.archive{list-style:none;margin:26px 0 0;padding:0}
+.archive li{border-bottom:1px solid rgba(29,26,21,.2)}
+.archive li:first-child{border-top:1px solid rgba(29,26,21,.2)}
 .archive a{
   display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
   text-decoration:none;color:inherit;padding:14px 8px;
-  transition:background .14s ease,padding-left .14s ease;
+  transition:background .15s ease,padding-left .15s ease;
 }
-.archive a:hover,.archive a:focus-visible{background:rgba(160,124,64,.14);padding-left:16px;outline:none}
-.archive a:focus-visible{box-shadow:inset 3px 0 0 var(--gold)}
-.archive .no{
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;color:var(--gold);
-  min-width:64px;
-}
-.archive .title{
-  font-family:"IM Fell English",serif;font-size:21px;line-height:1.2;color:#1c1408;flex:1;min-width:200px;
-}
-.archive .when{
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--ink-faint);
-}
+.archive a:hover,.archive a:focus-visible{background:rgba(140,110,50,.12);padding-left:16px;outline:none}
+.archive .no{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;color:#8a6a24;min-width:62px}
+.archive .title{font-family:"IM Fell English",serif;font-size:22px;color:#171310;flex:1;min-width:190px}
+.archive .meta{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6d5a3d}
 .archive .tag{
   font-family:"Cinzel",serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--paper-hi);background:var(--ink-soft);padding:2px 8px;
+  color:#efe9dc;background:#3d372c;padding:3px 9px;
 }
+.archive .tag.broadside{background:#8a6a24}
+.note{font-style:italic;color:#6d5a3d;padding:14px 8px;margin:0}
 
-.loading,.empty{
-  font-style:italic;color:var(--ink-faint);padding:16px 8px;margin:0;
+/* ═══ SECTION II — THE MARKET (timber, canvas, brass) ════════════ */
+.market{
+  color:#f0e3cd;
+  padding-top:clamp(78px,9vw,116px); /* clear the awning */
+  background:
+    linear-gradient(180deg,rgba(20,13,7,.5),rgba(20,13,7,.72)),
+    repeating-linear-gradient(90deg,#3a2416 0 62px,#432b19 62px 124px);
 }
+/* the awning: canvas stripes hanging over the stalls */
+/* awning body */
+.market::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:34px;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.26),rgba(255,255,255,.10) 55%,rgba(0,0,0,.18)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
+}
+/* scalloped valance hanging off it — same stripes, masked into half-discs */
+.market::after{
+  content:"";position:absolute;top:34px;left:0;right:0;height:13px;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.34)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
+  -webkit-mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
+  mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
+  -webkit-mask-size:22px 13px;mask-size:22px 13px;
+  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.5));
+}
+.market>*{position:relative}
+.market .sect-title h2{color:#f6ead2}
+.market .sect-title .n{color:var(--brass)}
+.market .sect-lede{color:#d4c1a0}
 
-/* ── colophon ───────────────────────────────────────────────────── */
-.colophon{
-  margin:44px 0 0;padding-top:18px;border-top:3px double var(--rule);
-  display:flex;flex-wrap:wrap;gap:10px 26px;justify-content:space-between;align-items:baseline;
+.stalls{display:grid;grid-template-columns:repeat(2,1fr);gap:52px 26px;margin-top:52px}
+@media(max-width:720px){.stalls{grid-template-columns:1fr;gap:58px}}
+
+/* each stall is a painted board hung on two chains from its own beam */
+.stall{
+  position:relative;display:block;text-decoration:none;color:inherit;
+  margin-top:32px;
+  background:linear-gradient(180deg,#7a5230,#5b3a20 55%,#4a2e18);
+  border:2px solid #2a1a0d;
+  border-radius:3px;
+  padding:26px 26px 22px;
+  box-shadow:0 16px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
+  transform-origin:top center;
+  transition:transform .25s ease,box-shadow .25s ease;
+}
+.stall:hover,.stall:focus-visible{transform:rotate(-.7deg) translateY(3px);box-shadow:0 22px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.22);outline:none}
+.stall:focus-visible{border-color:var(--brass)}
+/* the two chains */
+.stall::before,.stall::after{
+  content:"";position:absolute;top:-24px;width:3px;height:24px;
+  background:repeating-linear-gradient(180deg,#c9a24a 0 3px,#6f5722 3px 7px);
+}
+.stall::before{left:28px}
+.stall::after{right:28px}
+
+/* the beam the chains hang off */
+.stall .beam{
+  position:absolute;top:-32px;left:-10px;right:-10px;height:11px;
+  background:linear-gradient(180deg,#8a6038,#5c3c1f 60%,#3c2612);
+  border:1px solid #241608;border-radius:2px;
+  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,220,170,.18);
+}
+.stall .ring{
+  position:absolute;top:-28px;width:10px;height:10px;
+  border:2px solid #c9a24a;border-radius:50%;background:transparent;
+}
+.stall .ring.l{left:24px}
+.stall .ring.r{right:24px}
+
+.stall .trade{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--brass);display:block;margin:0 0 8px;
+}
+.stall h3{
+  font-family:"Cinzel",serif;font-weight:700;font-size:23px;letter-spacing:.03em;
+  margin:0 0 10px;color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.6);
+}
+.stall p{margin:0;color:#dcc9a8;font-size:17px;line-height:1.55}
+.stall .out{
+  display:inline-block;margin-top:16px;
   font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-faint);
+  color:#e6c97e;border-bottom:1px solid rgba(230,201,126,.42);padding-bottom:2px;
 }
-.colophon a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(138,106,36,.4)}
-.colophon a:hover{color:#5f470f}
-.colophon em{font-family:"EB Garamond",serif;font-style:italic;text-transform:none;letter-spacing:0;font-size:14px}
+
+/* ═══ SECTION III — THE CARTOGRAPHER'S TABLE (vellum) ════════════ */
+.cartographer{
+  color:#3a2f1e;
+  background:
+    /* survey grid, faint */
+    repeating-linear-gradient(0deg,rgba(120,92,48,.10) 0 1px,transparent 1px 44px),
+    repeating-linear-gradient(90deg,rgba(120,92,48,.10) 0 1px,transparent 1px 44px),
+    radial-gradient(130% 90% at 15% 0%,rgba(255,250,232,.9),transparent 55%),
+    linear-gradient(160deg,#efe3c4,#e2d2ac 55%,#cfba90);
+}
+.cartographer>*{position:relative}
+.cartographer .sect-title h2{color:#2f2513}
+.cartographer .sect-title .n{color:#8a6a24}
+.cartographer .sect-lede{color:#5c4b30}
+
+/* tick marks down the left edge, like a chart border */
+.cartographer::before{
+  content:"";position:absolute;top:0;bottom:0;left:0;width:14px;
+  background:repeating-linear-gradient(180deg,#6b5427 0 1px,transparent 1px 12px);
+  opacity:.5;
+}
+
+.map-head{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;justify-content:space-between}
+.rose{flex:0 0 auto;opacity:.8}
+
+.map-frame{
+  margin-top:26px;position:relative;
+  border:1px solid #6b5427;
+  padding:10px;
+  background:linear-gradient(180deg,rgba(255,250,232,.7),rgba(190,168,124,.35));
+  box-shadow:0 18px 40px rgba(60,44,18,.32),inset 0 0 0 1px rgba(255,255,255,.35);
+}
+/* brass corner pins holding the chart to the table */
+.map-frame .pin{
+  position:absolute;width:11px;height:11px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#e8cd83,#8a6a24 70%);
+  box-shadow:0 1px 3px rgba(0,0,0,.45);
+}
+.map-frame .pin.tl{top:-5px;left:-5px}
+.map-frame .pin.tr{top:-5px;right:-5px}
+.map-frame .pin.bl{bottom:-5px;left:-5px}
+.map-frame .pin.br{bottom:-5px;right:-5px}
+
+.map-frame iframe{
+  display:block;width:100%;height:min(72vh,660px);border:0;background:#e8dcc0;
+}
+@media(max-width:640px){.map-frame iframe{height:64vh}}
+
+.map-foot{
+  display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:space-between;align-items:baseline;
+  margin-top:14px;font-size:15px;color:#5c4b30;
+}
+.map-foot a{color:#7a5c1c}
+.map-foot .out{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  text-decoration:none;border-bottom:1px solid rgba(122,92,28,.45);padding-bottom:2px;
+}
+
+/* ═══ FOOTER — back out to the harbour at night ══════════════════ */
+.harbour{
+  background:linear-gradient(180deg,rgba(16,24,32,.2),rgba(10,15,20,.9)),
+             linear-gradient(180deg,#1b2b36,#0d141a);
+  color:#93a8b6;padding:44px 0 40px;
+}
+.harbour .wrap{
+  display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:baseline;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+}
+.harbour em{font-family:"IM Fell English",serif;font-style:italic;text-transform:none;letter-spacing:0;font-size:16px;color:#b6c8d4}
+.harbour a{color:var(--brass);text-decoration:none;border-bottom:1px solid rgba(201,162,74,.35)}
+.harbour a:hover{color:#e6c97e}
 </style>
 </head>
 <body>
-<main class="paper">
 
-  <!-- ══ MASTHEAD ══════════════════════════════════════════════ -->
-  <header class="masthead">
-    <hr class="pre-rule">
-    <p class="kicker">Printed at the sign of the Broken Quill, Castle Ward &mdash; by appointment to nobody</p>
-    <h1>The Waterdeep Wazoo</h1>
-    <p class="sub">Ink still wet &middot; truth still cheap</p>
-    <div class="dateline">
-      <span>City of Splendors</span>
-      <span>Year of Three Ships Sailing, 1492 DR</span>
-      <span>Price: one nib</span>
-    </div>
-    <hr class="post-rule">
-  </header>
+<div class="backdrop" id="backdrop"></div>
 
-  <!-- ══ THE THREE DOORS ═══════════════════════════════════════ -->
-  <section class="sec">
-    <div class="sec-head"><h2>The Ways In</h2></div>
-    <div class="doors">
-      <a class="door" href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener">
-        <span class="glyph">&#9876;</span>
-        <h3>The Campaign</h3>
-        <p>The roll of adventurers, their sheets and their sins. Kept on D&amp;D Beyond.</p>
-        <span class="ext">dndbeyond.com &#8599;</span>
-      </a>
-      <a class="door" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
-        <span class="glyph">&#127922;</span>
-        <h3>The Game Table</h3>
-        <p>Where the dice fall. Maps, tokens and initiative, live at the table.</p>
-        <span class="ext">dndbeyond.com &#8599;</span>
-      </a>
-      <a class="door" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">
-        <span class="glyph">&#128506;</span>
-        <h3>The Atlas</h3>
-        <p>Every ward, street and stinking alley of Waterdeep, on an interactive map.</p>
-        <span class="ext">aidedd.org &#8599;</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- ══ CURRENT ISSUE ═════════════════════════════════════════ -->
-  <section class="sec">
-    <div class="sec-head"><h2>Fresh off the Press</h2></div>
-    <article class="featured">
-      <a href="The-Waterdeep-Wazoo-flamerule-8-1492.html">
-        <img src="preview.jpg" alt="Front page of The Waterdeep Wazoo, Flamerule 8, 1492 DR">
-      </a>
-      <div>
-        <span class="stamp">Current issue</span>
-        <h3>Fire on the Dock Ward</h3>
-        <p class="meta">Flamerule 8, 1492 DR</p>
-        <p class="dek">The Yawning Portal keeps its counsel, the Walking Statues keep their silence, and something in the harbour is not keeping still. Read it before the Watch reads it to you.</p>
-        <a class="btn" href="The-Waterdeep-Wazoo-flamerule-8-1492.html">
-          Read the issue <span class="weight">&mdash; 37 MB, best on wifi</span>
-        </a>
-      </div>
-    </article>
-  </section>
-
-  <!-- ══ ARCHIVE ═══════════════════════════════════════════════ -->
-  <section class="sec">
-    <div class="sec-head"><h2>The Back Numbers</h2></div>
-    <p class="sec-note">Every issue the presses have run. New editions appear here of their own accord &mdash; nobody has to nail up a notice.</p>
-    <ul class="archive" id="archive">
-      <li><p class="loading" id="archive-status">Fetching the back numbers from the print room&hellip;</p></li>
+<!-- ══ HERO ═══════════════════════════════════════════════════════ -->
+<header class="hero">
+  <picture>
+    <source srcset="assets/waterdeep-panorama.webp" type="image/webp">
+    <img src="assets/waterdeep-panorama.jpg" alt="Waterdeep seen from the sea: the harbour crowded with ships, the city climbing to Mount Waterdeep" fetchpriority="high">
+  </picture>
+  <div class="wrap">
+    <p class="eyebrow">City of Splendors &middot; Year of Three Ships Sailing, 1492 DR</p>
+    <h1>The Waterdeep&nbsp;Wazoo</h1>
+    <p class="tagline">Ink still wet, truth still cheap &mdash; a running chronicle of the city, its news and its jobs.</p>
+    <ul class="jump">
+      <li><a href="#press">The Press Room</a></li>
+      <li><a href="#market">The Market</a></li>
+      <li><a href="#atlas">The Cartographer</a></li>
     </ul>
-  </section>
+  </div>
+</header>
 
-  <!-- ══ COLOPHON ══════════════════════════════════════════════ -->
-  <footer class="colophon">
-    <span>Set in IM Fell English &amp; EB Garamond</span>
+<!-- ══ I. THE PRESS ROOM ══════════════════════════════════════════ -->
+<section class="sect press" id="press">
+  <div class="wrap">
+    <div class="sect-title"><span class="n">I</span><h2>The Press Room</h2></div>
+    <p class="sect-lede">What the presses have run. The current issue first, then everything that came before it.</p>
+    <hr class="press-rule">
+
+    <article class="front" id="front">
+      <p class="note" id="front-note">Setting the type&hellip;</p>
+    </article>
+
+    <ul class="archive" id="archive"></ul>
+  </div>
+</section>
+
+<!-- ══ II. THE MARKET ═════════════════════════════════════════════ -->
+<section class="sect market" id="market">
+  <div class="wrap">
+    <div class="sect-title"><span class="n">II</span><h2>The Market</h2></div>
+    <p class="sect-lede">Every stall points somewhere else. Ask at the boards; the traders keep their ledgers on D&amp;D&nbsp;Beyond.</p>
+
+    <div class="stalls">
+      <a class="stall" href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <span class="trade">The Registry</span>
+        <h3>The Campaign</h3>
+        <p>The roll of adventurers &mdash; sheets, levels, inventories and sins. Signing in is required; the clerk does not gossip.</p>
+        <span class="out">dndbeyond.com &#8599;</span>
+      </a>
+
+      <a class="stall" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <span class="trade">The Gaming House</span>
+        <h3>The Game Table</h3>
+        <p>Where the dice actually fall. Maps, tokens and initiative, live while the session runs.</p>
+        <span class="out">dndbeyond.com &#8599;</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ III. THE CARTOGRAPHER'S TABLE ══════════════════════════════ -->
+<section class="sect cartographer" id="atlas">
+  <div class="wrap">
+    <div class="map-head">
+      <div>
+        <div class="sect-title"><span class="n">III</span><h2>The Cartographer&rsquo;s Table</h2></div>
+        <p class="sect-lede">The whole city, ward by ward. Drag it, zoom it, click a building to find out whose it is.</p>
+      </div>
+      <svg class="rose" width="76" height="76" viewBox="0 0 100 100" aria-hidden="true">
+        <g fill="none" stroke="#6b5427" stroke-width="1.2">
+          <circle cx="50" cy="50" r="34"/><circle cx="50" cy="50" r="26" stroke-dasharray="2 4"/>
+        </g>
+        <path d="M50 8 L57 46 L50 52 L43 46 Z" fill="#8a6a24"/>
+        <path d="M50 92 L43 54 L50 48 L57 54 Z" fill="#6b5427" opacity=".55"/>
+        <path d="M92 50 L54 57 L48 50 L54 43 Z" fill="#6b5427" opacity=".55"/>
+        <path d="M8 50 L46 43 L52 50 L46 57 Z" fill="#6b5427" opacity=".55"/>
+        <text x="50" y="7" text-anchor="middle" font-family="Cinzel,serif" font-size="11" fill="#5c4b30">N</text>
+      </svg>
+    </div>
+
+    <div class="map-frame">
+      <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
+      <iframe
+        src="https://www.aidedd.org/atlas/waterdeep"
+        title="Interactive atlas of Waterdeep, hosted by aidedd.org"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+
+    <p class="map-foot">
+      <span>Chart drawn and hosted by <a href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">aidedd.org</a> &mdash; loaded straight from their table.</span>
+      <a class="out" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">Open full size &#8599;</a>
+    </p>
+  </div>
+</section>
+
+<!-- ══ HARBOUR ════════════════════════════════════════════════════ -->
+<footer class="harbour">
+  <div class="wrap">
+    <span>Set in Cinzel, EB Garamond &amp; IM Fell English</span>
     <span><em>&ldquo;We print what we are paid to print, and a little of what we are not.&rdquo;</em></span>
     <span><a href="https://github.com/evolJoaoBento/PortugalDMWaterdeepWazoo" target="_blank" rel="noopener">The Print Room &#8599;</a></span>
-  </footer>
-
-</main>
+  </div>
+</footer>
 
 <script>
 /* ────────────────────────────────────────────────────────────────
-   The archive builds itself from whatever HTML pages live in the
-   repository. Commit a new issue, it shows up here on next load —
-   no editing this file.
+   The press room fills itself from whatever lives in the repository.
+
+   Publishing a new issue is: commit The-Waterdeep-Wazoo-<month>-<day>-<year>.html.
+   Optionally commit a matching .json beside it for the front-page slot:
+
+     { "headline": "...", "dek": "...", "cover": "some-image.jpg" }
+
+   With no .json the issue still lists and still leads; it just runs
+   under its own date instead of a headline. This file never needs
+   editing to publish.
 
    GitHub's contents API sends Access-Control-Allow-Origin: *, so a
-   static Pages site can call it directly. Unauthenticated callers
-   get 60 requests/hour/IP, hence the sessionStorage cache. If the
-   call fails for any reason we fall back to the hard-coded list.
+   static Pages site can call it. Unauthenticated callers get
+   60 requests/hour/IP, hence the sessionStorage cache.
    ──────────────────────────────────────────────────────────────── */
 (function () {
   var REPO  = 'evolJoaoBento/PortugalDMWaterdeepWazoo';
-  var CACHE = 'wazoo-archive-v1';
+  var RAW   = 'https://raw.githubusercontent.com/' + REPO + '/main/';
+  var CACHE = 'wazoo-files-v2';
 
-  // Pages that are machinery, not reading matter.
+  // Machinery, not reading matter.
   var HIDDEN = ['index.html', 'editor.html', 'job-board-ddb.html'];
 
-  // Calendar of Harptos, in order, for sorting and prettifying.
   var MONTHS = ['hammer','alturiak','ches','tarsakh','mirtul','kythorn','flamerule',
                 'eleasis','eleint','marpenoth','uktar','nightal'];
 
-  // Shown when GitHub is unreachable or rate-limited.
-  var FALLBACK = [{
-    name: 'The-Waterdeep-Wazoo-flamerule-8-1492.html',
-    size: 37486613
-  }];
+  // Used when GitHub is unreachable or rate-limited.
+  var FALLBACK = [
+    { name: 'The-Waterdeep-Wazoo-flamerule-8-1492.html', size: 37486613 },
+    { name: 'The-Waterdeep-Wazoo-flamerule-8-1492.json', size: 300 },
+    { name: 'The-Notice-Board.html', size: 12000 }
+  ];
 
+  var frontEl  = document.getElementById('front');
+  var noteEl   = document.getElementById('front-note');
   var listEl   = document.getElementById('archive');
-  var statusEl = document.getElementById('archive-status');
 
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
   function titleCase(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-  /* Turn "The-Waterdeep-Wazoo-flamerule-8-1492.html" into something
-     a reader recognises, and something we can sort on. */
   function describe(file) {
     var stem = file.name.replace(/\.html$/i, '');
     var m = stem.match(/^The-Waterdeep-Wazoo-([a-z]+)-(\d+)-(\d+)$/i);
@@ -359,23 +553,16 @@ body{
       var month = m[1].toLowerCase(), day = +m[2], year = +m[3];
       var mi = MONTHS.indexOf(month);
       return {
-        href:  file.name,
+        stem: stem, href: file.name, size: file.size, issue: true,
         title: 'The Waterdeep Wazoo',
-        when:  titleCase(month) + ' ' + day + ', ' + year + ' DR',
-        tag:   'Issue',
-        sort:  year * 10000 + (mi < 0 ? 0 : mi + 1) * 100 + day,
-        size:  file.size
+        when: titleCase(month) + ' ' + day + ', ' + year + ' DR',
+        sort: year * 10000 + (mi < 0 ? 0 : mi + 1) * 100 + day
       };
     }
-
-    // Anything else that is not machinery: a broadside, a one-off sheet.
     return {
-      href:  file.name,
+      stem: stem, href: file.name, size: file.size, issue: false,
       title: stem.replace(/[-_]+/g, ' '),
-      when:  '',
-      tag:   'Broadside',
-      sort:  0,
-      size:  file.size
+      when: '', sort: 0
     };
   }
 
@@ -384,7 +571,56 @@ body{
     return Math.round(bytes / 1048576) + ' MB';
   }
 
-  function render(files) {
+  function renderFront(it, meta) {
+    var cover = (meta && meta.cover) || 'preview.jpg';
+    var head  = (meta && meta.headline) || it.title;
+    var dek   = (meta && meta.dek) ||
+                'The city as it stood that day, printed while the ink was still an argument.';
+
+    frontEl.innerHTML =
+      '<a class="cover" href="' + encodeURI(it.href) + '">' +
+        '<img src="' + encodeURI(cover) + '" alt="Front page of the ' + esc(it.when) + ' issue">' +
+      '</a>' +
+      '<div>' +
+        '<span class="stamp">Current issue</span>' +
+        '<h3>' + esc(head) + '</h3>' +
+        '<p class="when">' + esc(it.when) + '</p>' +
+        '<p class="dek">' + esc(dek) + '</p>' +
+        '<a class="ink-btn" href="' + encodeURI(it.href) + '">Read the issue' +
+          (weigh(it.size) ? ' <span class="w">&mdash; ' + weigh(it.size) + ', best on wifi</span>' : '') +
+        '</a>' +
+      '</div>';
+  }
+
+  function renderArchive(items) {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      listEl.innerHTML = '<li><p class="note">The presses have not run yet.</p></li>';
+      return;
+    }
+    var issuesLeft = items.filter(function (i) { return i.issue; }).length;
+
+    items.forEach(function (it) {
+      var no = it.issue ? 'No. ' + issuesLeft-- : '&mdash;';
+      var li = document.createElement('li');
+      li.innerHTML =
+        '<a href="' + encodeURI(it.href) + '">' +
+          '<span class="no">' + no + '</span>' +
+          '<span class="title">' + esc(it.title) + '</span>' +
+          (it.when ? '<span class="meta">' + esc(it.when) + '</span>' : '') +
+          (weigh(it.size) ? '<span class="meta">' + weigh(it.size) + '</span>' : '') +
+          '<span class="tag' + (it.issue ? '' : ' broadside') + '">' +
+            (it.issue ? 'Issue' : 'Broadside') +
+          '</span>' +
+        '</a>';
+      listEl.appendChild(li);
+    });
+  }
+
+  function build(files) {
+    var names = {};
+    files.forEach(function (f) { names[f.name.toLowerCase()] = true; });
+
     var items = files
       .filter(function (f) {
         return /\.html$/i.test(f.name) && HIDDEN.indexOf(f.name.toLowerCase()) === -1;
@@ -392,41 +628,29 @@ body{
       .map(describe)
       .sort(function (a, b) { return b.sort - a.sort; });
 
-    listEl.innerHTML = '';
+    renderArchive(items);
 
-    if (!items.length) {
-      listEl.innerHTML = '<li><p class="empty">The presses have not run yet.</p></li>';
+    var lead = items.filter(function (i) { return i.issue; })[0];
+    if (!lead) {
+      frontEl.innerHTML = '<p class="note">No issue on the stand today.</p>';
       return;
     }
 
-    // Issues are numbered oldest-first, so the newest carries the highest
-    // number. Broadsides sit outside the sequence and get a dash.
-    var issuesLeft = items.filter(function (it) { return it.tag === 'Issue'; }).length;
-
-    items.forEach(function (it) {
-      var no = it.tag === 'Issue' ? 'No. ' + issuesLeft-- : '&mdash;';
-      var li = document.createElement('li');
-      li.innerHTML =
-        '<a href="' + encodeURI(it.href) + '">' +
-          '<span class="no">' + no + '</span>' +
-          '<span class="title">' + it.title + '</span>' +
-          (it.when ? '<span class="when">' + it.when + '</span>' : '') +
-          (weigh(it.size) ? '<span class="when">' + weigh(it.size) + '</span>' : '') +
-          '<span class="tag">' + it.tag + '</span>' +
-        '</a>';
-      listEl.appendChild(li);
-    });
+    // Optional per-issue metadata sitting beside the issue.
+    if (names[(lead.stem + '.json').toLowerCase()]) {
+      fetch(RAW + encodeURIComponent(lead.stem) + '.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (meta) { renderFront(lead, meta); })
+        .catch(function () { renderFront(lead, null); });
+    } else {
+      renderFront(lead, null);
+    }
   }
 
-  function fail() {
-    render(FALLBACK);
-  }
-
-  // Serve from cache first so a reload does not spend a rate-limit token.
   try {
     var cached = sessionStorage.getItem(CACHE);
-    if (cached) { render(JSON.parse(cached)); return; }
-  } catch (e) { /* private mode: carry on without a cache */ }
+    if (cached) { build(JSON.parse(cached)); return; }
+  } catch (e) { /* private mode: carry on uncached */ }
 
   fetch('https://api.github.com/repos/' + REPO + '/contents/', {
     headers: { 'Accept': 'application/vnd.github+json' }
@@ -439,9 +663,19 @@ body{
       if (!Array.isArray(data)) throw new Error('unexpected payload');
       var slim = data.map(function (f) { return { name: f.name, size: f.size }; });
       try { sessionStorage.setItem(CACHE, JSON.stringify(slim)); } catch (e) {}
-      render(slim);
+      build(slim);
     })
-    .catch(fail);
+    .catch(function () { build(FALLBACK); });
+})();
+
+/* Serve the backdrop as WebP where it is supported — 4 KB against 10 KB.
+   Trivial on its own, but it is a fixed layer behind every scroll. */
+(function () {
+  var probe = new Image();
+  probe.onload = function () {
+    if (probe.width > 0) document.getElementById('backdrop').classList.add('webp');
+  };
+  probe.src = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
 })();
 </script>
 </body>
