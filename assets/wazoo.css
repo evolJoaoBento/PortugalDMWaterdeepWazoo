@@ -404,19 +404,28 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
 }
 .back-street:hover{opacity:1}
 
-/* ═══ HARBOUR — footer ═══════════════════════════════════════════ */
-.harbour{
-  background:linear-gradient(180deg,rgba(16,24,32,.2),rgba(10,15,20,.9)),
-             linear-gradient(180deg,#1b2b36,#0d141a);
-  color:#93a8b6;padding:44px 0 40px;
+/* ═══ THE LEDGER — footer, utility only ══════════════════════════ */
+/* Not part of the fiction: whose site this is, and the three doors out
+   of it. The workshop links are nofollow'd and the pages themselves
+   carry noindex, so they stay off search results without pretending to
+   be secret. */
+.ledger{
+  background:linear-gradient(180deg,rgba(10,15,20,.55),rgba(8,12,16,.92));
+  border-top:1px solid rgba(201,162,74,.22);
+  padding:20px 0;
 }
-.harbour .wrap{
-  display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:baseline;
+.ledger .wrap{
+  display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;justify-content:space-between;
+}
+.ledger .by{
   font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#7f909c;
 }
-.harbour em{
-  font-family:"IM Fell English",serif;font-style:italic;text-transform:none;
-  letter-spacing:0;font-size:16px;color:#b6c8d4;
+.ledger nav{display:flex;gap:20px;flex-wrap:wrap}
+.ledger nav a{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--brass);text-decoration:none;
+  border-bottom:1px solid rgba(201,162,74,.28);padding-bottom:2px;
 }
-.harbour a{color:var(--brass);text-decoration:none;border-bottom:1px solid rgba(201,162,74,.35)}
-.harbour a:hover{color:var(--brass-lit)}
+.ledger nav a:hover{color:var(--brass-lit);border-bottom-color:var(--brass-lit)}
+@media(max-width:520px){.ledger .wrap{justify-content:center;text-align:center}}

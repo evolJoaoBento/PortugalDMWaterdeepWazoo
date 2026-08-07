@@ -133,6 +133,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
+<script src="assets/keyring.js"></script>
+<script src="assets/gate.js"></script>
 </head>
 <body>
 
@@ -1406,11 +1408,6 @@ function injectPaperCSS(){
 
   <div class="cols">
     <div>
-      <label for="city-tok">Token &mdash; shared with the Scriptorium</label>
-      <input type="password" id="city-tok" placeholder="github_pat_&hellip;" autocomplete="off" spellcheck="false">
-    </div>
-    <div style="flex:0 0 auto"><button id="city-tok-save" type="button">Unseal</button></div>
-    <div>
       <label for="city-open">Past issues</label>
       <select id="city-open"><option value="">&mdash;</option></select>
     </div>
@@ -1421,7 +1418,6 @@ function injectPaperCSS(){
   <div class="log" id="city-log">Waiting.</div>
 </div>
 
-<script src="assets/keyring.js"></script>
 <script>
 /* =========================================================================
    Publishing an issue.
@@ -1626,16 +1622,10 @@ function injectPaperCSS(){
   /* ── wiring ─────────────────────────────────────────────────────── */
   document.getElementById("btn-city").addEventListener("click",()=>{
     panel.classList.add("on");
-    $c("#city-tok").value = Keyring.get();
     showTarget();
     listIssues();
   });
   $c("#city-shut").addEventListener("click",()=>panel.classList.remove("on"));
-  $c("#city-tok-save").addEventListener("click",()=>{
-    Keyring.set($c("#city-tok").value.trim());
-    say(Keyring.has() ? "Token kept in this browser." : "No token given.", Keyring.has()?"ok":"err");
-    listIssues();
-  });
   $c("#city-go").addEventListener("click",publish);
   $c("#city-load").addEventListener("click",openIssue);
   ["f-title","f-dateline"].forEach(id=>{

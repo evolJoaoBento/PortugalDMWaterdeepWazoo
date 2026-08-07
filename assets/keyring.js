@@ -37,7 +37,40 @@
     clear: function () {
       try { localStorage.removeItem(LS_TOK); } catch (e) {}
     },
-    has: function () { return !!Keyring.get(); }
+    has: function () { return !!Keyring.get(); },
+
+    /* Does this key actually turn? Asks GitHub, which is the only
+       opinion that counts — this page cannot grant anything.
+
+       Note what is and is not proved here: a 200 shows the token is
+       live and can see the repository. Write access is only truly
+       proved by writing, so if GitHub reports the permission we check
+       it, and otherwise we say the key fits and let publishing be the
+       real test. */
+    verify: async function (tok) {
+      tok = (tok || Keyring.get() || '').trim();
+      if (!tok) return { ok: false, why: 'no key given' };
+      try {
+        var r = await fetch('https://api.github.com/repos/' + REPO, {
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': 'Bearer ' + tok,
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
+        });
+        if (r.status === 401) return { ok: false, why: 'the key is not recognised — expired, or mistyped' };
+        if (r.status === 403) return { ok: false, why: 'the key is refused — it may not be scoped to this repository' };
+        if (r.status === 404) return { ok: false, why: 'this key cannot see the repository at all' };
+        if (!r.ok)            return { ok: false, why: 'GitHub answered ' + r.status };
+        var repo = await r.json();
+        if (repo.permissions && repo.permissions.push === false) {
+          return { ok: false, why: 'this key can read but not write' };
+        }
+        return { ok: true, repo: repo.full_name };
+      } catch (e) {
+        return { ok: false, why: 'could not reach GitHub — ' + e.message };
+      }
+    }
   };
 
   /* ── bytes ────────────────────────────────────────────────────── */

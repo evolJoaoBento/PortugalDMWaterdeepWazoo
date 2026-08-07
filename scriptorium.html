@@ -133,6 +133,8 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
 .log b{color:#8fb069;font-weight:400}
 .log i{color:#c9736a;font-style:normal}
 </style>
+<script src="assets/keyring.js"></script>
+<script src="assets/gate.js"></script>
 </head>
 <body>
 
@@ -144,39 +146,9 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
       <p class="sub">Where the board is written, and the city reads it a minute later.</p>
     </div>
     <div>
-      <span class="state locked" id="lock">Sealed &mdash; no token</span>
       <a href="./" style="margin-left:14px">Back to the street &#8599;</a>
     </div>
   </header>
-
-  <!-- ══ the key ═════════════════════════════════════════════════ -->
-  <section class="panel">
-    <h2>The Key</h2>
-    <p class="hint">
-      This page is public &mdash; every file in a public repository is, and no password
-      written here could change that, since it would be sitting in source anyone can read.
-      What decides whether anything can be changed is the token below. GitHub checks it,
-      not this page.<br><br>
-      Make a <b>fine-grained personal access token</b> scoped to
-      <code>PortugalDMWaterdeepWazoo</code> alone, with <code>Contents: Read and write</code>
-      and nothing else. It is kept in this browser only, and never written into the page
-      or the repository.
-    </p>
-    <div class="row">
-      <div>
-        <label for="tok">Token</label>
-        <input type="password" id="tok" placeholder="github_pat_&hellip;" autocomplete="off" spellcheck="false">
-      </div>
-      <div class="tight">
-        <button id="tok-save" class="gold">Unseal</button>
-        <button id="tok-drop" class="quiet">Forget it</button>
-      </div>
-    </div>
-    <p class="hint" style="margin:0">
-      <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:#d8ae5f">Make a token &#8599;</a>
-      &mdash; expiry is up to you; when it lapses, publishing fails loudly and you make another.
-    </p>
-  </section>
 
   <!-- ══ the board ═══════════════════════════════════════════════ -->
   <section class="panel">
@@ -294,7 +266,7 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
   var sha   = null;              // the blob we read, so we can write over it
   var cur   = -1;                // which posting is selected
   var dirty = false;
-  var token = '';
+  
 
   /* ── the log, which is the only place this page tells the truth ── */
   function say(msg, kind) {
@@ -304,31 +276,9 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
     l.scrollTop = l.scrollHeight;
   }
 
-  /* ── the key ──────────────────────────────────────────────────── */
-  function setLock() {
-    var el = $('lock');
-    el.className = 'state ' + (token ? 'open' : 'locked');
-    el.textContent = token ? 'Unsealed — can publish' : 'Sealed — no token';
-    $('publish').disabled = !token;
-  }
-  function loadToken() {
-    try { token = localStorage.getItem(LS_TOK) || ''; } catch (e) { token = ''; }
-    if (token) $('tok').value = token;
-    setLock();
-  }
-  $('tok-save').addEventListener('click', function () {
-    token = $('tok').value.trim();
-    try { localStorage.setItem(LS_TOK, token); } catch (e) {}
-    setLock();
-    say(token ? 'Token kept in this browser.' : 'No token given.', token ? 'ok' : 'err');
-  });
-  $('tok-drop').addEventListener('click', function () {
-    token = '';
-    $('tok').value = '';
-    try { localStorage.removeItem(LS_TOK); } catch (e) {}
-    setLock();
-    say('Token forgotten.', 'ok');
-  });
+  /* The ward at the door owns the key now, and will not let the page
+     be used without one that GitHub has answered for. */
+  function setLock() { $('publish').disabled = !Keyring.has(); }
 
   /* ── GitHub ───────────────────────────────────────────────────── */
   function api(path) {
@@ -337,7 +287,7 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
   function headers() {
     return {
       'Accept': 'application/vnd.github+json',
-      'Authorization': 'Bearer ' + token,
+      'Authorization': 'Bearer ' + Keyring.get(),
       'X-GitHub-Api-Version': '2022-11-28',
       'Content-Type': 'application/json'
     };
@@ -490,7 +440,7 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
 
   /* ── publishing ───────────────────────────────────────────────── */
   $('publish').addEventListener('click', async function () {
-    if (!token) { say('No token — nothing to publish with.', 'err'); return; }
+    if (!Keyring.has()) { say('No key — nothing to publish with.', 'err'); return; }
     var btn = this;
     btn.disabled = true;
     try {
@@ -538,14 +488,14 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
 
       // The press room caches the repo listing; without this the author's
       // own browser keeps showing yesterday's board.
-      try { sessionStorage.removeItem('wazoo-files-v3'); } catch (e) {}
+      City.forgetCaches();
 
       say('Committed ' + (res.commit && res.commit.sha || '').slice(0, 7) +
           '. Live in about a minute, once Pages rebuilds.', 'ok');
     } catch (e) {
       say('Publish failed: ' + e.message, 'err');
     } finally {
-      btn.disabled = !token;
+      btn.disabled = !Keyring.has();
     }
   });
 
@@ -553,7 +503,7 @@ button.danger:hover{background:linear-gradient(180deg,#93392a,#642016)}
     if (dirty) { e.preventDefault(); e.returnValue = ''; }
   });
 
-  loadToken();
+  setLock();
   readBoard();
 })();
 </script>
