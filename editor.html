@@ -31,6 +31,8 @@ button:hover{background:#3a2f1e;border-color:#6b5636}
 button.primary{background:#5a3d18;border-color:#8a6a2f;color:#ffeec4}
 button.primary:hover{background:#6e4c1e}
 input[type=text]{cursor:text}
+/* long issue stems would otherwise stretch the bar off-screen */
+#pick-issue{max-width:250px}
 .spacer{flex:1}
 .hint{font-size:12px;color:#9a8a6a}
 .split{flex:1;display:grid;grid-template-columns:minmax(300px,32%) 1fr;min-height:0}
@@ -133,15 +135,17 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808b"></script>
-<script src="assets/gate.js?v=20260808b"></script>
+<script src="assets/keyring.js?v=20260808c"></script>
+<script src="assets/gate.js?v=20260808c"></script>
 </head>
 <body>
 
 <div class="toolbar">
   <span class="brand">Penny Press</span>
   <button id="btn-import">Import .md</button>
-  <button id="btn-sample">Load sample</button>
+  <select id="pick-issue" title="Open a published broadsheet">
+    <option value="">Choose broadsheet…</option>
+  </select>
   <button id="btn-new">New issue</button>
   <span class="spacer"></span>
   <span class="hint" id="save-state">—</span>
@@ -1135,16 +1139,6 @@ function wire(){
     fr.readAsText(f);
   });
 
-  $("#btn-sample").addEventListener("click",()=>{
-    doc.markdown=SAMPLE;
-    if(!doc.masthead.title) doc.masthead.title="The Waterdeep Wazoo";
-    if(!doc.masthead.tagline) doc.masthead.tagline="Ink still wet, truth still cheap";
-    if(!doc.masthead.dateline) doc.masthead.dateline="12 Ches, 1492 DR";
-    if(!doc.masthead.price) doc.masthead.price="one copper";
-    if(!doc.masthead.issue) doc.masthead.issue="No. 47";
-    syncFields(); render(); scheduleSave();
-  });
-
   $("#btn-new").addEventListener("click",()=>{
     if(!confirm("Clear masthead, markdown and every placed image?")) return;
     doc.slots.slice().forEach(s=>deleteSlot(s.id));
@@ -1407,11 +1401,6 @@ function injectPaperCSS(){
   </p>
 
   <div class="cols">
-    <div>
-      <label for="city-open">Past issues</label>
-      <select id="city-open"><option value="">&mdash;</option></select>
-    </div>
-    <div style="flex:0 0 auto"><button id="city-load" type="button">Open this one</button></div>
     <div style="flex:0 0 auto"><button id="city-go" class="gold" type="button">Publish</button></div>
   </div>
   <p class="hint" id="city-target" style="margin:0"></p>
@@ -1570,23 +1559,26 @@ function injectPaperCSS(){
   }
 
   /* ── opening a past issue ───────────────────────────────────────── */
+  /* Fill the toolbar picker. Reading the directory goes through the
+     API, which wants the key — and the ward has already seen to that,
+     so this waits for the ward to lift rather than firing at load. */
   async function listIssues(){
-    if(!Keyring.has()) return;
+    const sel = document.getElementById("pick-issue");
+    if(!sel || !Keyring.has()) return;
     try{
-      const files = await City.list("data/issues");
-      const sel = $c("#city-open");
-      sel.innerHTML = '<option value="">—</option>';
-      files.filter(f=>/\.json$/i.test(f.name)).forEach(f=>{
+      const files = (await City.list("data/issues")).filter(f=>/\.json$/i.test(f.name));
+      sel.innerHTML = '<option value="">'+
+        (files.length ? "Choose broadsheet…" : "No broadsheets published yet")+'</option>';
+      files.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
         const o=document.createElement("option");
-        o.value=f.name; o.textContent=f.name.replace(/\.json$/,"");
+        o.value=f.name; o.textContent=f.name.replace(/\.json$/,"").replace(/-/g," ");
         sel.appendChild(o);
       });
-      say(files.length+" past issue(s) in the city.");
-    }catch(e){ say("Could not list past issues: "+e.message,"err"); }
+      say(files.length+" published broadsheet(s) to choose from.");
+    }catch(e){ say("Could not list the broadsheets: "+e.message,"err"); }
   }
 
-  async function openIssue(){
-    const name = $c("#city-open").value;
+  async function openIssue(name){
     if(!name) return;
     if(!confirm("Open “"+name.replace(/\.json$/,"")+"”?\n\nThe issue open in this forge will be replaced.")) return;
     try{
@@ -1627,7 +1619,17 @@ function injectPaperCSS(){
   });
   $c("#city-shut").addEventListener("click",()=>panel.classList.remove("on"));
   $c("#city-go").addEventListener("click",publish);
-  $c("#city-load").addEventListener("click",openIssue);
+
+  const picker = document.getElementById("pick-issue");
+  if(picker){
+    picker.addEventListener("change",()=>{
+      const name = picker.value;
+      picker.value = "";                 // the bar is a verb, not a state
+      if(name) openIssue(name);
+    });
+  }
+  /* The ward lifts once the key is accepted; only then can the list be read. */
+  document.addEventListener("ward:open", listIssues);
   ["f-title","f-dateline"].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener("input",showTarget);
