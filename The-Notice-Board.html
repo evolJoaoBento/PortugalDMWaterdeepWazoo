@@ -98,21 +98,55 @@
   break-inside:avoid;margin:0 0 clamp(18px,2.6vw,28px);
   font:inherit;color:#2a2114;cursor:pointer;
   padding:24px 20px 20px;
-  border:0;border-radius:1px;
+  border:0;background:none;
+  position:relative;
+  /* The shadow has to be a filter, not a box-shadow: box-shadow follows
+     the element's rectangle and would draw a clean rectangular shadow
+     under a torn sheet. drop-shadow on the parent traces the clipped
+     silhouette of .sheet below it, ragged edge and all. */
+  filter:drop-shadow(0 9px 15px rgba(0,0,0,.48)) drop-shadow(0 2px 2px rgba(0,0,0,.34));
+  transition:transform .18s ease,filter .18s ease;
+  /* set per sheet by JS; these are the defaults if it never runs */
+  --tilt:0deg;
+  --paper-a:#f3e9cf;
+  --paper-b:#e6d7b4;
+  --paper-c:#d9c79c;
+}
+
+/* the paper itself — a layer, so the clip can bite it without taking
+   the text with it */
+.notice .sheet{
+  position:absolute;inset:0;z-index:0;
   background:
     radial-gradient(120% 80% at 15% 0%,rgba(255,255,255,.5),transparent 55%),
-    linear-gradient(172deg,#f3e9cf,#e6d7b4 60%,#d9c79c);
-  box-shadow:0 10px 22px rgba(0,0,0,.5),0 2px 4px rgba(0,0,0,.35);
-  position:relative;
-  transition:transform .18s ease,box-shadow .18s ease;
+    linear-gradient(172deg,var(--paper-a),var(--paper-b) 60%,var(--paper-c));
 }
+/* fibre and foxing, ground into the sheet */
+.notice .sheet::after{
+  content:"";position:absolute;inset:0;
+  opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.7 .9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23f)' opacity='.45'/></svg>");
+}
+/* damp stains, placed per sheet */
+.notice .sheet::before{
+  content:"";position:absolute;inset:0;
+  opacity:.5;mix-blend-mode:multiply;
+  background:
+    radial-gradient(ellipse var(--stain1-r,34%) var(--stain1-r2,22%) at var(--stain1-x,18%) var(--stain1-y,84%),rgba(150,110,52,.30),transparent 70%),
+    radial-gradient(ellipse var(--stain2-r,26%) var(--stain2-r2,18%) at var(--stain2-x,82%) var(--stain2-y,12%),rgba(133,96,44,.24),transparent 72%),
+    radial-gradient(ellipse 18% 12% at var(--stain3-x,55%) var(--stain3-y,46%),rgba(120,88,40,.16),transparent 74%);
+}
+/* everything that is not the paper sits on top of it */
+.notice>*:not(.sheet){position:relative;z-index:1}
+
 /* a little life, so it reads as paper and not as cards */
-.notice:nth-child(3n+1){transform:rotate(-.7deg)}
-.notice:nth-child(3n+2){transform:rotate(.6deg)}
-.notice:nth-child(3n+3){transform:rotate(-.3deg)}
+.notice{transform:rotate(var(--tilt))}
+.notice:nth-child(3n+1){--tilt:-.7deg}
+.notice:nth-child(3n+2){--tilt:.6deg}
+.notice:nth-child(3n+3){--tilt:-.3deg}
 .notice:hover,.notice:focus-within{
   transform:rotate(0deg) translateY(-4px) scale(1.014);
-  box-shadow:0 18px 34px rgba(0,0,0,.58),0 3px 6px rgba(0,0,0,.4);
+  filter:drop-shadow(0 16px 24px rgba(0,0,0,.55)) drop-shadow(0 3px 4px rgba(0,0,0,.4));
   z-index:2;
 }
 
@@ -128,11 +162,8 @@
   background:radial-gradient(circle at 34% 28%,#c2432c,#7a1f12 72%);
   width:17px;height:17px;
 }
-/* torn scraps sit crooked and rough */
-.notice.scrap{
-  background:linear-gradient(172deg,#efe2c4,#ddcaa4);
-  clip-path:polygon(0 2%,100% 0,99% 98%,1% 100%);
-}
+/* scraps are torn harder — the generator reads this class */
+.notice.scrap{--paper-a:#efe2c4;--paper-b:#e3d2ab;--paper-c:#d4c093}
 
 .notice .kind{
   display:block;font-family:"Cinzel",serif;font-size:9px;letter-spacing:.24em;
@@ -170,23 +201,45 @@ dialog.reading::backdrop{
   background:rgba(8,5,2,.82);
   backdrop-filter:blur(2px);
 }
-.reading .holder{position:relative}
+.reading .holder{
+  position:relative;
+  filter:drop-shadow(0 26px 50px rgba(0,0,0,.72)) drop-shadow(0 4px 6px rgba(0,0,0,.45));
+}
+/* The sheet is the frame and the text scrolls inside it. Scrolling the
+   paper itself would drag the torn layer up with the words and leave
+   them hanging off the top of it. */
 .reading .paper{
   position:relative;
-  padding:clamp(30px,4vw,46px) clamp(22px,3.4vw,44px) clamp(24px,3vw,36px);
-  max-height:88vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  max-height:88vh;
+  background:none;
+  --paper-a:#f7efd9;
+  --paper-b:#eaddbe;
+  --paper-c:#ddcba2;
+}
+/* the opened notice is the same paper, torn the same way */
+.reading .paper .sheet{
+  position:absolute;inset:0;z-index:0;
   background:
     radial-gradient(120% 70% at 12% 0%,rgba(255,255,255,.5),transparent 55%),
-    linear-gradient(172deg,#f5ecd5,#e8daba 60%,#dbc99f);
-  box-shadow:0 30px 70px rgba(0,0,0,.7);
-  border:1px solid rgba(74,60,38,.5);
+    linear-gradient(172deg,var(--paper-a),var(--paper-b) 60%,var(--paper-c));
 }
-.reading .paper::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  opacity:.24;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.5'/></svg>");
+.reading .paper .sheet::after{
+  content:"";position:absolute;inset:0;
+  opacity:.42;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.7 .9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23f)' opacity='.45'/></svg>");
 }
-.reading .paper>*{position:relative}
+.reading .paper .sheet::before{
+  content:"";position:absolute;inset:0;
+  opacity:.5;mix-blend-mode:multiply;
+  background:
+    radial-gradient(ellipse 30% 16% at 16% 88%,rgba(150,110,52,.26),transparent 70%),
+    radial-gradient(ellipse 22% 12% at 86% 8%,rgba(133,96,44,.22),transparent 72%);
+}
+.reading .leaf{
+  position:relative;z-index:1;
+  max-height:88vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  padding:clamp(34px,4.4vw,52px) clamp(26px,3.6vw,46px) clamp(28px,3.2vw,40px);
+}
 .reading .kind{
   display:block;font-family:"Cinzel",serif;font-size:10px;letter-spacing:.26em;
   text-transform:uppercase;color:#8a6a24;margin:0 0 9px;
@@ -325,6 +378,7 @@ dialog.reading::backdrop{
       <div class="papers">
 
         <article class="notice">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">Buying &middot; Coin waiting</span>
           <h2>Hunt for Magic Items and Spellbooks</h2>
@@ -361,6 +415,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice sealed">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">House rule &middot; The Yawning Portal</span>
           <h2>Terms for the Descent</h2>
@@ -379,6 +434,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="kind">Wanted &middot; Discreet</span>
           <span class="tack" aria-hidden="true"></span>
           <h2>Capable Persons, for a Small Matter</h2>
@@ -392,6 +448,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice sealed">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">By order of the Watch</span>
           <h2>Concerning Spellwork in Public Streets</h2>
@@ -406,6 +463,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice scrap">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">Work &middot; Foul but honest</span>
           <h2>The Cellars Want Clearing</h2>
@@ -419,6 +477,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">For sale &middot; As it stands</span>
           <h2>A Tavern, Empty These Long Years</h2>
@@ -432,6 +491,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="kind">Passage &middot; Dock Ward</span>
           <span class="tack" aria-hidden="true"></span>
           <h2>Berths South, and a Warning With Them</h2>
@@ -444,6 +504,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice scrap">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">Rumour &middot; Unsigned</span>
           <h2>Ask About the Stone Giants</h2>
@@ -456,6 +517,7 @@ dialog.reading::backdrop{
         </article>
 
         <article class="notice sealed">
+          <span class="sheet" aria-hidden="true"></span>
           <span class="tack" aria-hidden="true"></span>
           <span class="kind">House rules</span>
           <h2>Rules of This Board</h2>
@@ -486,7 +548,10 @@ dialog.reading::backdrop{
 <dialog class="reading" id="reading" aria-label="Notice">
   <div class="holder">
     <button class="shut" type="button" id="reading-shut" aria-label="Put the notice back">&times;</button>
-    <div class="paper" id="reading-paper"></div>
+    <div class="paper" id="reading-paper">
+      <span class="sheet" aria-hidden="true"></span>
+      <div class="leaf" id="reading-leaf"></div>
+    </div>
   </div>
 </dialog>
 
@@ -499,6 +564,155 @@ dialog.reading::backdrop{
 </footer>
 
 <script src="assets/backdrop.js"></script>
+<script>
+/* ────────────────────────────────────────────────────────────────
+   Tearing the paper.
+
+   Every sheet gets its own deckled edge, cut as an SVG <clipPath> and
+   pointed at the .sheet layer. Drawn rather than downloaded: no image
+   to host, nothing to licence, and it stays crisp at any size.
+
+   Two things worth knowing about the shape:
+
+   - The clip lives in userSpaceOnUse, not objectBoundingBox. Bounding-
+     box units are fractions of width and height, so the same 0.01 of
+     jitter would be a shallow nick along a wide edge and a deep bite
+     down a tall one. Measuring the sheet and cutting in real pixels
+     keeps every tear the same depth.
+   - Randomness is seeded off the sheet's index, so a given notice
+     tears the same way on every load and on every reflow. Paper that
+     reshuffles itself when the window resizes reads as a glitch.
+   ──────────────────────────────────────────────────────────────── */
+(function () {
+  var NS  = 'http://www.w3.org/2000/svg';
+  var defs;
+
+  function seeded(seed) {                      // mulberry32
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function ensureDefs() {
+    if (defs) return defs;
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+    defs = document.createElementNS(NS, 'defs');
+    svg.appendChild(defs);
+    document.body.appendChild(svg);
+    return defs;
+  }
+
+  /* Walk one edge, stepping along it and wandering in and out. The
+     wander is a slow drift plus a small tremble, which tears more like
+     fibre than pure noise does. */
+  function edge(pts, ax, ay, bx, by, depth, steps, rnd) {
+    var dx = bx - ax, dy = by - ay;
+    var nx = dy, ny = -dx;                     // inward normal
+    var len = Math.sqrt(nx * nx + ny * ny) || 1;
+    nx /= len; ny /= len;
+
+    var drift = 0;
+    for (var i = 1; i < steps; i++) {
+      var t = i / steps;
+      drift += (rnd() - 0.5) * depth * 0.55;
+      drift *= 0.72;                           // pulls back toward the edge
+      var bite = drift + (rnd() - 0.5) * depth * 0.5;
+      // corners tear less than the middle of a run
+      var ease = Math.sin(Math.PI * t);
+      bite *= 0.35 + 0.65 * ease;
+      pts.push([ax + dx * t + nx * bite, ay + dy * t + ny * bite]);
+    }
+    pts.push([bx, by]);
+  }
+
+  function tear(el, index, opts) {
+    var w = el.offsetWidth, h = el.offsetHeight;
+    if (!w || !h) return;
+
+    var rough = opts && opts.rough;
+    var rnd = seeded(index * 2654435761 % 2147483647);
+    var depth = rough ? 11 : 6.5;              // px
+    var per = 17;                              // px between tear points
+
+    // Each corner pulls in a little, so no sheet has true square corners.
+    var c = [];
+    for (var k = 0; k < 4; k++) c.push(2 + rnd() * (rough ? 11 : 6));
+
+    var pts = [[c[0], c[1] * 0.4]];
+    edge(pts, c[0], c[1] * 0.4, w - c[1], c[0] * 0.4, depth, Math.max(6, Math.round(w / per)), rnd);
+    edge(pts, w - c[1], c[0] * 0.4, w - c[2] * 0.4, h - c[1], depth, Math.max(6, Math.round(h / per)), rnd);
+    edge(pts, w - c[2] * 0.4, h - c[1], c[3], h - c[2] * 0.4, depth, Math.max(6, Math.round(w / per)), rnd);
+    edge(pts, c[3], h - c[2] * 0.4, c[0], c[1] * 0.4, depth, Math.max(6, Math.round(h / per)), rnd);
+
+    var d = 'M' + pts.map(function (pt) {
+      return pt[0].toFixed(1) + ' ' + pt[1].toFixed(1);
+    }).join('L') + 'Z';
+
+    var id = el.__deckleId || (el.__deckleId = 'deckle-' + index + '-' + Math.round(w));
+    var clip = document.getElementById(id);
+    if (!clip) {
+      clip = document.createElementNS(NS, 'clipPath');
+      clip.setAttribute('id', id);
+      clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+      clip.appendChild(document.createElementNS(NS, 'path'));
+      ensureDefs().appendChild(clip);
+    }
+    clip.firstChild.setAttribute('d', d);
+
+    var sheet = el.querySelector(':scope > .sheet');
+    if (sheet) sheet.style.clipPath = 'url(#' + id + ')';
+  }
+
+  /* Stains and paper tone, so no two sheets are the same colour. */
+  function weather(el, index) {
+    var rnd = seeded(index * 40503 + 7);
+    var tone = rnd();
+    el.style.setProperty('--paper-a', tone > 0.6 ? '#f4ead0' : tone > 0.3 ? '#f1e6c9' : '#efe4c6');
+    el.style.setProperty('--paper-b', tone > 0.6 ? '#e7d8b6' : tone > 0.3 ? '#e3d3ad' : '#e0cfa8');
+    el.style.setProperty('--paper-c', tone > 0.6 ? '#dac89e' : tone > 0.3 ? '#d5c295' : '#d1bd8e');
+    el.style.setProperty('--stain1-x', (8 + rnd() * 30).toFixed(0) + '%');
+    el.style.setProperty('--stain1-y', (68 + rnd() * 28).toFixed(0) + '%');
+    el.style.setProperty('--stain1-r', (22 + rnd() * 20).toFixed(0) + '%');
+    el.style.setProperty('--stain1-r2', (12 + rnd() * 14).toFixed(0) + '%');
+    el.style.setProperty('--stain2-x', (62 + rnd() * 32).toFixed(0) + '%');
+    el.style.setProperty('--stain2-y', (2 + rnd() * 24).toFixed(0) + '%');
+    el.style.setProperty('--stain2-r', (16 + rnd() * 18).toFixed(0) + '%');
+    el.style.setProperty('--stain2-r2', (10 + rnd() * 12).toFixed(0) + '%');
+    el.style.setProperty('--stain3-x', (25 + rnd() * 50).toFixed(0) + '%');
+    el.style.setProperty('--stain3-y', (25 + rnd() * 50).toFixed(0) + '%');
+    // a touch more or less lean than the three CSS defaults
+    el.style.setProperty('--tilt', (-1.1 + rnd() * 2.2).toFixed(2) + 'deg');
+  }
+
+  var notices = Array.prototype.slice.call(document.querySelectorAll('.notice'));
+
+  function cutAll() {
+    notices.forEach(function (el, i) {
+      tear(el, i + 1, { rough: el.classList.contains('scrap') });
+    });
+  }
+
+  notices.forEach(function (el, i) { weather(el, i + 1); });
+  cutAll();
+
+  // Fonts land after first paint and change every sheet's height.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(cutAll);
+
+  var t;
+  addEventListener('resize', function () { clearTimeout(t); t = setTimeout(cutAll, 160); });
+
+  // The opened notice is a sheet too, and its height is only known once
+  // it has been filled.
+  window.__tearPaper = function (el, index) { weather(el, index); tear(el, index, {}); };
+})();
+</script>
 <script>
 /* ────────────────────────────────────────────────────────────────
    Taking a notice down to read it, and putting it back.
@@ -514,16 +728,18 @@ dialog.reading::backdrop{
 (function () {
   var dlg   = document.getElementById('reading');
   var paper = document.getElementById('reading-paper');
+  var leaf  = document.getElementById('reading-leaf');
   var shut  = document.getElementById('reading-shut');
-  if (!dlg || !paper || !shut) return;
+  if (!dlg || !paper || !leaf || !shut) return;
 
   function open(notice) {
-    paper.textContent = '';
+    leaf.textContent = '';
 
     Array.prototype.forEach.call(notice.children, function (child) {
       if (child.classList.contains('tack')) return;   // the nail stays on the board
       if (child.classList.contains('more')) return;   // and so does "read the notice"
-      paper.appendChild(child.cloneNode(true));
+      if (child.classList.contains('sheet')) return;  // the modal makes its own
+      leaf.appendChild(child.cloneNode(true));
     });
 
     var heading = notice.querySelector('h2');
@@ -531,10 +747,19 @@ dialog.reading::backdrop{
 
     if (typeof dlg.showModal === 'function') dlg.showModal();
     else dlg.setAttribute('open', '');           // very old browsers: still readable
-    paper.scrollTop = 0;
+    leaf.scrollTop = 0;
+
+    // Tear the opened sheet only now — its height is not known until it
+    // has been filled and laid out.
+    if (window.__tearPaper) {
+      requestAnimationFrame(function () {
+        window.__tearPaper(paper, notice.__index || 1);
+      });
+    }
   }
 
-  document.querySelectorAll('.notice').forEach(function (notice) {
+  document.querySelectorAll('.notice').forEach(function (notice, i) {
+    notice.__index = i + 1;                    // so the modal tears the same sheet
     notice.addEventListener('click', function () { open(notice); });
 
     // The button is what the keyboard reaches, so name it after the
