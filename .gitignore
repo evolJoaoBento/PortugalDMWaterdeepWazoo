@@ -1,0 +1,15 @@
+# This repository is public and served straight from GitHub Pages.
+# Anything committed here is readable by the players.
+
+# DM-facing. Contains "DM ONLY" spoiler lines for every job on the board.
+job-board-ddb.html
+
+# Source images for the issues — the published HTML embeds them, so the
+# originals only bloat the repo (tens of MB each).
+*.gif
+6huyds6gmch71.png
+Death_Mask_Lord.jpg
+Laeral_Silverhand_Arunsun.webp
+WalkingStatuesofWaterdeep5e.webp
+f01a5a4d-3dfd-4e43-b7ab-f93a2338b30b.webp
+fireworks.webp
