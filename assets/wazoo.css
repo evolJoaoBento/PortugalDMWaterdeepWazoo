@@ -1,0 +1,399 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Waterdeep — The City of Splendours. Shared shell.
+
+   The header is the street outside: plaster and half-timber, awnings
+   overhead, cobbles underfoot, and a shop sign hanging for every place
+   you can go. The full street is the header of index.html; a slim run
+   of the same street rides the top of every other page.
+
+   Each page then supplies its own material inside — newsprint, vellum,
+   parchment — in its own <style> block.
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --brass:#c9a24a;
+  --brass-lit:#e6c97e;
+  --timber:#5b3a20;
+  --timber-dark:#2a1a0d;
+  --plaster:#3a2c1d;
+  --night:#101820;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+body{
+  margin:0;
+  font:18px/1.7 "EB Garamond",Georgia,"Times New Roman",serif;
+  color:#e6dcc8;
+  background:var(--night);
+  -webkit-text-size-adjust:100%;
+}
+
+/* The city sits blurred behind every page — the theme, not a picture. */
+.backdrop{
+  position:fixed;inset:0;z-index:-2;
+  background:
+    linear-gradient(180deg,rgba(16,24,32,.62),rgba(16,24,32,.88)),
+    url("waterdeep-backdrop.jpg") center/cover no-repeat;
+}
+html.webp .backdrop{background-image:
+    linear-gradient(180deg,rgba(16,24,32,.62),rgba(16,24,32,.88)),
+    url("waterdeep-backdrop.webp");}
+
+/* ═══ THE PROSPECT — the city from the sea, index header ═════════ */
+.hero{
+  position:relative;
+  min-height:min(80vh,720px);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  text-align:center;
+}
+.hero picture,.hero img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 58%;
+  z-index:0;
+}
+/* haze off the top, deep water at the foot, so the name has something
+   to sit on wherever the horizon happens to fall */
+.hero::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(18,28,38,.18) 0%,rgba(18,28,38,0) 30%),
+    radial-gradient(44% 32% at 50% 46%,rgba(10,16,22,.52),transparent 74%),
+    linear-gradient(0deg,rgba(12,19,26,.70) 0%,rgba(12,19,26,.16) 22%,rgba(12,19,26,0) 46%);
+}
+.hero .wrap{position:relative;z-index:2;width:100%}
+
+.hero .above{
+  font-family:"Cinzel",serif;font-weight:600;
+  font-size:clamp(9px,1.5vw,11px);letter-spacing:.34em;text-transform:uppercase;
+  color:var(--brass-lit);margin:0 0 16px;
+  text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 20px rgba(0,0,0,.9);
+}
+.hero h1{
+  font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(46px,11.5vw,132px);line-height:.94;margin:0;
+  letter-spacing:.05em;color:#fdf7ea;
+  text-shadow:0 2px 4px rgba(0,0,0,.7),0 8px 44px rgba(0,0,0,.85);
+}
+.hero .splendours{
+  font-family:"IM Fell English",serif;font-style:italic;
+  font-size:clamp(19px,3.6vw,36px);color:#ecdcbb;margin:16px 0 0;
+  text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 26px rgba(0,0,0,.85);
+}
+.hero .rule{
+  width:min(400px,66%);height:0;margin:26px auto 0;
+  border-top:1px solid rgba(230,201,126,.55);position:relative;
+}
+.hero .rule::after{
+  content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;
+  transform:translateX(-50%) rotate(45deg);background:var(--brass-lit);
+}
+.hero .credit{
+  position:absolute;right:14px;bottom:8px;z-index:2;
+  font-size:11px;letter-spacing:.05em;color:rgba(225,236,244,.4);
+}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+@media(max-width:640px){.wrap{padding:0 15px}}
+
+a{color:inherit}
+.sprite{display:none}
+
+/* ═══ THE STREET ═════════════════════════════════════════════════ */
+/* plaster wall, half-timber uprights, lantern light from above */
+.street{
+  position:relative;color:#f0e3cd;
+  background:
+    /* lantern pools */
+    radial-gradient(60% 34% at 18% 0%,rgba(230,201,126,.16),transparent 70%),
+    radial-gradient(60% 34% at 82% 0%,rgba(230,201,126,.13),transparent 70%),
+    /* half-timber uprights */
+    repeating-linear-gradient(90deg,
+      rgba(28,18,9,.85) 0 13px,
+      rgba(0,0,0,0) 13px 168px),
+    /* plaster */
+    linear-gradient(180deg,#3f3021 0%,#33271a 55%,#241b12 100%);
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+/* cobbles at the foot of the street */
+.street .cobbles{
+  position:absolute;left:0;right:0;bottom:0;height:26px;
+  background:
+    radial-gradient(ellipse 15px 8px at 12px 6px,#463a2c 60%,transparent 62%),
+    radial-gradient(ellipse 15px 8px at 40px 15px,#3d3226 60%,transparent 62%),
+    radial-gradient(ellipse 15px 8px at 68px 6px,#4a3d2e 60%,transparent 62%),
+    linear-gradient(180deg,#241b12,#191309);
+  background-size:80px 22px,80px 22px,80px 22px,100% 100%;
+  box-shadow:inset 0 4px 10px rgba(0,0,0,.55);
+}
+
+/* awning body + scalloped valance, over the whole street */
+.awning::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:34px;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.26),rgba(255,255,255,.10) 55%,rgba(0,0,0,.18)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
+  z-index:2;
+}
+.awning::after{
+  content:"";position:absolute;top:34px;left:0;right:0;height:13px;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.34)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
+  -webkit-mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
+  mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
+  -webkit-mask-size:22px 13px;mask-size:22px 13px;
+  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;
+  filter:drop-shadow(0 5px 7px rgba(0,0,0,.5));
+  z-index:2;
+}
+.awning>*{position:relative;z-index:1}
+
+/* ═══ THE STREET BELOW THE PROSPECT — index ══════════════════════ */
+.frontage{padding:0 0 calc(clamp(38px,6vw,64px) + 26px)}
+
+.street-intro{padding-top:clamp(74px,8vw,100px);text-align:center}
+.street-intro .here{
+  font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(15px,2.4vw,21px);letter-spacing:.2em;text-transform:uppercase;
+  color:#fbf1dd;margin:0;text-shadow:0 1px 0 rgba(0,0,0,.55);
+}
+.street-intro .blurb{
+  font-family:"IM Fell English",serif;font-style:italic;
+  color:#c9b391;margin:14px auto 0;max-width:52ch;font-size:17px;
+}
+
+/* ═══ THE SHOPFRONTS — index ═════════════════════════════════════ */
+/* Six signs, so three across reads as two even rows rather than 4+2. */
+.shops{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:58px 24px;margin:70px 0 0;padding:0;list-style:none;
+}
+@media(max-width:860px){.shops{grid-template-columns:repeat(2,1fr);gap:56px 18px}}
+@media(max-width:520px){.shops{grid-template-columns:1fr;gap:52px;margin-top:60px}}
+
+.shop{
+  position:relative;display:flex;flex-direction:column;
+  text-decoration:none;color:inherit;margin-top:30px;
+  background:
+    linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
+    linear-gradient(180deg,#7a5230,#5b3a20 55%,#4a2e18);
+  border:2px solid var(--timber-dark);border-radius:3px;
+  padding:22px 20px 20px;
+  box-shadow:0 16px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
+  transform-origin:top center;
+  transition:transform .3s cubic-bezier(.22,1.4,.4,1),box-shadow .22s ease;
+}
+.shop:hover,.shop:focus-visible{
+  transform:rotate(-.9deg);
+  box-shadow:0 22px 38px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.24);
+  outline:none;
+}
+.shop:focus-visible{border-color:var(--brass)}
+/* the chains */
+.shop::before,.shop::after{
+  content:"";position:absolute;top:-22px;width:3px;height:22px;
+  background:repeating-linear-gradient(180deg,var(--brass) 0 3px,#6f5722 3px 7px);
+}
+.shop::before{left:24px}
+.shop::after{right:24px}
+/* the bracket beam the sign hangs from */
+.shop .beam{
+  position:absolute;top:-30px;left:-9px;right:-9px;height:11px;
+  background:linear-gradient(180deg,#8a6038,#5c3c1f 60%,#3c2612);
+  border:1px solid #241608;border-radius:2px;
+  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,220,170,.18);
+}
+.shop .ring{
+  position:absolute;top:-26px;width:10px;height:10px;
+  border:2px solid var(--brass);border-radius:50%;
+}
+.shop .ring.l{left:20px}
+.shop .ring.r{right:20px}
+
+.shop .logo{
+  width:58px;height:58px;display:block;margin:0 0 15px;
+  color:var(--brass-lit);
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));
+  transition:color .2s ease,transform .2s ease;
+}
+.shop:hover .logo{transform:scale(1.05);color:#f6dfa6}
+.shop .trade{
+  font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--brass);display:block;margin:0 0 6px;
+}
+.shop h2{
+  font-family:"Cinzel",serif;font-weight:700;font-size:20px;letter-spacing:.03em;
+  margin:0 0 9px;color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.6);
+}
+.shop p{margin:0;color:#dcc9a8;font-size:16px;line-height:1.5}
+.shop .go{
+  display:inline-block;margin-top:auto;padding-top:15px;
+  font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--brass-lit);
+}
+.shop .go span{border-bottom:1px solid rgba(230,201,126,.42);padding-bottom:2px}
+
+/* ═══ THE PARADE — slim street, every other page ═════════════════ */
+/* Same prospect as the index hero, cropped to a strip and pushed back
+   far enough that the signs stay readable over it. */
+.parade{
+  position:relative;color:#f0e3cd;padding:0 0 26px;overflow:hidden;
+  background:#26333d;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+/* The panorama gets its own layer so it can be filtered. The left of
+   that crop sits in shadow in the original, and no amount of overlay
+   tuning fixes that — it wants lifting, not dimming. */
+.parade::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background:url("waterdeep-panorama.jpg") 50% 48%/cover no-repeat;
+  filter:brightness(1.14) saturate(1.05);
+}
+html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
+/* A scrim on the masthead's side only. The rest of the strip stays as
+   bright as the painting — the signs carry their own board behind them
+   and need no help. */
+.parade::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(10,16,22,.62) 0%,rgba(10,16,22,.34) 26%,rgba(10,16,22,0) 48%);
+}
+.parade .inner{position:relative;z-index:1}
+.parade .inner{
+  padding-top:20px;
+  display:flex;align-items:flex-end;gap:18px 26px;flex-wrap:wrap;justify-content:space-between;
+}
+
+/* the corner plate: which city you are standing in */
+.parade .plate{text-decoration:none;display:block;padding-bottom:6px}
+.parade .plate .city{
+  display:block;font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(19px,2.8vw,27px);letter-spacing:.08em;color:#fdf7ea;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 22px rgba(0,0,0,.85);
+}
+.parade .plate .sub{
+  display:block;font-family:"IM Fell English",serif;font-style:italic;
+  font-size:13px;color:var(--brass-lit);margin-top:2px;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 16px rgba(0,0,0,.8);
+}
+.parade .plate:hover .city{color:#fff6e4}
+
+/* One shop canopy over the links alone, then the rail the signs swing
+   from. The awning belongs to this stretch of frontage, not to the
+   whole width of the page. */
+.hangers{
+  position:relative;display:flex;flex-wrap:wrap;gap:8px 10px;
+  padding:74px 16px 16px;margin:0;
+  /* the shopfront the canopy is nailed to — brown timber, so the signs
+     read against wood rather than against the city behind them */
+  background:
+    linear-gradient(180deg,rgba(255,228,182,.12),rgba(0,0,0,.14)),
+    repeating-linear-gradient(90deg,#69431f 0 58px,#77502a 58px 116px);
+  border:1px solid #2e1c0c;border-radius:2px;
+  box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,225,180,.22);
+}
+/* canopy body — overhangs the frontage a little, as an awning does */
+.canopy{
+  position:absolute;top:0;left:-10px;right:-10px;height:32px;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.26),rgba(255,255,255,.10) 55%,rgba(0,0,0,.18)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 40px,#e2d5b8 40px 80px);
+  border-radius:2px 2px 0 0;
+  /* dark end caps, so the stripe repeat reads as a cut edge and not as
+     a stripe that happened to be sliced */
+  box-shadow:inset 3px 0 0 rgba(38,20,12,.75),inset -3px 0 0 rgba(38,20,12,.75);
+}
+/* scalloped valance hanging off it */
+.canopy::after{
+  content:"";position:absolute;top:32px;left:0;right:0;height:12px;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.34)),
+    repeating-linear-gradient(90deg,#9c3b2c 0 40px,#e2d5b8 40px 80px);
+  -webkit-mask-image:radial-gradient(circle 11px at 10px 0,#000 99%,transparent 100%);
+  mask-image:radial-gradient(circle 11px at 10px 0,#000 99%,transparent 100%);
+  -webkit-mask-size:20px 12px;mask-size:20px 12px;
+  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));
+}
+/* the rail, slung just under the canopy */
+.hangers::before{
+  content:"";position:absolute;top:48px;left:-8px;right:-8px;height:8px;
+  background:linear-gradient(180deg,#8a6038,#5c3c1f 60%,#3c2612);
+  border:1px solid #241608;border-radius:2px;
+  box-shadow:0 3px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.18);
+}
+
+/* each nav item is a little painted board on two chains */
+.hangers a{
+  position:relative;display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:#f2e4c6;padding:9px 13px;
+  background:
+    linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.20)),
+    linear-gradient(180deg,#6d4a2b,#50331b);
+  border:1px solid var(--timber-dark);border-radius:2px;
+  box-shadow:0 5px 12px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,220,170,.14);
+  transform-origin:top center;
+  transition:transform .3s cubic-bezier(.22,1.4,.4,1),background .18s ease,color .18s ease;
+}
+.hangers a::before,.hangers a::after{
+  content:"";position:absolute;top:-18px;width:2px;height:18px;
+  background:repeating-linear-gradient(180deg,var(--brass) 0 2.5px,#6f5722 2.5px 6px);
+}
+.hangers a::before{left:9px}
+.hangers a::after{right:9px}
+.hangers a:hover,.hangers a:focus-visible{
+  transform:rotate(-2.2deg);color:#fff6e4;outline:none;
+  background:
+    linear-gradient(180deg,rgba(255,225,175,.16),rgba(0,0,0,.16)),
+    linear-gradient(180deg,#7c5631,#5b3a20);
+}
+.hangers a:focus-visible{border-color:var(--brass)}
+.hangers a[aria-current="page"]{
+  background:
+    linear-gradient(180deg,rgba(255,225,175,.20),rgba(0,0,0,.14)),
+    linear-gradient(180deg,#8a6038,#63431f);
+  border-color:var(--brass);color:#fff6e4;
+}
+.hangers svg{width:17px;height:17px;color:var(--brass-lit);flex:0 0 auto}
+@media(max-width:600px){
+  .hangers a .label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .hangers a{padding:10px 12px}
+  .hangers svg{width:20px;height:20px}
+}
+
+/* ═══ PAGE SCAFFOLD ══════════════════════════════════════════════ */
+.sheet{position:relative;padding:clamp(40px,6vw,72px) 0 clamp(46px,7vw,80px)}
+.sheet-title{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 6px}
+.sheet-title h1{
+  font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(24px,4vw,38px);letter-spacing:.05em;margin:0;
+}
+.sheet-lede{font-style:italic;opacity:.82;margin:0 0 30px;max-width:60ch}
+
+.back-street{
+  display:inline-block;margin-top:34px;text-decoration:none;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  opacity:.7;
+}
+.back-street:hover{opacity:1}
+
+/* ═══ HARBOUR — footer ═══════════════════════════════════════════ */
+.harbour{
+  background:linear-gradient(180deg,rgba(16,24,32,.2),rgba(10,15,20,.9)),
+             linear-gradient(180deg,#1b2b36,#0d141a);
+  color:#93a8b6;padding:44px 0 40px;
+}
+.harbour .wrap{
+  display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:baseline;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+}
+.harbour em{
+  font-family:"IM Fell English",serif;font-style:italic;text-transform:none;
+  letter-spacing:0;font-size:16px;color:#b6c8d4;
+}
+.harbour a{color:var(--brass);text-decoration:none;border-bottom:1px solid rgba(201,162,74,.35)}
+.harbour a:hover{color:var(--brass-lit)}

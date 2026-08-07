@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Waterdeep Wazoo — Chronicle of the City of Splendors</title>
-<meta name="description" content="The campaign chronicle of Waterdeep: every issue of the Wazoo, the market of ways in, and the cartographer's table.">
+<title>Waterdeep — The City of Splendours</title>
+<meta name="description" content="Waterdeep, the City of Splendours: the broadsheet, the notice board, the cartographer's table, and the way to the table itself.">
 
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="The Waterdeep Wazoo">
-<meta property="og:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
-<meta property="og:description" content="Ink still wet, truth still cheap. Every issue, the ways in, and the whole city on the cartographer's table.">
+<meta property="og:site_name" content="Waterdeep — The City of Splendours">
+<meta property="og:title" content="Waterdeep — The City of Splendours">
+<meta property="og:description" content="The broadsheet, the notice board, the chart, and the way to the table. Step off the street and pick a door.">
 <meta property="og:url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
 <meta property="og:locale" content="en_GB">
 <meta property="og:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/assets/waterdeep-panorama.jpg">
@@ -20,529 +20,137 @@
 <meta property="og:image:alt" content="Waterdeep seen from the sea: the harbour, the city walls and Mount Waterdeep">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
-<meta name="twitter:description" content="Ink still wet, truth still cheap. A chronicle of the City of Splendors.">
+<meta name="twitter:title" content="Waterdeep — The City of Splendours">
+<meta name="twitter:description" content="The broadsheet, the notice board, the chart, and the way to the table.">
 <meta name="twitter:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/assets/waterdeep-panorama.jpg">
 
-<meta name="theme-color" content="#131c24">
+<meta name="theme-color" content="#241b12">
 <link rel="canonical" href="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-
-<style>
-/* ═══════════════════════════════════════════════════════════════════
-   Palette lifted off the panorama: sea-slate, harbour blue, sun-baked
-   stone, terracotta roofs. Each section then overrides these with its
-   own material — newsprint, market timber, cartographer's vellum.
-   ═══════════════════════════════════════════════════════════════════ */
-:root{
-  --sea-deep:#16242e;
-  --sea:#2f5b6d;
-  --sea-light:#5f8fa2;
-  --mist:#c6d4de;
-  --sky:#e4ecf1;
-  --stone:#c9b79c;
-  --terracotta:#b0674a;
-  --brass:#c9a24a;
-  --night:#101820;
-}
-
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-
-body{
-  margin:0;
-  font:18px/1.7 "EB Garamond",Georgia,"Times New Roman",serif;
-  color:var(--mist);
-  background:var(--night);
-  -webkit-text-size-adjust:100%;
-}
-
-/* The panorama sits behind everything, blurred and dimmed, so the page
-   always feels like it is happening in front of the city. */
-.backdrop{
-  position:fixed;inset:0;z-index:-2;
-  background:
-    linear-gradient(180deg,rgba(16,24,32,.55),rgba(16,24,32,.86)),
-    url("assets/waterdeep-backdrop.jpg") center/cover no-repeat;
-}
-.backdrop.webp{background-image:
-    linear-gradient(180deg,rgba(16,24,32,.55),rgba(16,24,32,.86)),
-    url("assets/waterdeep-backdrop.webp");}
-
-.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
-@media(max-width:640px){.wrap{padding:0 15px}}
-
-a{color:inherit}
-
-/* ═══ HERO ═══════════════════════════════════════════════════════ */
-.hero{
-  position:relative;min-height:min(88vh,760px);
-  display:flex;align-items:flex-end;
-  overflow:hidden;
-}
-.hero picture,.hero img{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:50% 62%;
-  z-index:-1;
-}
-/* Sea haze at the top, deep water at the bottom, so the headline sits
-   on something dark enough to read against. */
-.hero::after{
-  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:
-    linear-gradient(180deg,rgba(20,32,42,.42) 0%,rgba(20,32,42,0) 30%),
-    linear-gradient(0deg,rgba(14,22,29,.94) 0%,rgba(14,22,29,.55) 30%,rgba(14,22,29,0) 62%);
-}
-.hero .wrap{position:relative;z-index:1;padding-bottom:clamp(38px,7vw,84px);width:100%}
-
-.hero .eyebrow{
-  font-family:"Cinzel",serif;font-weight:600;
-  font-size:clamp(10px,1.5vw,12px);letter-spacing:.34em;text-transform:uppercase;
-  color:#e6c97e;margin:0 0 14px;
-  /* the sky behind this is bright — it needs a real scrim, not a glow */
-  text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 18px rgba(0,0,0,.9);
-}
-@media(max-width:620px){.hero .eyebrow{letter-spacing:.2em}}
-.hero h1{
-  font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(36px,7.4vw,84px);line-height:1.02;
-  margin:0;color:#f2f6f8;
-  text-shadow:0 2px 28px rgba(0,0,0,.85),0 1px 3px rgba(0,0,0,.7);
-}
-.hero .tagline{
-  font-family:"IM Fell English",serif;font-style:italic;
-  font-size:clamp(17px,2.4vw,24px);
-  margin:16px 0 0;color:#dbe6ed;max-width:34ch;
-  text-shadow:0 1px 16px rgba(0,0,0,.85);
-}
-.hero .credit{
-  position:absolute;right:16px;bottom:8px;z-index:1;
-  font-size:11px;letter-spacing:.06em;color:rgba(220,232,240,.42);
-}
-
-.jump{
-  display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 0;padding:0;list-style:none;
-}
-.jump a{
-  display:inline-block;text-decoration:none;
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-  color:#eaf1f5;padding:9px 16px;
-  border:1px solid rgba(230,240,246,.35);
-  background:rgba(12,20,27,.42);
-  backdrop-filter:blur(3px);
-  transition:background .18s ease,border-color .18s ease,transform .18s ease;
-}
-.jump a:hover,.jump a:focus-visible{
-  background:rgba(201,162,74,.22);border-color:var(--brass);transform:translateY(-2px);outline:none;
-}
-
-/* ═══ SHARED SECTION SCAFFOLD ════════════════════════════════════ */
-.sect{position:relative;padding:clamp(46px,7vw,88px) 0}
-.sect-title{
-  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 6px;
-}
-.sect-title h2{
-  font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(21px,3.4vw,32px);letter-spacing:.06em;margin:0;
-}
-.sect-title .n{
-  font-family:"Cinzel",serif;font-weight:600;font-size:12px;letter-spacing:.16em;
-  border:1px solid currentColor;padding:4px 9px;line-height:1;opacity:.85;
-  align-self:center;
-}
-.sect-lede{font-style:italic;opacity:.82;margin:0 0 30px;max-width:60ch}
-
-/* ═══ SECTION I — THE PRESS ROOM (newsprint) ═════════════════════ */
-.press{
-  background:#efe9dc;
-  color:#1d1a15;
-}
-/* halftone: the dots you only see when you lean in */
-.press::before{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background-image:radial-gradient(circle at 1px 1px,rgba(40,34,24,.16) 1px,transparent 0);
-  background-size:4px 4px;
-}
-.press>*{position:relative}
-.press .sect-title h2{color:#171310;font-family:"IM Fell English",serif;letter-spacing:0}
-.press .sect-title .n{color:#8a6a24}
-.press .sect-lede{color:#4c4136}
-
-.press-rule{border:0;border-top:1px solid #1d1a15;border-bottom:3px double #1d1a15;height:5px;margin:0 0 26px}
-
-/* featured issue: front-page slot */
-.front{
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px;align-items:center;
-  padding:0 0 34px;border-bottom:1px solid rgba(29,26,21,.22);
-}
-@media(max-width:820px){.front{grid-template-columns:1fr;gap:20px}}
-.front .cover{display:block;position:relative}
-.front img{
-  width:100%;height:auto;display:block;
-  filter:saturate(.92) contrast(1.04);
-  box-shadow:0 14px 34px rgba(20,14,4,.36);
-  border:1px solid rgba(29,26,21,.4);
-  transition:transform .2s ease,box-shadow .2s ease;
-}
-.front .cover:hover img{transform:translateY(-3px);box-shadow:0 20px 44px rgba(20,14,4,.44)}
-.front .stamp{
-  display:inline-block;font-family:"Cinzel",serif;font-size:10px;letter-spacing:.24em;
-  text-transform:uppercase;color:#8c2f1d;border:1px solid #8c2f1d;padding:3px 10px;
-  transform:rotate(-1.4deg);margin:0 0 14px;
-}
-.front h3{
-  font-family:"IM Fell English",serif;font-size:clamp(26px,4.2vw,42px);line-height:1.08;
-  margin:0 0 10px;color:#120f0b;
-}
-.front .when{
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-  color:#6d5a3d;margin:0 0 14px;
-}
-.front .dek{margin:0 0 22px;color:#3b332a;font-size:19px}
-
-.ink-btn{
-  display:inline-block;text-decoration:none;
-  font-family:"Cinzel",serif;font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
-  color:#f3efe4;background:#1d1a15;border:1px solid #000;
-  padding:12px 22px;transition:background .18s ease,transform .18s ease;
-}
-.ink-btn:hover,.ink-btn:focus-visible{background:#3d372c;transform:translateY(-2px);outline:none}
-.ink-btn .w{opacity:.62;font-size:10px;letter-spacing:.1em}
-
-/* archive */
-.archive{list-style:none;margin:26px 0 0;padding:0}
-.archive li{border-bottom:1px solid rgba(29,26,21,.2)}
-.archive li:first-child{border-top:1px solid rgba(29,26,21,.2)}
-.archive a{
-  display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
-  text-decoration:none;color:inherit;padding:14px 8px;
-  transition:background .15s ease,padding-left .15s ease;
-}
-.archive a:hover,.archive a:focus-visible{background:rgba(140,110,50,.12);padding-left:16px;outline:none}
-.archive .no{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;color:#8a6a24;min-width:62px}
-.archive .title{font-family:"IM Fell English",serif;font-size:22px;color:#171310;flex:1;min-width:190px}
-.archive .meta{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6d5a3d}
-.archive .tag{
-  font-family:"Cinzel",serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
-  color:#efe9dc;background:#3d372c;padding:3px 9px;
-}
-.archive .tag.broadside{background:#8a6a24}
-.note{font-style:italic;color:#6d5a3d;padding:14px 8px;margin:0}
-
-/* ═══ SECTION II — THE MARKET (timber, canvas, brass) ════════════ */
-.market{
-  color:#f0e3cd;
-  padding-top:clamp(78px,9vw,116px); /* clear the awning */
-  background:
-    linear-gradient(180deg,rgba(20,13,7,.5),rgba(20,13,7,.72)),
-    repeating-linear-gradient(90deg,#3a2416 0 62px,#432b19 62px 124px);
-}
-/* the awning: canvas stripes hanging over the stalls */
-/* awning body */
-.market::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:34px;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.26),rgba(255,255,255,.10) 55%,rgba(0,0,0,.18)),
-    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
-}
-/* scalloped valance hanging off it — same stripes, masked into half-discs */
-.market::after{
-  content:"";position:absolute;top:34px;left:0;right:0;height:13px;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.34)),
-    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
-  -webkit-mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
-  mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
-  -webkit-mask-size:22px 13px;mask-size:22px 13px;
-  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;
-  filter:drop-shadow(0 5px 7px rgba(0,0,0,.5));
-}
-.market>*{position:relative}
-.market .sect-title h2{color:#f6ead2}
-.market .sect-title .n{color:var(--brass)}
-.market .sect-lede{color:#d4c1a0}
-
-.stalls{display:grid;grid-template-columns:repeat(2,1fr);gap:52px 26px;margin-top:52px}
-@media(max-width:720px){.stalls{grid-template-columns:1fr;gap:58px}}
-
-/* each stall is a painted board hung on two chains from its own beam */
-.stall{
-  position:relative;display:block;text-decoration:none;color:inherit;
-  margin-top:32px;
-  background:linear-gradient(180deg,#7a5230,#5b3a20 55%,#4a2e18);
-  border:2px solid #2a1a0d;
-  border-radius:3px;
-  padding:26px 26px 22px;
-  box-shadow:0 16px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
-  transform-origin:top center;
-  transition:transform .25s ease,box-shadow .25s ease;
-}
-.stall:hover,.stall:focus-visible{transform:rotate(-.7deg) translateY(3px);box-shadow:0 22px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.22);outline:none}
-.stall:focus-visible{border-color:var(--brass)}
-/* the two chains */
-.stall::before,.stall::after{
-  content:"";position:absolute;top:-24px;width:3px;height:24px;
-  background:repeating-linear-gradient(180deg,#c9a24a 0 3px,#6f5722 3px 7px);
-}
-.stall::before{left:28px}
-.stall::after{right:28px}
-
-/* the beam the chains hang off */
-.stall .beam{
-  position:absolute;top:-32px;left:-10px;right:-10px;height:11px;
-  background:linear-gradient(180deg,#8a6038,#5c3c1f 60%,#3c2612);
-  border:1px solid #241608;border-radius:2px;
-  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,220,170,.18);
-}
-.stall .ring{
-  position:absolute;top:-28px;width:10px;height:10px;
-  border:2px solid #c9a24a;border-radius:50%;background:transparent;
-}
-.stall .ring.l{left:24px}
-.stall .ring.r{right:24px}
-
-.stall .trade{
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.26em;text-transform:uppercase;
-  color:var(--brass);display:block;margin:0 0 8px;
-}
-.stall h3{
-  font-family:"Cinzel",serif;font-weight:700;font-size:23px;letter-spacing:.03em;
-  margin:0 0 10px;color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.6);
-}
-.stall p{margin:0;color:#dcc9a8;font-size:17px;line-height:1.55}
-.stall .out{
-  display:inline-block;margin-top:16px;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:#e6c97e;border-bottom:1px solid rgba(230,201,126,.42);padding-bottom:2px;
-}
-
-/* ═══ SECTION III — THE CARTOGRAPHER'S TABLE (vellum) ════════════ */
-.cartographer{
-  color:#3a2f1e;
-  background:
-    /* survey grid, faint */
-    repeating-linear-gradient(0deg,rgba(120,92,48,.10) 0 1px,transparent 1px 44px),
-    repeating-linear-gradient(90deg,rgba(120,92,48,.10) 0 1px,transparent 1px 44px),
-    radial-gradient(130% 90% at 15% 0%,rgba(255,250,232,.9),transparent 55%),
-    linear-gradient(160deg,#efe3c4,#e2d2ac 55%,#cfba90);
-}
-.cartographer>*{position:relative}
-.cartographer .sect-title h2{color:#2f2513}
-.cartographer .sect-title .n{color:#8a6a24}
-.cartographer .sect-lede{color:#5c4b30}
-
-/* tick marks down the left edge, like a chart border */
-.cartographer::before{
-  content:"";position:absolute;top:0;bottom:0;left:0;width:14px;
-  background:repeating-linear-gradient(180deg,#6b5427 0 1px,transparent 1px 12px);
-  opacity:.5;
-}
-
-.map-head{display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap;justify-content:space-between}
-.rose{flex:0 0 auto;opacity:.8}
-/* stacked, the rose would leave a hole between the lede and the chart */
-@media(max-width:720px){
-  .map-head{gap:0}
-  .map-head .sect-lede{margin-bottom:0}
-  .rose{width:52px;height:52px;margin:-14px 0 0 auto}
-}
-
-.map-frame{
-  margin-top:26px;position:relative;
-  border:1px solid #6b5427;
-  padding:10px;
-  background:linear-gradient(180deg,rgba(255,250,232,.7),rgba(190,168,124,.35));
-  box-shadow:0 18px 40px rgba(60,44,18,.32),inset 0 0 0 1px rgba(255,255,255,.35);
-}
-/* brass corner pins holding the chart to the table */
-.map-frame .pin{
-  position:absolute;width:11px;height:11px;border-radius:50%;
-  background:radial-gradient(circle at 34% 30%,#e8cd83,#8a6a24 70%);
-  box-shadow:0 1px 3px rgba(0,0,0,.45);
-}
-.map-frame .pin.tl{top:-5px;left:-5px}
-.map-frame .pin.tr{top:-5px;right:-5px}
-.map-frame .pin.bl{bottom:-5px;left:-5px}
-.map-frame .pin.br{bottom:-5px;right:-5px}
-
-.map-live{position:relative}
-.map-live iframe{
-  display:block;width:100%;height:min(72vh,660px);border:0;background:#e8dcc0;
-  /* Leaflet swallows wheel and touch, so a reader scrolling past the
-     section would pan the map instead of the page. The chart stays inert
-     until it is deliberately woken. */
-  pointer-events:none;
-}
-@media(max-width:640px){.map-live iframe{height:62vh}}
-.map-live.live iframe{pointer-events:auto}
-
-.map-veil{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:6px;
-  font-family:inherit;cursor:pointer;
-  border:0;width:100%;
-  background:linear-gradient(180deg,rgba(38,28,10,.34),rgba(38,28,10,.52));
-  color:#f6ecd4;text-align:center;padding:20px;
-  transition:background .2s ease;
-}
-.map-veil:hover,.map-veil:focus-visible{background:linear-gradient(180deg,rgba(38,28,10,.24),rgba(38,28,10,.42));outline:none}
-.map-veil:focus-visible{box-shadow:inset 0 0 0 3px var(--brass)}
-.map-veil b{
-  font-family:"Cinzel",serif;font-weight:700;font-size:clamp(13px,2.4vw,17px);
-  letter-spacing:.16em;text-transform:uppercase;
-  text-shadow:0 2px 14px rgba(0,0,0,.8);
-}
-.map-veil small{
-  font-size:14px;font-style:italic;color:#e0d0ad;max-width:34ch;
-  text-shadow:0 1px 10px rgba(0,0,0,.8);
-}
-.map-live.live .map-veil{display:none}
-
-.map-release{
-  display:none;margin-top:10px;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:#7a5c1c;background:none;border:1px solid rgba(122,92,28,.5);
-  padding:7px 13px;cursor:pointer;
-}
-.map-release:hover{background:rgba(122,92,28,.12)}
-.map-live.live+.map-release{display:inline-block}
-
-.map-foot{
-  display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:space-between;align-items:baseline;
-  margin-top:14px;font-size:15px;color:#5c4b30;
-}
-.map-foot a{color:#7a5c1c}
-.map-foot .out{
-  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  text-decoration:none;border-bottom:1px solid rgba(122,92,28,.45);padding-bottom:2px;
-}
-
-/* ═══ FOOTER — back out to the harbour at night ══════════════════ */
-.harbour{
-  background:linear-gradient(180deg,rgba(16,24,32,.2),rgba(10,15,20,.9)),
-             linear-gradient(180deg,#1b2b36,#0d141a);
-  color:#93a8b6;padding:44px 0 40px;
-}
-.harbour .wrap{
-  display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:space-between;align-items:baseline;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-}
-.harbour em{font-family:"IM Fell English",serif;font-style:italic;text-transform:none;letter-spacing:0;font-size:16px;color:#b6c8d4}
-.harbour a{color:var(--brass);text-decoration:none;border-bottom:1px solid rgba(201,162,74,.35)}
-.harbour a:hover{color:#e6c97e}
-</style>
+<link rel="stylesheet" href="assets/wazoo.css">
 </head>
 <body>
 
 <div class="backdrop" id="backdrop"></div>
 
-<!-- ══ HERO ═══════════════════════════════════════════════════════ -->
+<!-- ══ the signs, drawn once and used on every page ═══════════════ -->
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-press" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 6h20M24 6v7"/><circle cx="24" cy="15.5" r="2.6"/><path d="M24 18v4"/>
+    <rect x="11" y="22" width="26" height="6" rx="1"/>
+    <path d="M13 28v10M35 28v10"/><path d="M9 38h30"/><path d="M17 31h14M17 34.5h9"/>
+  </symbol>
+  <symbol id="i-compass" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="10.5" stroke-dasharray="2 3.5"/>
+    <path d="M24 5.5 27.5 21 24 24.5 20.5 21z" fill="currentColor" stroke="none"/>
+    <path d="M24 42.5 20.5 27 24 23.5 27.5 27z"/><path d="M42.5 24 27 27.5 23.5 24 27 20.5z"/>
+    <path d="M5.5 24 21 20.5 24.5 24 21 27.5z"/>
+  </symbol>
+  <symbol id="i-notice" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 10h26v22H11z"/><circle cx="24" cy="14" r="1.6" fill="currentColor" stroke="none"/>
+    <path d="M16 20h16M16 25h11"/><path d="M14 32v7M20 32v7M26 32v7M32 32v7"/><path d="M11 32h26"/>
+  </symbol>
+  <symbol id="i-ledger" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 14c-4-3-8-4-13-4v25c5 0 9 1 13 4 4-3 8-4 13-4V10c-5 0-9 1-13 4z"/>
+    <path d="M24 14v25"/><path d="M29 10v11l3-2 3 2V10"/>
+  </symbol>
+  <symbol id="i-d20" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 5 41 15v20L24 45 7 35V15z"/><path d="M24 5 14 20h20L24 5z"/>
+    <path d="M14 20 7 15M34 20l7-5"/><path d="M14 20l10 25 10-25"/><path d="M14 20 7 35M34 20l7 15"/>
+  </symbol>
+  <symbol id="i-map" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 13l12-5 12 5 12-5v27l-12 5-12-5-12 5z"/><path d="M18 8v27M30 13v27"/>
+    <path d="M11 27c4-4 5-9 10-9s6 6 11 3" stroke-dasharray="2.5 3"/>
+  </symbol>
+</svg>
+
+<!-- ══ THE PROSPECT — the city from the sea ═══════════════════════ -->
 <header class="hero">
   <picture>
     <source srcset="assets/waterdeep-panorama.webp" type="image/webp">
     <img src="assets/waterdeep-panorama.jpg" alt="Waterdeep seen from the sea: the harbour crowded with ships, the city climbing to Mount Waterdeep" fetchpriority="high">
   </picture>
   <div class="wrap">
-    <p class="eyebrow">City of Splendors &middot; Year of Three Ships Sailing, 1492 DR</p>
-    <h1>The Waterdeep&nbsp;Wazoo</h1>
-    <p class="tagline">Ink still wet, truth still cheap &mdash; a running chronicle of the city, its news and its jobs.</p>
-    <ul class="jump">
-      <li><a href="#press">The Press Room</a></li>
-      <li><a href="#market">The Market</a></li>
-      <li><a href="#atlas">The Cartographer</a></li>
-    </ul>
+    <p class="above">Year of Three Ships Sailing &middot; 1492 DR</p>
+    <h1>Waterdeep</h1>
+    <p class="splendours">The City of Splendours</p>
+    <div class="rule"></div>
   </div>
 </header>
 
-<!-- ══ I. THE PRESS ROOM ══════════════════════════════════════════ -->
-<section class="sect press" id="press">
+<!-- ══ THE STREET — the shops along it ════════════════════════════ -->
+<section class="street frontage awning">
   <div class="wrap">
-    <div class="sect-title"><span class="n">I</span><h2>The Press Room</h2></div>
-    <p class="sect-lede">What the presses have run. The current issue first, then everything that came before it.</p>
-    <hr class="press-rule">
 
-    <article class="front" id="front">
-      <p class="note" id="front-note">Setting the type&hellip;</p>
-    </article>
+    <div class="street-intro">
+      <p class="here">Off the ship, into the street</p>
+      <p class="blurb">Half a million souls, and not one of them minding their own business. Every door along here is open.</p>
+    </div>
 
-    <ul class="archive" id="archive"></ul>
-  </div>
-</section>
+    <nav class="shops" aria-label="Places along the street">
 
-<!-- ══ II. THE MARKET ═════════════════════════════════════════════ -->
-<section class="sect market" id="market">
-  <div class="wrap">
-    <div class="sect-title"><span class="n">II</span><h2>The Market</h2></div>
-    <p class="sect-lede">Every stall points somewhere else. Ask at the boards; the traders keep their ledgers on D&amp;D&nbsp;Beyond.</p>
-
-    <div class="stalls">
-      <a class="stall" href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener">
+      <a class="shop" href="press-room.html">
         <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-press"/></svg>
+        <span class="trade">The Print Room</span>
+        <h2>The Waterdeep Wazoo</h2>
+        <p>The city&rsquo;s broadsheet. Ink still wet, truth still cheap.</p>
+        <span class="go"><span>Read the paper &rarr;</span></span>
+      </a>
+
+      <a class="shop" href="cartographer.html">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-compass"/></svg>
+        <span class="trade">The Chart House</span>
+        <h2>The Cartographer</h2>
+        <p>The whole city on the table &mdash; drag it, zoom it, name a street.</p>
+        <span class="go"><span>Unroll it &rarr;</span></span>
+      </a>
+
+      <a class="shop" href="The-Notice-Board.html">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-notice"/></svg>
+        <span class="trade">The Yawning Portal</span>
+        <h2>The Notice Board</h2>
+        <p>Work going in Waterdeep. First tag taken, first served.</p>
+        <span class="go"><span>Read the postings &rarr;</span></span>
+      </a>
+
+      <a class="shop" href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-ledger"/></svg>
         <span class="trade">The Registry</span>
-        <h3>The Campaign</h3>
-        <p>The roll of adventurers &mdash; sheets, levels, inventories and sins. Signing in is required; the clerk does not gossip.</p>
-        <span class="out">dndbeyond.com &#8599;</span>
+        <h2>The Campaign</h2>
+        <p>The roll of adventurers &mdash; sheets, levels and inventories.</p>
+        <span class="go"><span>dndbeyond.com &#8599;</span></span>
       </a>
 
-      <a class="stall" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
+      <a class="shop" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
         <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-d20"/></svg>
         <span class="trade">The Gaming House</span>
-        <h3>The Game Table</h3>
-        <p>Where the dice actually fall. Maps, tokens and initiative, live while the session runs.</p>
-        <span class="out">dndbeyond.com &#8599;</span>
+        <h2>The Game Table</h2>
+        <p>Where the dice fall. Maps and initiative, live at the table.</p>
+        <span class="go"><span>dndbeyond.com &#8599;</span></span>
       </a>
-    </div>
+
+      <a class="shop" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">
+        <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
+        <svg class="logo" aria-hidden="true"><use href="#i-map"/></svg>
+        <span class="trade">Aidedd&rsquo;s Stall</span>
+        <h2>The Atlas, Full Size</h2>
+        <p>The same chart on its own table, with the room to spread out.</p>
+        <span class="go"><span>aidedd.org &#8599;</span></span>
+      </a>
+
+    </nav>
   </div>
+  <div class="cobbles" aria-hidden="true"></div>
 </section>
 
-<!-- ══ III. THE CARTOGRAPHER'S TABLE ══════════════════════════════ -->
-<section class="sect cartographer" id="atlas">
-  <div class="wrap">
-    <div class="map-head">
-      <div>
-        <div class="sect-title"><span class="n">III</span><h2>The Cartographer&rsquo;s Table</h2></div>
-        <p class="sect-lede">The whole city, ward by ward. Drag it, zoom it, click a building to find out whose it is.</p>
-      </div>
-      <svg class="rose" width="76" height="76" viewBox="0 0 100 100" aria-hidden="true">
-        <g fill="none" stroke="#6b5427" stroke-width="1.2">
-          <circle cx="50" cy="50" r="34"/><circle cx="50" cy="50" r="26" stroke-dasharray="2 4"/>
-        </g>
-        <path d="M50 8 L57 46 L50 52 L43 46 Z" fill="#8a6a24"/>
-        <path d="M50 92 L43 54 L50 48 L57 54 Z" fill="#6b5427" opacity=".55"/>
-        <path d="M92 50 L54 57 L48 50 L54 43 Z" fill="#6b5427" opacity=".55"/>
-        <path d="M8 50 L46 43 L52 50 L46 57 Z" fill="#6b5427" opacity=".55"/>
-        <text x="50" y="7" text-anchor="middle" font-family="Cinzel,serif" font-size="11" fill="#5c4b30">N</text>
-      </svg>
-    </div>
-
-    <div class="map-frame">
-      <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
-      <div class="map-live" id="map-live">
-        <iframe
-          src="https://www.aidedd.org/atlas/waterdeep"
-          title="Interactive atlas of Waterdeep, hosted by aidedd.org"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <button class="map-veil" type="button" id="map-veil">
-          <b>Unroll the chart</b>
-          <small>It takes over scrolling while it is live &mdash; tap anywhere off the chart to roll it up again.</small>
-        </button>
-      </div>
-      <button class="map-release" type="button" id="map-release">Roll the chart up</button>
-    </div>
-
-    <p class="map-foot">
-      <span>Chart drawn and hosted by <a href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">aidedd.org</a> &mdash; loaded straight from their table.</span>
-      <a class="out" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">Open full size &#8599;</a>
-    </p>
-  </div>
-</section>
-
-<!-- ══ HARBOUR ════════════════════════════════════════════════════ -->
 <footer class="harbour">
   <div class="wrap">
     <span>Set in Cinzel, EB Garamond &amp; IM Fell English</span>
@@ -551,209 +159,6 @@ a{color:inherit}
   </div>
 </footer>
 
-<script>
-/* ────────────────────────────────────────────────────────────────
-   The press room fills itself from whatever lives in the repository.
-
-   Publishing a new issue is: commit The-Waterdeep-Wazoo-<month>-<day>-<year>.html.
-   Optionally commit a matching .json beside it for the front-page slot:
-
-     { "headline": "...", "dek": "...", "cover": "some-image.jpg" }
-
-   With no .json the issue still lists and still leads; it just runs
-   under its own date instead of a headline. This file never needs
-   editing to publish.
-
-   GitHub's contents API sends Access-Control-Allow-Origin: *, so a
-   static Pages site can call it. Unauthenticated callers get
-   60 requests/hour/IP, hence the sessionStorage cache.
-   ──────────────────────────────────────────────────────────────── */
-(function () {
-  var REPO  = 'evolJoaoBento/PortugalDMWaterdeepWazoo';
-  var RAW   = 'https://raw.githubusercontent.com/' + REPO + '/main/';
-  var CACHE = 'wazoo-files-v2';
-
-  // Machinery, not reading matter.
-  var HIDDEN = ['index.html', 'editor.html', 'job-board-ddb.html'];
-
-  var MONTHS = ['hammer','alturiak','ches','tarsakh','mirtul','kythorn','flamerule',
-                'eleasis','eleint','marpenoth','uktar','nightal'];
-
-  // Used when GitHub is unreachable or rate-limited.
-  var FALLBACK = [
-    { name: 'The-Waterdeep-Wazoo-flamerule-8-1492.html', size: 37486613 },
-    { name: 'The-Waterdeep-Wazoo-flamerule-8-1492.json', size: 300 },
-    { name: 'The-Notice-Board.html', size: 12000 }
-  ];
-
-  var frontEl  = document.getElementById('front');
-  var noteEl   = document.getElementById('front-note');
-  var listEl   = document.getElementById('archive');
-
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
-  function titleCase(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-  function describe(file) {
-    var stem = file.name.replace(/\.html$/i, '');
-    var m = stem.match(/^The-Waterdeep-Wazoo-([a-z]+)-(\d+)-(\d+)$/i);
-
-    if (m) {
-      var month = m[1].toLowerCase(), day = +m[2], year = +m[3];
-      var mi = MONTHS.indexOf(month);
-      return {
-        stem: stem, href: file.name, size: file.size, issue: true,
-        title: 'The Waterdeep Wazoo',
-        when: titleCase(month) + ' ' + day + ', ' + year + ' DR',
-        sort: year * 10000 + (mi < 0 ? 0 : mi + 1) * 100 + day
-      };
-    }
-    return {
-      stem: stem, href: file.name, size: file.size, issue: false,
-      title: stem.replace(/[-_]+/g, ' '),
-      when: '', sort: 0
-    };
-  }
-
-  function weigh(bytes) {
-    if (!bytes || bytes < 1048576) return '';
-    return Math.round(bytes / 1048576) + ' MB';
-  }
-
-  function renderFront(it, meta) {
-    var cover = (meta && meta.cover) || 'preview.jpg';
-    var head  = (meta && meta.headline) || it.title;
-    var dek   = (meta && meta.dek) ||
-                'The city as it stood that day, printed while the ink was still an argument.';
-
-    frontEl.innerHTML =
-      '<a class="cover" href="' + encodeURI(it.href) + '">' +
-        '<img src="' + encodeURI(cover) + '" alt="Front page of the ' + esc(it.when) + ' issue">' +
-      '</a>' +
-      '<div>' +
-        '<span class="stamp">Current issue</span>' +
-        '<h3>' + esc(head) + '</h3>' +
-        '<p class="when">' + esc(it.when) + '</p>' +
-        '<p class="dek">' + esc(dek) + '</p>' +
-        '<a class="ink-btn" href="' + encodeURI(it.href) + '">Read the issue' +
-          (weigh(it.size) ? ' <span class="w">&mdash; ' + weigh(it.size) + ', best on wifi</span>' : '') +
-        '</a>' +
-      '</div>';
-  }
-
-  function renderArchive(items) {
-    listEl.innerHTML = '';
-    if (!items.length) {
-      listEl.innerHTML = '<li><p class="note">The presses have not run yet.</p></li>';
-      return;
-    }
-    var issuesLeft = items.filter(function (i) { return i.issue; }).length;
-
-    items.forEach(function (it) {
-      var no = it.issue ? 'No. ' + issuesLeft-- : '&mdash;';
-      var li = document.createElement('li');
-      li.innerHTML =
-        '<a href="' + encodeURI(it.href) + '">' +
-          '<span class="no">' + no + '</span>' +
-          '<span class="title">' + esc(it.title) + '</span>' +
-          (it.when ? '<span class="meta">' + esc(it.when) + '</span>' : '') +
-          (weigh(it.size) ? '<span class="meta">' + weigh(it.size) + '</span>' : '') +
-          '<span class="tag' + (it.issue ? '' : ' broadside') + '">' +
-            (it.issue ? 'Issue' : 'Broadside') +
-          '</span>' +
-        '</a>';
-      listEl.appendChild(li);
-    });
-  }
-
-  function build(files) {
-    var names = {};
-    files.forEach(function (f) { names[f.name.toLowerCase()] = true; });
-
-    var items = files
-      .filter(function (f) {
-        return /\.html$/i.test(f.name) && HIDDEN.indexOf(f.name.toLowerCase()) === -1;
-      })
-      .map(describe)
-      .sort(function (a, b) { return b.sort - a.sort; });
-
-    renderArchive(items);
-
-    var lead = items.filter(function (i) { return i.issue; })[0];
-    if (!lead) {
-      frontEl.innerHTML = '<p class="note">No issue on the stand today.</p>';
-      return;
-    }
-
-    // Optional per-issue metadata sitting beside the issue.
-    if (names[(lead.stem + '.json').toLowerCase()]) {
-      fetch(RAW + encodeURIComponent(lead.stem) + '.json')
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (meta) { renderFront(lead, meta); })
-        .catch(function () { renderFront(lead, null); });
-    } else {
-      renderFront(lead, null);
-    }
-  }
-
-  try {
-    var cached = sessionStorage.getItem(CACHE);
-    if (cached) { build(JSON.parse(cached)); return; }
-  } catch (e) { /* private mode: carry on uncached */ }
-
-  fetch('https://api.github.com/repos/' + REPO + '/contents/', {
-    headers: { 'Accept': 'application/vnd.github+json' }
-  })
-    .then(function (r) {
-      if (!r.ok) throw new Error('GitHub said ' + r.status);
-      return r.json();
-    })
-    .then(function (data) {
-      if (!Array.isArray(data)) throw new Error('unexpected payload');
-      var slim = data.map(function (f) { return { name: f.name, size: f.size }; });
-      try { sessionStorage.setItem(CACHE, JSON.stringify(slim)); } catch (e) {}
-      build(slim);
-    })
-    .catch(function () { build(FALLBACK); });
-})();
-
-/* The chart is inert until woken, so scrolling past the section does not
-   get eaten by Leaflet. Waking it is one tap; any tap off it rolls it up. */
-(function () {
-  var live    = document.getElementById('map-live');
-  var veil    = document.getElementById('map-veil');
-  var release = document.getElementById('map-release');
-  if (!live || !veil || !release) return;
-
-  function open()  { live.classList.add('live'); }
-  function close() { live.classList.remove('live'); }
-
-  veil.addEventListener('click', open);
-  release.addEventListener('click', close);
-
-  // A tap outside rolls it up. The iframe eats its own clicks, so this
-  // only ever fires for the page around it.
-  document.addEventListener('click', function (e) {
-    if (!live.contains(e.target) && e.target !== release) close();
-  });
-  // Escape works too, for anyone driving by keyboard.
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') close();
-  });
-})();
-
-/* Serve the backdrop as WebP where it is supported — 4 KB against 10 KB.
-   Trivial on its own, but it is a fixed layer behind every scroll. */
-(function () {
-  var probe = new Image();
-  probe.onload = function () {
-    if (probe.width > 0) document.getElementById('backdrop').classList.add('webp');
-  };
-  probe.src = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
-})();
-</script>
+<script src="assets/backdrop.js"></script>
 </body>
 </html>

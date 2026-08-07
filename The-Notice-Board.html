@@ -3,90 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Notice Board — The Yawning Portal, Castle Ward</title>
+<title>The Notice Board — Waterdeep</title>
 <meta name="description" content="Work going in Waterdeep. Nailed, pinned and wax-sealed at the Yawning Portal — tear off a tag to claim a job.">
 
 <meta property="og:type" content="article">
-<meta property="og:site_name" content="The Waterdeep Wazoo">
+<meta property="og:site_name" content="Waterdeep — The City of Splendours">
 <meta property="og:title" content="The Notice Board — The Yawning Portal">
 <meta property="og:description" content="Work going in Waterdeep. First tag taken, first served — the Watch does not adjudicate disputes over parchment.">
 <meta property="og:url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/The-Notice-Board.html">
 <meta property="og:locale" content="en_GB">
 <meta property="og:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
-<meta name="theme-color" content="#0e0b06">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
+<meta name="theme-color" content="#2a1a0d">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css">
 
 <style>
-:root{
-  --ink:#241a0e;
-  --ink-soft:#4a3a24;
-  --ink-faint:#6d5a3d;
-  --gold:#8a6a24;
-  --rule:#4a3c26;
-  --dark:#0e0b06;
-  --paper:#e9dcbe;
-  --paper-hi:#f4ead2;
-  --paper-lo:#d9c69f;
-  --wax:#8c2f1d;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--dark)}
-body{
-  font:17px/1.62 "EB Garamond",Georgia,"Times New Roman",serif;color:var(--ink);
-  padding:26px 16px 60px;display:flex;justify-content:center;
-  -webkit-text-size-adjust:100%;
-}
-@media(max-width:720px){body{padding:10px 6px 34px}}
-
+/* ═══ PARCHMENT ON CORK — this page's material ═══════════════════ */
 .board{
-  width:100%;max-width:900px;position:relative;isolation:isolate;
+  color:#241a0e;
   background:
-    radial-gradient(120% 80% at 12% 0%,rgba(255,255,255,.42),transparent 55%),
-    linear-gradient(180deg,var(--paper-hi),var(--paper) 40%,var(--paper-lo));
-  box-shadow:0 22px 60px rgba(0,0,0,.72),0 0 0 1px rgba(60,44,20,.55);
-  padding:34px 40px 46px;
+    radial-gradient(120% 80% at 12% 0%,rgba(255,255,255,.32),transparent 55%),
+    linear-gradient(180deg,#f4ead2,#e9dcbe 40%,#d9c69f);
 }
-@media(max-width:720px){.board{padding:20px 16px 30px}}
 .board::before{
-  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  opacity:.30;mix-blend-mode:multiply;
+  content:"";position:absolute;inset:0;pointer-events:none;
+  opacity:.28;mix-blend-mode:multiply;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.5'/></svg>");
 }
-.board::after{
-  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  box-shadow:inset 0 0 90px rgba(90,62,22,.45),inset 0 0 22px rgba(60,38,10,.35);
-}
+.board>*{position:relative}
+.board .back-street{color:#6d5a3d}
 
-.back{
-  display:inline-block;margin:0 0 22px;text-decoration:none;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--gold);border-bottom:1px solid rgba(138,106,36,.4);
-}
-.back:hover{color:#5f470f}
-
-header.top{text-align:center;margin:0 0 30px}
-header.top hr{border:0;border-top:3px double var(--rule);margin:0 0 14px}
-header.top hr.b{margin:14px 0 0}
-header.top h1{
-  font-family:"IM Fell English",serif;font-size:clamp(30px,6.4vw,58px);line-height:1;
+.board-head{text-align:center;margin:0 0 34px}
+.board-head hr{border:0;border-top:3px double #4a3c26;margin:0 0 14px}
+.board-head hr.b{margin:14px 0 0}
+.board-head h1{
+  font-family:"IM Fell English",serif;font-size:clamp(30px,6.4vw,54px);line-height:1;
   margin:0;color:#1c1408;text-shadow:0 1px 0 rgba(255,255,255,.35);
 }
-header.top .where{
+.board-head .where{
   font-family:"Cinzel",serif;font-weight:600;font-size:clamp(10px,1.8vw,12px);
-  letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin:12px 0 0;
+  letter-spacing:.3em;text-transform:uppercase;color:#8a6a24;margin:12px 0 0;
 }
-header.top .rubric{
-  font-family:"IM Fell English",serif;font-style:italic;color:var(--ink-faint);
+.board-head .rubric{
+  font-family:"IM Fell English",serif;font-style:italic;color:#6d5a3d;
   max-width:52ch;margin:14px auto 0;font-size:16px;
 }
 
 .job{
   border:1px solid rgba(74,60,38,.5);
   background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(160,124,64,.10));
-  padding:22px 24px 20px;margin:0 0 22px;position:relative;
+  padding:22px 24px 20px;margin:0 0 26px;position:relative;
 }
 @media(max-width:720px){.job{padding:16px}}
 /* the nail */
@@ -101,20 +72,27 @@ header.top .rubric{
   margin:6px 0 14px;color:#1c1408;
 }
 .job .no{
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--gold);
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#8a6a24;
 }
 dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0 0 16px}
 @media(max-width:560px){dl{grid-template-columns:1fr;gap:2px}dl dd{margin-bottom:8px}}
 dt{
   font-family:"Cinzel",serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--ink-faint);padding-top:4px;
+  color:#6d5a3d;padding-top:4px;
 }
-dd{margin:0;color:var(--ink-soft)}
+dd{margin:0;color:#4a3a24}
 
 blockquote{
   margin:0;padding:10px 0 0 18px;border-left:3px solid rgba(140,47,29,.55);
   font-family:"IM Fell English",serif;font-style:italic;font-size:18px;color:#3a2c18;
+}
+
+/* shown while nothing is nailed up */
+.board-empty{
+  margin:0;padding:34px 24px;text-align:center;
+  font-family:"IM Fell English",serif;font-style:italic;font-size:18px;color:#6d5a3d;
+  border:1px dashed rgba(74,60,38,.45);
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(160,124,64,.05));
 }
 
 .rules{
@@ -126,94 +104,133 @@ blockquote{
   font-family:"Cinzel",serif;font-weight:700;font-size:14px;letter-spacing:.22em;
   text-transform:uppercase;margin:0 0 12px;color:#2b1f10;
 }
-.rules p.small{font-style:italic;color:var(--ink-faint);margin:0 0 12px}
-.rules ol{margin:0;padding-left:22px;color:var(--ink-soft)}
+.rules p.small{font-style:italic;color:#6d5a3d;margin:0 0 12px}
+.rules ol{margin:0;padding-left:22px;color:#4a3a24}
 .rules li{margin:0 0 6px}
 
-.foot{
-  margin:36px 0 0;padding-top:16px;border-top:3px double var(--rule);text-align:center;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-faint);
+.board-foot{
+  margin:32px 0 0;padding-top:16px;border-top:3px double #4a3c26;text-align:center;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#6d5a3d;
 }
-.foot a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(138,106,36,.4)}
-.foot a:hover{color:#5f470f}
+.board-foot a{color:#8a6a24;text-decoration:none;border-bottom:1px solid rgba(138,106,36,.4)}
+.board-foot a:hover{color:#5f470f}
 </style>
 </head>
 <body>
-<main class="board">
 
-  <a class="back" href="./">&larr; Back to the Wazoo</a>
+<div class="backdrop" id="backdrop"></div>
 
-  <header class="top">
-    <hr>
-    <h1>The Notice Board</h1>
-    <p class="where">The Yawning Portal &middot; Castle Ward</p>
-    <p class="rubric">Nailed, pinned and wax-sealed. Tear off the tag to claim a job. First tag taken, first served &mdash; the Watch does not adjudicate disputes over parchment.</p>
-    <hr class="b">
-  </header>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-press" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 6h20M24 6v7"/><circle cx="24" cy="15.5" r="2.6"/><path d="M24 18v4"/>
+    <rect x="11" y="22" width="26" height="6" rx="1"/>
+    <path d="M13 28v10M35 28v10"/><path d="M9 38h30"/><path d="M17 31h14M17 34.5h9"/>
+  </symbol>
+  <symbol id="i-compass" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="10.5" stroke-dasharray="2 3.5"/>
+    <path d="M24 5.5 27.5 21 24 24.5 20.5 21z" fill="currentColor" stroke="none"/>
+    <path d="M24 42.5 20.5 27 24 23.5 27.5 27z"/><path d="M42.5 24 27 27.5 23.5 24 27 20.5z"/>
+    <path d="M5.5 24 21 20.5 24.5 24 21 27.5z"/>
+  </symbol>
+  <symbol id="i-notice" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 10h26v22H11z"/><circle cx="24" cy="14" r="1.6" fill="currentColor" stroke="none"/>
+    <path d="M16 20h16M16 25h11"/><path d="M14 32v7M20 32v7M26 32v7M32 32v7"/><path d="M11 32h26"/>
+  </symbol>
+  <symbol id="i-ledger" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 14c-4-3-8-4-13-4v25c5 0 9 1 13 4 4-3 8-4 13-4V10c-5 0-9 1-13 4z"/>
+    <path d="M24 14v25"/><path d="M29 10v11l3-2 3 2V10"/>
+  </symbol>
+  <symbol id="i-d20" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 5 41 15v20L24 45 7 35V15z"/><path d="M24 5 14 20h20L24 5z"/>
+    <path d="M14 20 7 15M34 20l7-5"/><path d="M14 20l10 25 10-25"/><path d="M14 20 7 35M34 20l7 15"/>
+  </symbol>
+  <symbol id="i-map" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 13l12-5 12 5 12-5v27l-12 5-12-5-12 5z"/><path d="M18 8v27M30 13v27"/>
+    <path d="M11 27c4-4 5-9 10-9s6 6 11 3" stroke-dasharray="2.5 3"/>
+  </symbol>
+</svg>
 
-  <article class="job">
-    <span class="no">Posting the First</span>
-    <h2>Rats the Size of Dogs</h2>
-    <dl>
-      <dt>Patron</dt><dd>Ulmo Larkspur, cellarer, Trades Ward</dd>
-      <dt>Pay</dt><dd>30 gp, split as you like</dd>
-      <dt>Where</dt><dd>Cellars beneath Larkspur&rsquo;s warehouse, off Coach Street</dd>
-      <dt>Ask for</dt><dd>Ulmo, mornings, at the Bent Nail</dd>
-    </dl>
-    <blockquote>&ldquo;They took the cat. Then they took the boy who went looking for the cat. Bring back the boy.&rdquo;</blockquote>
-  </article>
+<header class="parade">
+  <div class="wrap inner">
+    <a class="plate" href="./">
+      <span class="city">Waterdeep</span>
+      <span class="sub">The City of Splendours</span>
+    </a>
+    <nav class="hangers" aria-label="Places along the street">
+      <span class="canopy" aria-hidden="true"></span>
+      <a href="press-room.html"><svg aria-hidden="true"><use href="#i-press"/></svg><span class="label">The Wazoo</span></a>
+      <a href="cartographer.html"><svg aria-hidden="true"><use href="#i-compass"/></svg><span class="label">Cartographer</span></a>
+      <a href="The-Notice-Board.html" aria-current="page"><svg aria-hidden="true"><use href="#i-notice"/></svg><span class="label">Notice Board</span></a>
+      <a href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-ledger"/></svg><span class="label">Campaign &#8599;</span></a>
+      <a href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-d20"/></svg><span class="label">Game Table &#8599;</span></a>
+    </nav>
+  </div>
+</header>
 
-  <article class="job">
-    <span class="no">Posting the Second</span>
-    <h2>Escort a Cargo That Must Not Be Opened</h2>
-    <dl>
-      <dt>Patron</dt><dd>Anonymous, via the Guild of Fine Carters</dd>
-      <dt>Pay</dt><dd>120 gp, half up front</dd>
-      <dt>Where</dt><dd>Southern Ward caravan yards to Rassalantar, two days</dd>
-      <dt>Ask for</dt><dd>Leave word with the clerk at the Wheel and Whip</dd>
-    </dl>
-    <blockquote>&ldquo;The crate is sealed. The seal is the job. Break it and there is no pay, and worse than no pay.&rdquo;</blockquote>
-  </article>
+<main class="sheet board">
+  <div class="wrap">
 
-  <article class="job">
-    <span class="no">Posting the Third</span>
-    <h2>The Well Wants Paying</h2>
-    <dl>
-      <dt>Patron</dt><dd>Durnan, proprietor</dd>
-      <dt>Pay</dt><dd>Keep what you carry up</dd>
-      <dt>Where</dt><dd>Down. You know where.</dd>
-      <dt>Ask for</dt><dd>Durnan. Do not haggle.</dd>
-    </dl>
-    <blockquote>&ldquo;Two parties went down in a tenday. Neither came up. The winch still works, so that is not the problem.&rdquo;</blockquote>
-  </article>
+    <header class="board-head">
+      <hr>
+      <h1>The Notice Board</h1>
+      <p class="where">The Yawning Portal &middot; Castle Ward</p>
+      <p class="rubric">Nailed, pinned and wax-sealed. Tear off the tag to claim a job. First tag taken, first served &mdash; the Watch does not adjudicate disputes over parchment.</p>
+      <hr class="b">
+    </header>
 
-  <article class="job">
-    <span class="no">Posting the Fourth</span>
-    <h2>Quiet Hands for Wet Work</h2>
-    <dl>
-      <dt>Patron</dt><dd>Not stated</dd>
-      <dt>Pay</dt><dd>Not stated</dd>
-      <dt>Where</dt><dd>The Bloody Fist, Dock Ward</dd>
-      <dt>Ask for</dt><dd>Say you read it in the Wazoo</dd>
-    </dl>
-    <blockquote>&ldquo;No questions. No names. No second meeting.&rdquo;</blockquote>
-  </article>
+    <!-- ═══════════════════════════════════════════════════════════════
+         POSTINGS GO HERE.
 
-  <section class="rules">
-    <h2>Board Rules</h2>
-    <p class="small">Postings are cleared at each tenday&rsquo;s turn. The house keeps no record of who took what, and remembers nothing if asked.</p>
-    <ol>
-      <li>One tag per hand.</li>
-      <li>Blood spilled over a posting is blood spilled in the Portal, and Durnan settles that himself.</li>
-      <li>Patrons who do not pay are not posted twice.</li>
-    </ol>
-  </section>
+         One <article class="job"> per posting, in the order you want
+         them read. Every part is optional except the heading — drop the
+         <dl> for a rumour with no patron, drop the <blockquote> when
+         nobody said anything worth quoting.
 
-  <p class="foot">
-    Read the news behind these postings in <a href="./">The Waterdeep Wazoo</a>
-  </p>
+         <article class="job">
+           <span class="no">Posting the First</span>
+           <h2>The job, named the way a patron would name it</h2>
+           <dl>
+             <dt>Patron</dt><dd>Who is paying</dd>
+             <dt>Pay</dt><dd>How much, and on what terms</dd>
+             <dt>Where</dt><dd>Which ward, which street</dd>
+             <dt>Ask for</dt><dd>Who to find, and where they drink</dd>
+           </dl>
+           <blockquote>&ldquo;What the patron actually said.&rdquo;</blockquote>
+         </article>
 
+         Curly quotes are &ldquo; &rdquo; and an apostrophe is &rsquo;.
+         Keep DM-only notes out of this file — the repository is public.
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <p class="board-empty">The board is bare this tenday. Whatever was nailed here has been taken, torn down, or settled the hard way &mdash; come back when the ink is wet.</p>
+
+    <section class="rules">
+      <h2>Board Rules</h2>
+      <p class="small">Postings are cleared at each tenday&rsquo;s turn. The house keeps no record of who took what, and remembers nothing if asked.</p>
+      <ol>
+        <li>One tag per hand.</li>
+        <li>Blood spilled over a posting is blood spilled in the Portal, and Durnan settles that himself.</li>
+        <li>Patrons who do not pay are not posted twice.</li>
+      </ol>
+    </section>
+
+    <p class="board-foot">
+      Read the news behind the postings in <a href="press-room.html">The Waterdeep Wazoo</a>
+    </p>
+
+    <a class="back-street" href="./">&larr; Back to the street</a>
+
+  </div>
 </main>
+
+<footer class="harbour">
+  <div class="wrap">
+    <span>Set in Cinzel, EB Garamond &amp; IM Fell English</span>
+    <span><em>&ldquo;We print what we are paid to print, and a little of what we are not.&rdquo;</em></span>
+    <span><a href="https://github.com/evolJoaoBento/PortugalDMWaterdeepWazoo" target="_blank" rel="noopener">The Print Room &#8599;</a></span>
+  </div>
+</footer>
+
+<script src="assets/backdrop.js"></script>
 </body>
 </html>
