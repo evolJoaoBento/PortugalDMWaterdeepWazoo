@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Waterdeep Wazoo — Flamerule 8, 1492 DR</title>
-<meta name="description" content="Ink still wet, truth still cheap. Fire on the Dock Ward, the Yawning Portal, the Walking Statues and more — a magical broadsheet of the City of Splendors.">
+<title>The Waterdeep Wazoo — Chronicle of the City of Splendors</title>
+<meta name="description" content="The campaign chronicle of Waterdeep: every issue of the Wazoo, the notice board, the campaign roll and the atlas of the City of Splendors.">
 
 <!-- Open Graph: what WhatsApp, Discord, Signal and Facebook read for the link preview -->
-<meta property="og:type" content="article">
+<meta property="og:type" content="website">
 <meta property="og:site_name" content="The Waterdeep Wazoo">
-<meta property="og:title" content="The Waterdeep Wazoo — Flamerule 8, 1492 DR">
-<meta property="og:description" content="Ink still wet, truth still cheap. Fire on the Dock Ward, the Yawning Portal, the Walking Statues and more — a magical broadsheet of the City of Splendors.">
+<meta property="og:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
+<meta property="og:description" content="Ink still wet, truth still cheap. Every issue, the notice board, the campaign roll and the atlas of Waterdeep.">
 <meta property="og:url" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
 <meta property="og:locale" content="en_GB">
 <meta property="og:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
@@ -20,34 +20,429 @@
 <meta property="og:image:height" content="629">
 <meta property="og:image:alt" content="Front page of The Waterdeep Wazoo, a fantasy broadsheet newspaper">
 
-<!-- Twitter/X uses its own names -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The Waterdeep Wazoo — Flamerule 8, 1492 DR">
+<meta name="twitter:title" content="The Waterdeep Wazoo — Chronicle of the City of Splendors">
 <meta name="twitter:description" content="Ink still wet, truth still cheap. A magical broadsheet of the City of Splendors.">
 <meta name="twitter:image" content="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/preview.jpg">
 
 <meta name="theme-color" content="#0e0b06">
 <link rel="canonical" href="https://evoljoaobento.github.io/PortugalDMWaterdeepWazoo/">
-<!-- Crawlers stop at the tags above; readers get bounced to the paper itself.
-     The delay keeps the preview image cached before the 37 MB issue starts loading. -->
-<meta http-equiv="refresh" content="1; url=The-Waterdeep-Wazoo-flamerule-8-1492.html">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
 <style>
-  html,body{height:100%;margin:0}
-  body{display:flex;align-items:center;justify-content:center;background:#0e0b06;color:#e8dcc0;
-    font:16px/1.7 Georgia,"Times New Roman",serif;text-align:center;padding:24px}
-  .wrap{max-width:640px}
-  img{max-width:100%;height:auto;border:1px solid #4a3c26;box-shadow:0 10px 30px #000a}
-  h1{font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin:18px 0 4px;color:#d8b46a}
-  p{margin:6px 0 0;color:#c8b58c;font-size:14px}
-  a{color:#d8b46a}
+:root{
+  --ink:#241a0e;
+  --ink-soft:#4a3a24;
+  --ink-faint:#6d5a3d;
+  --gold:#8a6a24;
+  --gold-bright:#d8b46a;
+  --rule:#4a3c26;
+  --dark:#0e0b06;
+  --paper:#e9dcbe;
+  --paper-hi:#f4ead2;
+  --paper-lo:#d9c69f;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--dark)}
+body{
+  font:17px/1.62 "EB Garamond",Georgia,"Times New Roman",serif;
+  color:var(--ink);
+  padding:26px 16px 60px;
+  display:flex;justify-content:center;
+  -webkit-text-size-adjust:100%;
+}
+@media(max-width:720px){body{padding:10px 6px 34px}}
+
+/* ── the sheet ──────────────────────────────────────────────────── */
+.paper{
+  width:100%;max-width:1120px;
+  background:
+    radial-gradient(120% 80% at 12% 0%,rgba(255,255,255,.42),transparent 55%),
+    radial-gradient(100% 70% at 88% 100%,rgba(120,88,40,.20),transparent 60%),
+    linear-gradient(180deg,var(--paper-hi),var(--paper) 40%,var(--paper-lo));
+  box-shadow:0 22px 60px rgba(0,0,0,.72),0 0 0 1px rgba(60,44,20,.55);
+  padding:34px 40px 46px;
+  position:relative;
+  isolation:isolate;
+}
+@media(max-width:720px){.paper{padding:20px 16px 30px}}
+
+/* paper grain */
+.paper::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  opacity:.30;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='.5'/></svg>");
+}
+/* burnt edges */
+.paper::after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  box-shadow:inset 0 0 90px rgba(90,62,22,.45),inset 0 0 22px rgba(60,38,10,.35);
+}
+
+/* ── masthead ───────────────────────────────────────────────────── */
+.masthead{text-align:center;padding-bottom:10px}
+.pre-rule,.post-rule{border:0;border-top:3px double var(--rule);margin:0 0 12px}
+.post-rule{margin:12px 0 0}
+
+.masthead .kicker{
+  font-family:"IM Fell English",serif;font-style:italic;
+  color:var(--ink-faint);font-size:15px;letter-spacing:.04em;margin:0 0 6px;
+}
+.masthead h1{
+  font-family:"IM Fell English","EB Garamond",serif;
+  font-size:clamp(38px,8.4vw,86px);
+  line-height:.96;margin:0;
+  letter-spacing:.01em;
+  color:#1c1408;
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+}
+.masthead .sub{
+  font-family:"Cinzel",serif;font-weight:600;
+  font-size:clamp(10px,1.8vw,13px);letter-spacing:.34em;text-transform:uppercase;
+  color:var(--gold);margin:12px 0 0;
+}
+.dateline{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-soft);margin:14px 0 0;
+}
+.dateline span{white-space:nowrap}
+
+/* ── section headings ───────────────────────────────────────────── */
+.sec{margin:38px 0 0}
+.sec-head{
+  display:flex;align-items:center;gap:14px;margin:0 0 18px;
+}
+.sec-head::after{content:"";flex:1;height:0;border-top:1px solid rgba(74,60,38,.5)}
+.sec-head h2{
+  font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(13px,2.2vw,16px);letter-spacing:.22em;text-transform:uppercase;
+  margin:0;color:#2b1f10;white-space:nowrap;
+}
+.sec-note{
+  font-style:italic;color:var(--ink-faint);font-size:15px;margin:-8px 0 18px;
+}
+
+/* ── the three doors ────────────────────────────────────────────── */
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:800px){.doors{grid-template-columns:1fr}}
+
+.door{
+  display:block;text-decoration:none;color:inherit;
+  border:1px solid rgba(74,60,38,.55);
+  background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(160,124,64,.10));
+  padding:20px 20px 18px;
+  position:relative;
+  transition:transform .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.door:hover,.door:focus-visible{
+  transform:translateY(-3px);
+  box-shadow:0 12px 26px rgba(40,26,6,.28);
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(160,124,64,.16));
+  outline:none;
+}
+.door:focus-visible{box-shadow:0 0 0 2px var(--gold),0 12px 26px rgba(40,26,6,.28)}
+.door .glyph{font-size:26px;line-height:1;display:block;margin-bottom:10px;filter:sepia(.5) saturate(.8)}
+.door h3{
+  font-family:"Cinzel",serif;font-weight:700;font-size:15px;letter-spacing:.12em;
+  text-transform:uppercase;margin:0 0 6px;color:#2b1f10;
+}
+.door p{margin:0;font-size:15px;color:var(--ink-soft);line-height:1.5}
+.door .ext{
+  display:block;margin-top:10px;font-family:"Cinzel",serif;font-size:10px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);
+}
+
+/* ── featured issue ─────────────────────────────────────────────── */
+.featured{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:26px;align-items:center;
+  border:1px solid rgba(74,60,38,.5);
+  background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(160,124,64,.08));
+  padding:22px;
+}
+@media(max-width:800px){.featured{grid-template-columns:1fr;padding:16px}}
+.featured img{
+  width:100%;height:auto;display:block;
+  border:1px solid var(--rule);
+  box-shadow:0 10px 26px rgba(30,18,4,.45);
+}
+.featured .stamp{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:#8c2f1d;border:1px solid #8c2f1d;display:inline-block;padding:3px 9px;margin:0 0 12px;
+  transform:rotate(-1.2deg);
+}
+.featured h3{
+  font-family:"IM Fell English",serif;font-size:clamp(24px,3.6vw,34px);
+  line-height:1.1;margin:0 0 8px;color:#1c1408;
+}
+.featured .meta{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 12px;
+}
+.featured p.dek{margin:0 0 18px;font-size:17px;color:var(--ink-soft)}
+
+.btn{
+  display:inline-block;text-decoration:none;
+  font-family:"Cinzel",serif;font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:#f4ead2;background:#2b1f10;border:1px solid #1c1408;
+  padding:11px 20px;transition:background .16s ease,transform .16s ease;
+}
+.btn:hover,.btn:focus-visible{background:#4a3a24;transform:translateY(-1px);outline:none}
+.btn:focus-visible{box-shadow:0 0 0 2px var(--gold)}
+.btn .weight{opacity:.6;font-size:10px;letter-spacing:.1em}
+
+/* ── archive list ───────────────────────────────────────────────── */
+.archive{list-style:none;margin:0;padding:0;border-top:1px solid rgba(74,60,38,.35)}
+.archive li{border-bottom:1px solid rgba(74,60,38,.35)}
+.archive a{
+  display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+  text-decoration:none;color:inherit;padding:14px 8px;
+  transition:background .14s ease,padding-left .14s ease;
+}
+.archive a:hover,.archive a:focus-visible{background:rgba(160,124,64,.14);padding-left:16px;outline:none}
+.archive a:focus-visible{box-shadow:inset 3px 0 0 var(--gold)}
+.archive .no{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.14em;color:var(--gold);
+  min-width:64px;
+}
+.archive .title{
+  font-family:"IM Fell English",serif;font-size:21px;line-height:1.2;color:#1c1408;flex:1;min-width:200px;
+}
+.archive .when{
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);
+}
+.archive .tag{
+  font-family:"Cinzel",serif;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--paper-hi);background:var(--ink-soft);padding:2px 8px;
+}
+
+.loading,.empty{
+  font-style:italic;color:var(--ink-faint);padding:16px 8px;margin:0;
+}
+
+/* ── colophon ───────────────────────────────────────────────────── */
+.colophon{
+  margin:44px 0 0;padding-top:18px;border-top:3px double var(--rule);
+  display:flex;flex-wrap:wrap;gap:10px 26px;justify-content:space-between;align-items:baseline;
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-faint);
+}
+.colophon a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(138,106,36,.4)}
+.colophon a:hover{color:#5f470f}
+.colophon em{font-family:"EB Garamond",serif;font-style:italic;text-transform:none;letter-spacing:0;font-size:14px}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <img src="preview.jpg" alt="Front page of The Waterdeep Wazoo">
+<main class="paper">
+
+  <!-- ══ MASTHEAD ══════════════════════════════════════════════ -->
+  <header class="masthead">
+    <hr class="pre-rule">
+    <p class="kicker">Printed at the sign of the Broken Quill, Castle Ward &mdash; by appointment to nobody</p>
     <h1>The Waterdeep Wazoo</h1>
-    <p>Flamerule 8, 1492 DR &middot; the presses are turning&hellip;</p>
-    <p><a href="The-Waterdeep-Wazoo-flamerule-8-1492.html">Read the issue</a> (37 MB &mdash; best on wifi)</p>
-  </div>
+    <p class="sub">Ink still wet &middot; truth still cheap</p>
+    <div class="dateline">
+      <span>City of Splendors</span>
+      <span>Year of the Iron Dwarf&rsquo;s Vow, 1492 DR</span>
+      <span>Price: one nib</span>
+    </div>
+    <hr class="post-rule">
+  </header>
+
+  <!-- ══ THE THREE DOORS ═══════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head"><h2>The Ways In</h2></div>
+    <div class="doors">
+      <a class="door" href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener">
+        <span class="glyph">&#9876;</span>
+        <h3>The Campaign</h3>
+        <p>The roll of adventurers, their sheets and their sins. Kept on D&amp;D Beyond.</p>
+        <span class="ext">dndbeyond.com &#8599;</span>
+      </a>
+      <a class="door" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
+        <span class="glyph">&#127922;</span>
+        <h3>The Game Table</h3>
+        <p>Where the dice fall. Maps, tokens and initiative, live at the table.</p>
+        <span class="ext">dndbeyond.com &#8599;</span>
+      </a>
+      <a class="door" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">
+        <span class="glyph">&#128506;</span>
+        <h3>The Atlas</h3>
+        <p>Every ward, street and stinking alley of Waterdeep, on an interactive map.</p>
+        <span class="ext">aidedd.org &#8599;</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ CURRENT ISSUE ═════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head"><h2>Fresh off the Press</h2></div>
+    <article class="featured">
+      <a href="The-Waterdeep-Wazoo-flamerule-8-1492.html">
+        <img src="preview.jpg" alt="Front page of The Waterdeep Wazoo, Flamerule 8, 1492 DR">
+      </a>
+      <div>
+        <span class="stamp">Current issue</span>
+        <h3>Fire on the Dock Ward</h3>
+        <p class="meta">Flamerule 8, 1492 DR</p>
+        <p class="dek">The Yawning Portal keeps its counsel, the Walking Statues keep their silence, and something in the harbour is not keeping still. Read it before the Watch reads it to you.</p>
+        <a class="btn" href="The-Waterdeep-Wazoo-flamerule-8-1492.html">
+          Read the issue <span class="weight">&mdash; 37 MB, best on wifi</span>
+        </a>
+      </div>
+    </article>
+  </section>
+
+  <!-- ══ ARCHIVE ═══════════════════════════════════════════════ -->
+  <section class="sec">
+    <div class="sec-head"><h2>The Back Numbers</h2></div>
+    <p class="sec-note">Every issue the presses have run. New editions appear here of their own accord &mdash; nobody has to nail up a notice.</p>
+    <ul class="archive" id="archive">
+      <li><p class="loading" id="archive-status">Fetching the back numbers from the print room&hellip;</p></li>
+    </ul>
+  </section>
+
+  <!-- ══ COLOPHON ══════════════════════════════════════════════ -->
+  <footer class="colophon">
+    <span>Set in IM Fell English &amp; EB Garamond</span>
+    <span><em>&ldquo;We print what we are paid to print, and a little of what we are not.&rdquo;</em></span>
+    <span><a href="https://github.com/evolJoaoBento/PortugalDMWaterdeepWazoo" target="_blank" rel="noopener">The Print Room &#8599;</a></span>
+  </footer>
+
+</main>
+
+<script>
+/* ────────────────────────────────────────────────────────────────
+   The archive builds itself from whatever HTML pages live in the
+   repository. Commit a new issue, it shows up here on next load —
+   no editing this file.
+
+   GitHub's contents API sends Access-Control-Allow-Origin: *, so a
+   static Pages site can call it directly. Unauthenticated callers
+   get 60 requests/hour/IP, hence the sessionStorage cache. If the
+   call fails for any reason we fall back to the hard-coded list.
+   ──────────────────────────────────────────────────────────────── */
+(function () {
+  var REPO  = 'evolJoaoBento/PortugalDMWaterdeepWazoo';
+  var CACHE = 'wazoo-archive-v1';
+
+  // Pages that are machinery, not reading matter.
+  var HIDDEN = ['index.html', 'editor.html', 'job-board-ddb.html'];
+
+  // Calendar of Harptos, in order, for sorting and prettifying.
+  var MONTHS = ['hammer','alturiak','ches','tarsakh','mirtul','kythorn','flamerule',
+                'eleasis','eleint','marpenoth','uktar','nightal'];
+
+  // Shown when GitHub is unreachable or rate-limited.
+  var FALLBACK = [{
+    name: 'The-Waterdeep-Wazoo-flamerule-8-1492.html',
+    size: 37486613
+  }];
+
+  var listEl   = document.getElementById('archive');
+  var statusEl = document.getElementById('archive-status');
+
+  function titleCase(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  /* Turn "The-Waterdeep-Wazoo-flamerule-8-1492.html" into something
+     a reader recognises, and something we can sort on. */
+  function describe(file) {
+    var stem = file.name.replace(/\.html$/i, '');
+    var m = stem.match(/^The-Waterdeep-Wazoo-([a-z]+)-(\d+)-(\d+)$/i);
+
+    if (m) {
+      var month = m[1].toLowerCase(), day = +m[2], year = +m[3];
+      var mi = MONTHS.indexOf(month);
+      return {
+        href:  file.name,
+        title: 'The Waterdeep Wazoo',
+        when:  titleCase(month) + ' ' + day + ', ' + year + ' DR',
+        tag:   'Issue',
+        sort:  year * 10000 + (mi < 0 ? 0 : mi + 1) * 100 + day,
+        size:  file.size
+      };
+    }
+
+    // Anything else that is not machinery: a broadside, a one-off sheet.
+    return {
+      href:  file.name,
+      title: stem.replace(/[-_]+/g, ' '),
+      when:  '',
+      tag:   'Broadside',
+      sort:  0,
+      size:  file.size
+    };
+  }
+
+  function weigh(bytes) {
+    if (!bytes || bytes < 1048576) return '';
+    return Math.round(bytes / 1048576) + ' MB';
+  }
+
+  function render(files) {
+    var items = files
+      .filter(function (f) {
+        return /\.html$/i.test(f.name) && HIDDEN.indexOf(f.name.toLowerCase()) === -1;
+      })
+      .map(describe)
+      .sort(function (a, b) { return b.sort - a.sort; });
+
+    listEl.innerHTML = '';
+
+    if (!items.length) {
+      listEl.innerHTML = '<li><p class="empty">The presses have not run yet.</p></li>';
+      return;
+    }
+
+    // Issues are numbered oldest-first, so the newest carries the highest
+    // number. Broadsides sit outside the sequence and get a dash.
+    var issuesLeft = items.filter(function (it) { return it.tag === 'Issue'; }).length;
+
+    items.forEach(function (it) {
+      var no = it.tag === 'Issue' ? 'No. ' + issuesLeft-- : '&mdash;';
+      var li = document.createElement('li');
+      li.innerHTML =
+        '<a href="' + encodeURI(it.href) + '">' +
+          '<span class="no">' + no + '</span>' +
+          '<span class="title">' + it.title + '</span>' +
+          (it.when ? '<span class="when">' + it.when + '</span>' : '') +
+          (weigh(it.size) ? '<span class="when">' + weigh(it.size) + '</span>' : '') +
+          '<span class="tag">' + it.tag + '</span>' +
+        '</a>';
+      listEl.appendChild(li);
+    });
+  }
+
+  function fail() {
+    render(FALLBACK);
+  }
+
+  // Serve from cache first so a reload does not spend a rate-limit token.
+  try {
+    var cached = sessionStorage.getItem(CACHE);
+    if (cached) { render(JSON.parse(cached)); return; }
+  } catch (e) { /* private mode: carry on without a cache */ }
+
+  fetch('https://api.github.com/repos/' + REPO + '/contents/', {
+    headers: { 'Accept': 'application/vnd.github+json' }
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error('GitHub said ' + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      if (!Array.isArray(data)) throw new Error('unexpected payload');
+      var slim = data.map(function (f) { return { name: f.name, size: f.size }; });
+      try { sessionStorage.setItem(CACHE, JSON.stringify(slim)); } catch (e) {}
+      render(slim);
+    })
+    .catch(fail);
+})();
+</script>
 </body>
 </html>
