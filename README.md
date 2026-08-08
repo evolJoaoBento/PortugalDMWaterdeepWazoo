@@ -68,9 +68,23 @@ once Pages rebuilds.
 data/notices.json                  the notice board's postings
 data/issues/<stem>.json            an issue's source, so it can be reopened
 assets/issues/<stem>/NN.webp       that issue's pictures, one file each
+assets/issues/<stem>/cover.webp    a picture of the paper's own top
 <stem>.html                        the published issue
 <stem>.json                        its front-page card in the press room
 ```
+
+### The cover is painted, not screenshotted
+
+The card in the press room shows the top of the paper — masthead, dateline,
+rules and the first columns. Chrome will not let a page screenshot itself: the
+usual trick, drawing the DOM through an SVG `<foreignObject>`, taints the
+canvas so its bytes can never be read back.
+
+So publishing repaints the paper's top with the operations that stay clean —
+`fillText`, `drawImage`, `ctx.filter`. Nothing is laid out twice: every
+position, font and colour is measured off the live preview, so the cover
+follows the design instead of imitating it. Pseudo-element decoration is the
+exception: flat tints survive, gradient fog and glows do not.
 
 Issues also **carry their own source**, embedded in the page as
 `<script type="application/json" id="penny-source">`. That is what lets any

@@ -115,15 +115,6 @@ textarea{
   padding:2px 6px;font-size:11px;line-height:1.4;background:#2a2216cc;color:#f2e6cf;
   border:1px solid #6b5636;border-radius:3px;
 }
-/* Which picture is the front-page cover, visible without opening every
-   inspector in turn. Editor-only: this markup never leaves the forge. */
-.paper figure.slot .covertag{
-  position:absolute;top:2px;left:2px;z-index:5;
-  font:600 9px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
-  color:#f2e6cf;background:#7a4a12dd;border:1px solid #b5762a;border-radius:3px;
-  padding:3px 6px;pointer-events:none;
-}
-@media print{.paper figure.slot .covertag{display:none!important}}
 .orphans{
   border:1px dashed #b5762a;background:#f6ecd4;color:#5a3d18;padding:8px 10px;margin:0 0 14px;
   font:13px/1.4 system-ui;border-radius:4px;
@@ -389,10 +380,6 @@ textarea{
   </div>
   <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c">
     <input type="checkbox" id="i-frame" style="width:auto"> Aged photo frame
-  </label>
-  <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c"
-         title="The picture the press room shows beside the latest issue">
-    <input type="checkbox" id="i-cover" style="width:auto"> Front-page cover
   </label>
   <div class="row">
     <button id="i-replace">Replace</button>
@@ -1074,7 +1061,6 @@ function figureHTML(slot, editing){
   const bar = editing
     ? '<div class="slotbar"><button data-act="width" data-slot="'+slot.id+'" title="Toggle width">↔</button>'
       + '<button data-act="del" data-slot="'+slot.id+'" title="Delete">✕</button></div>'
-      + (slot.cover ? '<span class="covertag">cover</span>' : "")
     : "";
   return '<figure class="'+cls+'" data-slot="'+slot.id+'"'+fxVar+'>'+bar+
     '<div class="plate"><img src="'+md.dataUrl+'" alt="'+esc(slot.caption||md.name||"")+'"'+dims+' loading="lazy"></div>'+
@@ -1188,28 +1174,10 @@ function deleteSlot(id){
    ========================================================================= */
 function slotById(id){ return doc.slots.find(s=>s.id===id); }
 
-/* ── the front-page cover ────────────────────────────────────────────
-   The press room shows one picture beside the latest issue. It used to
-   be whichever picture happened to be first, which is why it looked
-   arbitrary — so a picture is chosen for the job instead.
-
-   The flag lives on the slot, not on the document: sourceDoc() embeds
-   doc.slots verbatim, so the choice survives publishing and reopening
-   with no plumbing, follows the slot when its picture is replaced, and
-   dies with the slot when it is deleted. */
-function setCover(id, on){
-  doc.slots.forEach(s=>{ if(s.id!==id) delete s.cover; });
-  const s = slotById(id); if(!s) return;
-  if(on) s.cover = true; else delete s.cover;
-}
-/* Pure so it can be tested: slots and the published paths, in — the
-   path for the front card, out. Falls back the way it always did, both
-   when nothing was chosen and when the chosen slot's picture has gone
-   missing, so an issue is never left without a card. */
-function coverPathFor(slots, urls, used){
-  const chosen = (slots||[]).find(s=>s.cover);
-  const path = chosen && urls.get(chosen.mediaId);
-  if(path) return path;
+/* What the front card falls back to when the cover cannot be painted —
+   the first picture, and failing that the house image. Pure, so the
+   fallback is testable without publishing anything. */
+function coverPathFor(urls, used){
   return used.length ? (urls.get(used[0].id)||"preview.jpg") : "preview.jpg";
 }
 function fxOptionsHTML(){
@@ -1223,7 +1191,6 @@ function openInspector(slot){
   $("#i-fxamount").value = slot.fxAmount==null?75:slot.fxAmount;
   $("#i-fx-val").textContent = $("#i-fxamount").value+"%";
   $("#i-frame").checked = !!slot.frame;
-  $("#i-cover").checked = !!slot.cover;
   $("#inspector").classList.add("open");
   render();
   /* The colour only means anything to the warding fog, so it only
@@ -1362,6 +1329,219 @@ function calendarChanged(){
     const el = $("#f-dateline"); if(el) el.value = d.text;
   }
   render(); scheduleSave();
+}
+
+/* =========================================================================
+   The cover — a picture of the top of the paper
+
+   Publishing writes an image of the paper's own front, the way someone
+   glancing at the stand would see it: masthead, dateline, the rules and
+   the start of the columns.
+
+   It has to be painted, not screenshotted. The usual trick — wrap the
+   DOM in an SVG <foreignObject> and draw that to a canvas — is dead in
+   Chrome: the canvas is tainted the moment such an image is drawn and
+   the bytes can never be read back out. Measured here, deliberately:
+   foreignObject taints; fillText, drawImage of a data URI, and
+   ctx.filter are all clean. So this walks the live paper and repaints
+   it with those clean operations.
+
+   Nothing is laid out twice. Every position, size, font and colour is
+   read off the real elements — getClientRects for text, getBoundingRect
+   for boxes — so the cover follows the layout on screen, columns and
+   all, and cannot drift from it as the paper's design changes.
+
+   What it cannot carry: pseudo-element decoration (the illusion fogs
+   and glows are ::before/::after), background images, and shadows.
+   Text, pictures, rules, colours and their arrangement all survive.
+   ========================================================================= */
+const COVER_W = 1200, COVER_H = 629;          // what a link preview wants
+const COVER_SKIP = ".gap,.slotbar,.covertag,.orphans";
+
+function coverPaintText(node, g, pr, scale, limitY){
+  const txt = node.nodeValue;
+  if(!txt || !/\S/.test(txt)) return;
+  const el = node.parentElement;
+  if(!el || el.closest(COVER_SKIP)) return;
+  const cs = getComputedStyle(el);
+  if(cs.visibility==="hidden" || +cs.opacity===0) return;
+
+  /* Metrics of the font, not of the word. Measuring each word's own ink
+     puts "now" and "lap" on different baselines, because one has no
+     descender: the height it fills is not the height the line reserves.
+     The font's own ascent and descent are constant for the run, which
+     is what the browser laid the line out with. */
+  let asc = 0, desc = 0;
+  const setFont = (style)=>{
+    const size = parseFloat(style.fontSize)*scale;
+    g.font = style.fontStyle+" "+style.fontWeight+" "+size+"px "+style.fontFamily;
+    g.fillStyle = style.color;
+    const ls = parseFloat(style.letterSpacing);
+    try{ g.letterSpacing = (isNaN(ls)?0:ls*scale)+"px"; }catch(_){}
+    const m = g.measureText("Hxg");
+    asc  = m.fontBoundingBoxAscent  || m.actualBoundingBoxAscent  || size*0.78;
+    desc = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent || size*0.22;
+    return size;
+  };
+  /* A range rect is the text's own box, so seating the font's ascent and
+     descent inside it lands the baseline where the browser put it,
+     whatever the line-height. */
+  const put = (s, r)=>{
+    const x=(r.left-pr.left)*scale, top=(r.top-pr.top)*scale, h=r.height*scale;
+    if(top > limitY) return;
+    g.fillText(s, x, top + (h-(asc+desc))/2 + asc);
+  };
+  const range = document.createRange();
+  const rectOf = (a,b)=>{ range.setStart(node,a); range.setEnd(node,b);
+                          const rs=range.getClientRects(); return rs.length?rs[0]:null; };
+
+  /* A drop cap is a ::first-letter, which belongs to no node of its own:
+     paint it from that pseudo-style, then let the loop skip past it. */
+  let skipTo = 0;
+  const fl = getComputedStyle(el, "::first-letter");
+  const isFirst = el.firstChild === node && /\S/.test(txt[0]||"");
+  if(isFirst && fl && parseFloat(fl.fontSize) > parseFloat(cs.fontSize)*1.4){
+    const r = rectOf(0,1);
+    if(r){ setFont(fl); put(txt[0], r); skipTo = 1; }
+  }
+
+  setFont(cs);
+  const re = /\S+/g; let m;
+  while((m = re.exec(txt))){
+    let start = m.index, word = m[0];
+    if(start < skipTo){ start = skipTo; word = m[0].slice(skipTo-m.index); if(!word) continue; }
+    const r = rectOf(start, start+word.length);
+    if(r && r.width) put(word, r);
+  }
+}
+
+function coverPaintBox(el, g, pr, scale, limitY){
+  if(el.closest(COVER_SKIP)) return;
+  const cs = getComputedStyle(el);
+  if(cs.visibility==="hidden" || cs.display==="none" || +cs.opacity===0) return;
+  const r = el.getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  const x=(r.left-pr.left)*scale, y=(r.top-pr.top)*scale, w=r.width*scale, h=r.height*scale;
+  if(y > limitY) return;
+
+  const bg = cs.backgroundColor;
+  if(bg && bg!=="rgba(0, 0, 0, 0)" && bg!=="transparent"){ g.fillStyle=bg; g.fillRect(x,y,w,h); }
+
+  /* Rules under the masthead and around frames are borders. */
+  const side = (px, colour, rx, ry, rw, rh)=>{
+    const t = parseFloat(px)*scale;
+    if(!(t>0) || !colour || colour==="rgba(0, 0, 0, 0)") return;
+    g.fillStyle = colour; g.fillRect(rx, ry, rw, rh);
+  };
+  side(cs.borderTopWidth,    cs.borderTopColor,    x, y, w, parseFloat(cs.borderTopWidth)*scale);
+  side(cs.borderBottomWidth, cs.borderBottomColor, x, y+h-parseFloat(cs.borderBottomWidth)*scale,
+       w, parseFloat(cs.borderBottomWidth)*scale);
+  side(cs.borderLeftWidth,   cs.borderLeftColor,   x, y, parseFloat(cs.borderLeftWidth)*scale, h);
+  side(cs.borderRightWidth,  cs.borderRightColor,  x+w-parseFloat(cs.borderRightWidth)*scale, y,
+       parseFloat(cs.borderRightWidth)*scale, h);
+
+  if(el.tagName==="IMG" && el.complete && el.naturalWidth){
+    g.save();
+    if(cs.filter && cs.filter!=="none"){ try{ g.filter = cs.filter; }catch(_){} }
+    g.globalAlpha = +cs.opacity || 1;
+    try{ g.drawImage(el, x, y, w, h); }catch(_){}
+    g.restore();
+  }
+}
+
+/* The illusion tints are ::before layers over the picture, and a pseudo
+   element has no node to walk. Only the plain ones are recoverable: a
+   flat colour laid over the whole box. Anything built from gradients —
+   the drifting fog itself, the rough paper's foxing — has a geometry
+   this cannot know, and is left out rather than guessed at. */
+function coverPaintPseudo(el, g, pr, scale, limitY){
+  if(el.closest(COVER_SKIP)) return;
+  const r = el.getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  const y=(r.top-pr.top)*scale;
+  if(y > limitY) return;
+  ["::before","::after"].forEach(which=>{
+    const ps = getComputedStyle(el, which);
+    if(!ps || ps.content==="none" || ps.display==="none") return;
+    if(ps.backgroundImage && ps.backgroundImage!=="none") return;
+    const bg = ps.backgroundColor;
+    if(!bg || bg==="rgba(0, 0, 0, 0)" || bg==="transparent") return;
+    const a = +ps.opacity; if(!(a>0)) return;
+    g.save();
+    g.globalAlpha = a;
+    if(ps.mixBlendMode && ps.mixBlendMode!=="normal"){
+      try{ g.globalCompositeOperation = ps.mixBlendMode; }catch(_){}
+    }
+    g.fillStyle = bg;
+    g.fillRect((r.left-pr.left)*scale, y, r.width*scale, r.height*scale);
+    g.restore();
+  });
+}
+
+/* Paint the paper's top into a canvas. Returns the canvas, or null when
+   there is no paper to paint. */
+function paintCover(paperEl){
+  const paper = paperEl || document.getElementById("paper");
+  if(!paper) return null;
+  const pr = paper.getBoundingClientRect();
+  if(!pr.width) return null;
+
+  const scale = COVER_W / pr.width;
+  const cv = document.createElement("canvas");
+  cv.width = COVER_W; cv.height = COVER_H;
+  const g = cv.getContext("2d");
+  const pcs = getComputedStyle(paper);
+  g.fillStyle = (pcs.backgroundColor && pcs.backgroundColor!=="rgba(0, 0, 0, 0)")
+                ? pcs.backgroundColor : "#e9dcbf";
+  g.fillRect(0,0,COVER_W,COVER_H);
+
+  /* Document order, boxes then their text, so later elements sit on top
+     the way they do on screen. Columns mean a later element can be
+     higher up the page, so nothing is skipped by position alone —
+     each node is culled on its own rect. */
+  const walk = document.createTreeWalker(paper, NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
+  let n;
+  while((n = walk.nextNode())){
+    if(n.nodeType===1) coverPaintBox(n, g, pr, scale, COVER_H);
+    else coverPaintText(n, g, pr, scale, COVER_H);
+  }
+  /* Tints last, because they belong over the picture they cover. */
+  paper.querySelectorAll("figure.slot .plate").forEach(el=>coverPaintPseudo(el, g, pr, scale, COVER_H));
+  return cv;
+}
+
+/* A picture that is on screen is not necessarily decoded: Chrome will
+   draw nothing for one it has not finished with, which is how the first
+   cover came out with tan holes where the pictures should be. Wait for
+   the fonts and the pictures before painting anything. */
+async function coverReady(paperEl){
+  const paper = paperEl || document.getElementById("paper");
+  if(!paper) return;
+  try{ await document.fonts.ready; }catch(_){}
+  const pr = paper.getBoundingClientRect();
+  if(!pr.width) return;
+  const scale = COVER_W / pr.width;
+  /* Only the pictures the cover can actually show. The rest are marked
+     lazy and sit far below the fold: decode() on one of those never
+     settles, because nothing is ever going to ask for it. */
+  const near = [...paper.querySelectorAll("img")].filter(i=>{
+    const r = i.getBoundingClientRect();
+    return (r.top-pr.top)*scale <= COVER_H && (r.bottom-pr.top)*scale >= 0;
+  });
+  near.forEach(i=>{ try{ i.loading = "eager"; }catch(_){} });
+  await Promise.race([
+    Promise.all(near.map(i => (i.decode ? i.decode().catch(()=>{}) : Promise.resolve()))),
+    new Promise(r=>setTimeout(r, 4000))          // a stubborn picture must not hold a publish
+  ]);
+}
+
+async function coverBytes(){
+  await coverReady();
+  const cv = paintCover();
+  if(!cv) return null;
+  const blob = await new Promise(r=>cv.toBlob(r, "image/webp", 0.9));
+  if(!blob) return null;
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 /* Everything needed to rebuild this issue, embedded in what it exports
@@ -1710,15 +1890,6 @@ function wire(){
     const s=slotById(selectedSlot); if(!s) return;
     s.frame=$("#i-frame").checked; render(); scheduleSave();
   });
-  /* One cover per issue: naming a new one un-names the old, so the flag
-     can never disagree with itself. Cleared with delete rather than set
-     to false, so a slot that was never chosen carries nothing at all
-     into the source the page embeds. */
-  $("#i-cover").addEventListener("change",()=>{
-    const s=slotById(selectedSlot); if(!s) return;
-    setCover(s.id, $("#i-cover").checked);
-    render(); scheduleSave();
-  });
   $("#i-fx").addEventListener("change",()=>{
     const s=slotById(selectedSlot); if(!s) return;
     s.fx=$("#i-fx").value;
@@ -1873,30 +2044,38 @@ function runTests(){
   ok("fx: animation runs by default", styleVars({}).indexOf("--fxplay:running")>-1);
   media.delete("mtest");
 
-  // the front-page cover
-  doc.slots = [{id:"c1",mediaId:"m1"},{id:"c2",mediaId:"m2"}];
-  setCover("c1", true); setCover("c2", true);
-  ok("cover: only one picture holds it", !doc.slots[0].cover && doc.slots[1].cover===true,
-     JSON.stringify(doc.slots));
-  setCover("c2", false);
-  ok("cover: unchecking leaves nothing behind", !("cover" in doc.slots[1]), JSON.stringify(doc.slots[1]));
-
+  // the cover — painted from the paper, with a picture as the fallback
   const cu = new Map([["m1","assets/issues/x/01.webp"],["m2","assets/issues/x/02.webp"]]);
-  const cused = [{id:"m1"},{id:"m2"}];
-  ok("cover: nothing marked falls back to the first picture",
-     coverPathFor(doc.slots, cu, cused)==="assets/issues/x/01.webp");
-  setCover("c2", true);
-  ok("cover: the marked picture wins", coverPathFor(doc.slots, cu, cused)==="assets/issues/x/02.webp");
-  ok("cover: a marked picture that never published falls back",
-     coverPathFor([{id:"c9",mediaId:"gone",cover:true}], cu, cused)==="assets/issues/x/01.webp");
+  ok("cover: fallback is the first picture",
+     coverPathFor(cu, [{id:"m1"},{id:"m2"}])==="assets/issues/x/01.webp");
   ok("cover: an issue with no pictures still gets a card",
-     coverPathFor([], new Map(), [])==="preview.jpg");
-  media.set("mcov",{id:"mcov",name:"c.webp",mime:"image/webp",dataUrl:"data:image/webp;base64,AA",w:10,h:6});
-  ok("cover: the badge shows while editing",
-     figureHTML({id:"c1",mediaId:"mcov",cover:true},true).indexOf("covertag")>-1);
-  ok("cover: the badge is editor-only",
-     figureHTML({id:"c1",mediaId:"mcov",cover:true},false).indexOf("covertag")===-1);
-  media.delete("mcov");
+     coverPathFor(new Map(), [])==="preview.jpg");
+  {
+    /* Paint a real paper, not an empty one: the tainting that killed the
+       foreignObject route would show up here as a throw, and an unread
+       canvas would pass a size check while carrying nothing. */
+    doc.masthead={title:"The Waterdeep Wazoo",tagline:"Serving the City",
+                  dateline:"Flamerule 8, 1492 DR",price:"1 cp",issue:"7",lang:"en"};
+    doc.style=Object.assign({},STYLE_DEFAULTS);
+    doc.markdown="## Fire on Dock Ward\n\n!The blaze took three warehouses before the watch came.";
+    doc.slots=[];
+    render();
+    const cv = paintCover();
+    ok("cover: paints at link-preview size", !!cv && cv.width===1200 && cv.height===629,
+       cv ? cv.width+"×"+cv.height : "no canvas");
+    let readable = false, why = "";
+    try{ readable = !!cv && cv.toDataURL("image/png").indexOf("data:image/png")===0; }
+    catch(e){ why = e.message; }
+    ok("cover: the canvas is not tainted", readable, why);
+    let painted = 0;
+    if(cv){
+      const d = cv.getContext("2d").getImageData(0,0,cv.width,cv.height).data;
+      const bg = [d[0],d[1],d[2]];
+      for(let i=0;i<d.length;i+=4)
+        if(d[i]!==bg[0]||d[i+1]!==bg[1]||d[i+2]!==bg[2]){ painted++; }
+    }
+    ok("cover: something was actually drawn on it", painted>2000, "ink pixels="+painted);
+  }
 
   doc.masthead={title:"T",tagline:"",dateline:"D",price:"1cp",issue:"7",lang:"en"};
   doc.style=Object.assign({},STYLE_DEFAULTS,{cols:4});
@@ -1920,7 +2099,6 @@ function runTests(){
   ok("export has doctype", html.indexOf("<!doctype html>")===0);
   ok("export has no gaps", html.indexOf('class="gap"')===-1);
   ok("export has no slotbar", html.indexOf("slotbar")===-1);
-  ok("export has no cover badge", html.indexOf("covertag")===-1);
   ok("export inlines paper css", html.indexOf(".paper .body{column-count:var(--cols)")>-1);
   ok("export ships the illusion keyframes",
      ["fx-sheen","fx-weave","fx-ghost","fx-unstable","fx-fading"].every(k=>html.indexOf("@keyframes "+k)>-1));
@@ -2141,12 +2319,22 @@ function injectPaperCSS(){
       await City.write("data/issues/"+stem+".json", JSON.stringify(source,null,2)+"\n",
                        "issue "+stem+": source");
 
-      /* The press room's front card reads this beside the issue. */
-      const chosen = doc.slots.find(s=>s.cover);
-      const cover = coverPathFor(doc.slots, urls, used);
-      say(chosen && urls.get(chosen.mediaId)
-            ? "cover — the picture you marked"
-            : "cover — no picture marked, using the first one");
+      /* The press room's front card reads this beside the issue, and it
+         shows the paper's own top — painted off the live preview, which
+         is still on screen and still holds the pictures inline. */
+      let cover = null;
+      try{
+        const bytes = await coverBytes();
+        if(bytes){
+          cover = "assets/issues/"+stem+"/cover.webp";
+          await City.write(cover, bytes, "issue "+stem+": cover");
+          say("cover — the top of the paper, "+MB(bytes.length));
+        }
+      }catch(e){ say("cover could not be painted ("+e.message+")","err"); }
+      if(!cover){
+        cover = coverPathFor(urls, used);
+        say("cover — fell back to a picture","err");
+      }
       await City.write(stem+".json", JSON.stringify({
         headline: doc.masthead.title||"The Waterdeep Wazoo",
         dek: doc.masthead.tagline||"",
