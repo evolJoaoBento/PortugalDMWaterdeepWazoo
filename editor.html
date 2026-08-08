@@ -42,10 +42,13 @@ input[type=text]{cursor:text}
 .fields label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#9a8a6a;
   text-transform:uppercase;letter-spacing:.08em}
 .fields label.wide{grid-column:1/-1}
-.cal{display:flex;gap:6px}
-.cal select{flex:1 1 auto;min-width:0}
-.cal input{width:74px;flex:0 0 auto}
+
 .fields input,.fields select{width:100%}
+/* After .fields input/select, and more specific than it — otherwise the
+   width:100% above wins on source order and collapses the month list. */
+.fields .cal{display:flex;gap:6px;width:100%}
+.fields .cal select{flex:1 1 auto;min-width:0;width:auto}
+.fields .cal input{flex:0 0 72px;width:72px}
 .md-head{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:11px;
   text-transform:uppercase;letter-spacing:.1em;color:#9a8a6a;border-bottom:1px solid #2a2216}
 textarea{
@@ -138,8 +141,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808f"></script>
-<script src="assets/gate.js?v=20260808f"></script>
+<script src="assets/keyring.js?v=20260808g"></script>
+<script src="assets/gate.js?v=20260808g"></script>
 </head>
 <body>
 
