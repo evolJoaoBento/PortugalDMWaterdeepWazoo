@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808k">
+<meta name="wazoo-build" content="20260808l">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Penny Press — magical broadsheet forge</title>
@@ -181,8 +181,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808k"></script>
-<script src="assets/gate.js?v=20260808k"></script>
+<script src="assets/keyring.js?v=20260808l"></script>
+<script src="assets/gate.js?v=20260808l"></script>
 </head>
 <body>
 
@@ -366,10 +366,15 @@ textarea{
   <label>Brightness <b class="val" id="i-bright-val"></b></label>
   <input type="range" id="i-bright" min="50" max="180" step="5" value="100" style="width:100%">
   <div id="i-fxcolor-row" style="display:none">
-    <label>Ward colour</label>
+    <label>Fog colour</label>
     <span class="swatchrow">
-      <input type="color" id="i-fxcolor" value="#57e0d8" title="The hue the fog tints with">
-      <input type="text" id="i-fxcolor-hex" spellcheck="false" maxlength="7" aria-label="Ward colour as hex">
+      <input type="color" id="i-fxcolor" value="#57e0d8" title="The hue of the fog and its glow">
+      <input type="text" id="i-fxcolor-hex" spellcheck="false" maxlength="7" aria-label="Fog colour as hex">
+    </span>
+    <label>Picture tint</label>
+    <span class="swatchrow">
+      <input type="color" id="i-tintcolor" value="#2a1c4f" title="The hue laid over the picture itself">
+      <input type="text" id="i-tintcolor-hex" spellcheck="false" maxlength="7" aria-label="Picture tint as hex">
     </span>
   </div>
   <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c">
@@ -401,6 +406,10 @@ const PAPER_CSS = `
      Declared here so the preview and the exported page use the same. */
   --fogsheet:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='620' height='620'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.0055' numOctaves='5' seed='11'/><feGaussianBlur stdDeviation='6'/><feColorMatrix type='matrix' values='0.5 0.5 0.5 0 0.28  0.5 0.5 0.5 0 0.28  0.5 0.5 0.5 0 0.28  0.55 0.55 0.55 0 0.42'/></filter><rect width='620' height='620' filter='url(%23f)'/></svg>");
   --fogmist:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='620' height='620'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.0042' numOctaves='5' seed='29'/><feGaussianBlur stdDeviation='4'/><feColorMatrix type='matrix' values='0.34 0.34 0.34 0 0  0.34 0.34 0.34 0 0  0.34 0.34 0.34 0 0  1.55 1.55 1.55 0 -0.62'/></filter><rect width='620' height='620' filter='url(%23m)'/></svg>");
+  --fogholes:
+    radial-gradient(38% 44% at 26% 34%, transparent 8%, rgba(0,0,0,.55) 46%, #000 76%),
+    radial-gradient(44% 36% at 72% 66%, transparent 10%, rgba(0,0,0,.5) 48%, #000 78%),
+    radial-gradient(30% 48% at 54% 12%, transparent 6%, rgba(0,0,0,.6) 44%, #000 74%);
   --fibre:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.75 .95' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='260' height='260' filter='url(%23g)' opacity='.42'/></svg>");
   /* every knob below is overridable per-issue by the Style panel (inline style attr) */
   --ink:#241c12; --paper:#e9dcbf; --rule:#8a7146; --accent:#5a2d18;
@@ -496,7 +505,7 @@ const PAPER_CSS = `
 .paper figure.fx-ink .plate{background:var(--paper)}
 .paper figure.fx-ink img{
   filter:grayscale(1) sepia(calc(var(--fx) * .55)) contrast(calc(1 + var(--fx) * .45))
-         brightness(calc(1 + var(--fx) * .22));
+         brightness(calc(1 + var(--fx) * .22)) var(--imgadj);
   mix-blend-mode:multiply;
 }
 .paper figure.fx-ink .plate::after{
@@ -505,14 +514,15 @@ const PAPER_CSS = `
   mix-blend-mode:multiply;
 }
 
-/* PER-PICTURE ADJUSTMENT — contrast and brightness, so a plate that
-   fights its effect can be brought back into line without editing the
-   file. On .plate rather than the <img>, because every effect already
-   owns the image's own filter; two elements, two filters, neither
-   clobbering the other. */
-.paper figure.slot .plate{
-  filter:contrast(var(--imgc,1)) brightness(var(--imgb,1));
-}
+/* PER-PICTURE ADJUSTMENT — contrast and brightness for the picture
+   itself, leaving the fog and the glow alone.
+
+   Filters do not accumulate: a second filter rule replaces the first,
+   and six effects already set the image's. So the adjustment rides as a
+   variable that every one of those chains ends with, and stands alone
+   for the effects that set no filter at all. */
+.paper figure.slot{--imgadj:contrast(var(--imgc,1)) brightness(var(--imgb,1))}
+.paper figure.slot img{filter:var(--imgadj)}
 
 /* WARDING FOG — a tinted haze that drifts over the plate.
 
@@ -529,9 +539,30 @@ const PAPER_CSS = `
          drop-shadow(0 0 calc(1px + 5px*var(--fx)) color-mix(in srgb, var(--fxcolor) 80%, transparent));
 }
 .paper figure.fx-ward .plate{position:relative;overflow:hidden;background:var(--fxcolor)}
-.paper figure.fx-ward img{opacity:calc(1 - .30*var(--fx))}
+.paper figure.fx-ward img{
+  opacity:calc(1 - .12*var(--fx));
+  /* Holes in the picture, so the ward colour beneath shows through in
+     banks rather than as an even wash. Gradients rather than an SVG:
+     a gradient's alpha is unambiguous, whereas an SVG used as a mask is
+     read by its alpha in some engines and its luminance in others. */
+  -webkit-mask-image:var(--fogholes);mask-image:var(--fogholes);
+  mask-image:var(--fogholes);
+  -webkit-mask-size:170% 170%;mask-size:170% 170%;
+  animation:fx-ward-holes 41s ease-in-out infinite alternate;
+  animation-play-state:var(--fxplay,running);
+}
+@keyframes fx-ward-holes{
+  from{-webkit-mask-position:12% 78%;mask-position:12% 78%}
+  to  {-webkit-mask-position:82% 16%;mask-position:82% 16%}
+}
+.paper figure.fx-ward .plate::before{
+  /* the picture's own tint, under the fog and over the image */
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:var(--tintcolor);
+  opacity:calc(.10 + .42*var(--fx));
+}
 .paper figure.fx-ward .plate::after{
-  content:"";position:absolute;inset:-40%;pointer-events:none;
+  content:"";position:absolute;inset:-40%;pointer-events:none;z-index:2;
   opacity:calc(.35 + .55*var(--fx));
   background:
     radial-gradient(38% 46% at 22% 30%, var(--fxcolor), transparent 62%),
@@ -575,7 +606,7 @@ const PAPER_CSS = `
 
 /* SCRYSHEEN — a sheen of the binding spell crosses the plate */
 .paper figure.fx-sheen img{
-  filter:sepia(calc(var(--fx) * .38)) saturate(calc(1 + var(--fx) * .35)) contrast(1.06);
+  filter:sepia(calc(var(--fx) * .38)) saturate(calc(1 + var(--fx) * .35)) contrast(1.06) var(--imgadj);
 }
 .paper figure.fx-sheen .plate::after{
   background:linear-gradient(115deg, transparent 34%,
@@ -588,7 +619,7 @@ const PAPER_CSS = `
 @keyframes fx-sheen{from{background-position:170% 0}to{background-position:-170% 0}}
 
 /* WEAVE — the illusion's warp, drifting like a loom in motion */
-.paper figure.fx-weave img{filter:sepia(calc(var(--fx) * .42)) contrast(1.06) saturate(1.05)}
+.paper figure.fx-weave img{filter:sepia(calc(var(--fx) * .42)) contrast(1.06) saturate(1.05) var(--imgadj)}
 .paper figure.fx-weave .plate::after{
   background:repeating-linear-gradient(0deg,
     color-mix(in srgb, var(--ink) calc(var(--fx) * 26%), transparent) 0 1px, transparent 1px 4px);
@@ -602,7 +633,7 @@ const PAPER_CSS = `
              inset 0 0 calc(var(--fx) * 24px) color-mix(in srgb, #ffdca6 45%, transparent);
   animation:fx-ghost 4.6s ease-in-out infinite;
 }
-.paper figure.fx-ghost img{filter:sepia(calc(var(--fx) * .3)) saturate(1.15) brightness(1.04)}
+.paper figure.fx-ghost img{filter:sepia(calc(var(--fx) * .3)) saturate(1.15) brightness(1.04) var(--imgadj)}
 @keyframes fx-ghost{
   0%,100%{opacity:calc(1 - var(--fx) * .1)}
   50%{opacity:1}
@@ -612,7 +643,7 @@ const PAPER_CSS = `
 .paper figure.fx-unstable img{
   filter:sepia(calc(var(--fx) * .3)) contrast(1.06)
          drop-shadow(calc(var(--fx) * 2px) 0 0 rgba(150,40,30,.45))
-         drop-shadow(calc(var(--fx) * -2px) 0 0 rgba(30,80,140,.42));
+         drop-shadow(calc(var(--fx) * -2px) 0 0 rgba(30,80,140,.42)) var(--imgadj);
   animation:fx-unstable 7s steps(1,end) infinite;
 }
 .paper figure.fx-unstable .plate::after{
@@ -633,7 +664,7 @@ const PAPER_CSS = `
     transparent 45%, color-mix(in srgb, var(--paper) calc(var(--fx) * 92%), transparent) 88%);
   animation:fx-fading 6.5s ease-in-out infinite;
 }
-.paper figure.fx-fading img{filter:sepia(calc(var(--fx) * .3)) contrast(1.04)}
+.paper figure.fx-fading img{filter:sepia(calc(var(--fx) * .3)) contrast(1.04) var(--imgadj)}
 @keyframes fx-fading{0%,100%{opacity:.55}50%{opacity:1}}
 
 @media(prefers-reduced-motion:reduce){
@@ -1004,7 +1035,8 @@ function figureHTML(slot, editing){
   const fxVar = ' style="--fx:'+(((slot.fxAmount==null?75:slot.fxAmount)/100).toFixed(2))+
                 ';--fxcolor:'+esc(slot.fxColor||"#57e0d8")+
                 ';--imgc:'+(((slot.contrast==null?100:slot.contrast)/100).toFixed(2))+
-                ';--imgb:'+(((slot.bright==null?100:slot.bright)/100).toFixed(2))+'"';
+                ';--imgb:'+(((slot.bright==null?100:slot.bright)/100).toFixed(2))+
+                ';--tintcolor:'+esc(slot.tintColor||"#2a1c4f")+'"';
   if(!md){
     return editing
       ? '<figure class="'+cls+'" data-slot="'+slot.id+'"><figcaption>[missing image]</figcaption></figure>'
@@ -1095,6 +1127,7 @@ async function addMediaAt(file, anchor){
       fx:doc.style.fxDefault||"ink", fxAmount:doc.style.fxAmount==null?75:doc.style.fxAmount
     };
     if(!slot.fxColor) slot.fxColor = "#57e0d8";
+    if(!slot.tintColor) slot.tintColor = "#2a1c4f";
     doc.slots.push(slot);
     selectedSlot = slot.id;
     render(); openInspector(slot); scheduleSave();
@@ -1153,6 +1186,9 @@ function openInspector(slot){
     const col = slot.fxColor || "#57e0d8";
     $("#i-fxcolor").value = col;
     $("#i-fxcolor-hex").value = col;
+    const tint = slot.tintColor || "#2a1c4f";
+    $("#i-tintcolor").value = tint;
+    $("#i-tintcolor-hex").value = tint;
   }
 }
 function closeInspector(){ $("#inspector").classList.remove("open"); selectedSlot=null; render(); }
@@ -1630,19 +1666,27 @@ function wire(){
         s.fxColor = col;
         $("#i-fxcolor").value = col;
         $("#i-fxcolor-hex").value = col;
+        const tint = s.tintColor || "#2a1c4f";
+        s.tintColor = tint;
+        $("#i-tintcolor").value = tint;
+        $("#i-tintcolor-hex").value = tint;
       }
     }
     render(); scheduleSave();
   });
-  function setWardColour(v, from){
+  /* Two swatches, one setter: `field` names the slot property, `ids` the
+     pair of inputs for it. They stay in step without echoing back at
+     whichever one the edit came from. */
+  function setColour(field, ids, v, from){
     const hex = String(v||"").trim();
     if(!/^#[0-9a-f]{6}$/i.test(hex)) return;            // half-typed hex is not a change
     const sl = slotById(selectedSlot); if(!sl) return;
-    sl.fxColor = hex.toLowerCase();
-    if(from!=="picker") $("#i-fxcolor").value = sl.fxColor;
-    if(from!=="hex")    $("#i-fxcolor-hex").value = sl.fxColor;
+    sl[field] = hex.toLowerCase();
+    if(from!=="picker") $(ids[0]).value = sl[field];
+    if(from!=="hex")    $(ids[1]).value = sl[field];
     render(); scheduleSave();
   }
+  const FOG=["#i-fxcolor","#i-fxcolor-hex"], TINT=["#i-tintcolor","#i-tintcolor-hex"];
   function setAdjust(which, v){
     const sl = slotById(selectedSlot); if(!sl) return;
     sl[which] = +v;
@@ -1652,8 +1696,10 @@ function wire(){
   $("#i-contrast").addEventListener("input", e=>setAdjust("contrast", e.target.value));
   $("#i-bright").addEventListener("input",  e=>setAdjust("bright",  e.target.value));
 
-  $("#i-fxcolor").addEventListener("input", e=>setWardColour(e.target.value,"picker"));
-  $("#i-fxcolor-hex").addEventListener("input", e=>setWardColour(e.target.value,"hex"));
+  $("#i-fxcolor").addEventListener("input",       e=>setColour("fxColor",  FOG,  e.target.value,"picker"));
+  $("#i-fxcolor-hex").addEventListener("input",   e=>setColour("fxColor",  FOG,  e.target.value,"hex"));
+  $("#i-tintcolor").addEventListener("input",     e=>setColour("tintColor",TINT, e.target.value,"picker"));
+  $("#i-tintcolor-hex").addEventListener("input", e=>setColour("tintColor",TINT, e.target.value,"hex"));
 
   $("#i-fxamount").addEventListener("input",()=>{
     const s=slotById(selectedSlot); if(!s) return;
