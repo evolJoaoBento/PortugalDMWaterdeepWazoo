@@ -180,8 +180,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808i"></script>
-<script src="assets/gate.js?v=20260808i"></script>
+<script src="assets/keyring.js?v=20260808j"></script>
+<script src="assets/gate.js?v=20260808j"></script>
 </head>
 <body>
 
@@ -1611,11 +1611,27 @@ function wire(){
     const s=slotById(selectedSlot); if(!s) return;
     s.frame=$("#i-frame").checked; render(); scheduleSave();
   });
-  /* switching effect changes whether the colour applies */
-  $("#i-fx").addEventListener("change", e=>{ const sl=slotById(selectedSlot); if(sl) openInspector(sl); });
   $("#i-fx").addEventListener("change",()=>{
     const s=slotById(selectedSlot); if(!s) return;
-    s.fx=$("#i-fx").value; render(); scheduleSave();
+    s.fx=$("#i-fx").value;
+    /* Show or hide the ward colour to match the new effect — but only
+       after the effect has been read off the select. An earlier version
+       re-opened the whole inspector on this event, and openInspector
+       writes slot.fx back into the select: it reset the choice to the
+       old value before this line could read it, so changing an effect
+       did nothing at all. Touch the one row instead of rebuilding. */
+    const row = $("#i-fxcolor-row");
+    if(row){
+      const isWard = s.fx === "ward";
+      row.style.display = isWard ? "" : "none";
+      if(isWard){
+        const col = s.fxColor || "#57e0d8";
+        s.fxColor = col;
+        $("#i-fxcolor").value = col;
+        $("#i-fxcolor-hex").value = col;
+      }
+    }
+    render(); scheduleSave();
   });
   function setWardColour(v, from){
     const hex = String(v||"").trim();
