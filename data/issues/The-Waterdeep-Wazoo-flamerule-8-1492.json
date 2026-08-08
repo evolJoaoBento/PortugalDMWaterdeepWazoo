@@ -151,8 +151,8 @@
       "fx": "ward",
       "fxAmount": 15,
       "caption": "",
-      "fxColor": "#57e0d8",
-      "tintColor": "#aaf2f3"
+      "fxColor": "#ffffff",
+      "tintColor": "#ffffff"
     }
   ],
   "media": [
