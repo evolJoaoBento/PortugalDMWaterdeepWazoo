@@ -115,11 +115,21 @@ numbers are there so later work has something to compute with.
 
 ## Working on it locally
 
-Any static server will do, but browsers cache aggressively and GitHub Pages
-serves assets with a ten minute cache, so shared files carry `?v=` in their
-URLs. **Bump that token in every page when you change `assets/wazoo.css`,
-`keyring.js`, `gate.js` or `backdrop.js`**, or a browser that has been here
-before will keep running the old one.
+Any static server will do. GitHub Pages serves everything with
+`cache-control: max-age=600`, which matters twice:
+
+**Shared assets** carry `?v=` in their URLs. **Bump that token in every page
+when you change `assets/wazoo.css`, `keyring.js`, `gate.js` or
+`backdrop.js`** — a different query is a different resource, so the change is
+picked up on the next load instead of whenever the cache lapses.
+
+**The HTML pages cannot be versioned that way**, since their URL is the thing
+you navigate to. A page you have visited in the last ten minutes will serve
+from cache after a deploy, and `editor.html` keeps all its CSS and script
+inline — so a stale page is a stale tool, not just stale styling. Hard-reload
+(Ctrl-Shift-R) after publishing a change to a page, or wait it out. Checking
+the deploy landed by fetching the URL is not enough; that proves the server
+has it, not the browser.
 
 ```
 python -m http.server 8731 --bind 127.0.0.1
