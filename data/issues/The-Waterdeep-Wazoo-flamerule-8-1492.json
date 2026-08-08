@@ -63,7 +63,7 @@
       },
       "width": "col",
       "frame": false,
-      "fx": "sheen",
+      "fx": "ward",
       "fxAmount": 15,
       "caption": "",
       "fxColor": "#57e0d8",
@@ -150,10 +150,10 @@
       "width": "col",
       "frame": false,
       "fx": "ward",
-      "fxAmount": 15,
+      "fxAmount": 10,
       "caption": "",
-      "fxColor": "#ffffff",
-      "tintColor": "#ffffff"
+      "fxColor": "#00ccf5",
+      "tintColor": "#b0fcf7"
     }
   ],
   "media": [
