@@ -32,6 +32,22 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
+
+<style>
+  /* The Registry sign hangs two doors instead of one: the roll is only
+     open to those already on it, so newcomers get the register itself
+     rather than a locked page. The sign is a div, not a link, so the
+     two anchors inside it stay valid. */
+  .shop-pair{cursor:default}
+  .shop-pair:focus-within{
+    transform:rotate(-.9deg);
+    box-shadow:0 22px 38px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.24);
+  }
+  .go.pair{display:flex;flex-wrap:wrap;gap:7px 20px}
+  .go.pair a{color:inherit;text-decoration:none}
+  .go.pair a:hover span,.go.pair a:focus-visible span{color:#f6dfa6;border-bottom-color:var(--brass)}
+  .go.pair a:focus-visible{outline:none}
+</style>
 </head>
 <body>
 
@@ -57,6 +73,11 @@
   <symbol id="i-ledger" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
     <path d="M24 14c-4-3-8-4-13-4v25c5 0 9 1 13 4 4-3 8-4 13-4V10c-5 0-9 1-13 4z"/>
     <path d="M24 14v25"/><path d="M29 10v11l3-2 3 2V10"/>
+  </symbol>
+  <symbol id="i-quill" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 34C14 20 22 11 37 8c3 15-6 24-20 26z"/>
+    <path d="M37 8 18 27"/>
+    <path d="M8 41h32"/>
   </symbol>
   <symbol id="i-d20" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
     <path d="M24 5 41 15v20L24 45 7 35V15z"/><path d="M24 5 14 20h20L24 5z"/>
@@ -120,14 +141,17 @@
         <span class="go"><span>Read the postings &rarr;</span></span>
       </a>
 
-      <a class="shop" href="https://www.dndbeyond.com/campaigns/join/79837994000601072" target="_blank" rel="noopener">
+      <div class="shop shop-pair">
         <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
         <svg class="logo" aria-hidden="true"><use href="#i-ledger"/></svg>
         <span class="trade">The Registry</span>
         <h2>The Campaign</h2>
-        <p>The roll of adventurers &mdash; sheets, levels and inventories.</p>
-        <span class="go"><span>dndbeyond.com &#8599;</span></span>
-      </a>
+        <p>The roll of adventurers &mdash; sheets, levels and inventories. New hands sign the register first.</p>
+        <span class="go pair">
+          <a href="https://www.dndbeyond.com/campaigns/join/79837994000601072" target="_blank" rel="noopener"><span>Sign the register &#8599;</span></a>
+          <a href="https://www.dndbeyond.com/campaigns/7983799" target="_blank" rel="noopener"><span>Enter the campaign &#8599;</span></a>
+        </span>
+      </div>
 
       <a class="shop" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
         <span class="beam"></span><span class="ring l"></span><span class="ring r"></span>
