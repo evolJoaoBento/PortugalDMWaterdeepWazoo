@@ -157,6 +157,15 @@ textarea{
 .inspector label{display:block;font-size:11px;color:#9a8a6a;margin:8px 0 3px;
   text-transform:uppercase;letter-spacing:.08em}
 .inspector input[type=text],.inspector select{width:100%}
+.swatchrow{display:flex;gap:6px;align-items:center}
+.swatchrow input[type=color]{
+  width:46px;height:30px;padding:2px;flex:0 0 auto;
+  background:#2a2216;border:1px solid #4a3c26;border-radius:4px;cursor:pointer;
+}
+.swatchrow input[type=text]{
+  flex:1 1 auto;min-width:0;width:auto;
+  font-family:ui-monospace,Consolas,monospace;font-size:12px;
+}
 .inspector .row{display:flex;gap:6px;margin-top:10px}
 .inspector .row button{flex:1}
 .danger{border-color:#7a2f22;color:#ffb4a2}
@@ -171,8 +180,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808h"></script>
-<script src="assets/gate.js?v=20260808h"></script>
+<script src="assets/keyring.js?v=20260808i"></script>
+<script src="assets/gate.js?v=20260808i"></script>
 </head>
 <body>
 
@@ -299,6 +308,13 @@ textarea{
         </label>
         <label class="ck"><input type="checkbox" data-style="colRule"> Rule between columns</label>
 
+        <label style="grid-column:1/-1">Paper
+          <select data-style="paperType">
+            <option value="smooth">Smooth stock — clean press paper</option>
+            <option value="rough">Rough stock — fibre, foxing and stains</option>
+          </select>
+        </label>
+
         <div class="sgroup">Illusion press</div>
         <label style="grid-column:1/-1">Default enchantment for new pictures
           <select data-style="fxDefault" id="s-fxdefault"></select>
@@ -344,6 +360,17 @@ textarea{
   <select id="i-fx"></select>
   <label>Strength <b class="val" id="i-fx-val"></b></label>
   <input type="range" id="i-fxamount" min="0" max="100" step="5" style="width:100%">
+  <label>Contrast <b class="val" id="i-contrast-val"></b></label>
+  <input type="range" id="i-contrast" min="50" max="180" step="5" value="100" style="width:100%">
+  <label>Brightness <b class="val" id="i-bright-val"></b></label>
+  <input type="range" id="i-bright" min="50" max="180" step="5" value="100" style="width:100%">
+  <div id="i-fxcolor-row" style="display:none">
+    <label>Ward colour</label>
+    <span class="swatchrow">
+      <input type="color" id="i-fxcolor" value="#57e0d8" title="The hue the fog tints with">
+      <input type="text" id="i-fxcolor-hex" spellcheck="false" maxlength="7" aria-label="Ward colour as hex">
+    </span>
+  </div>
   <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c">
     <input type="checkbox" id="i-frame" style="width:auto"> Aged photo frame
   </label>
@@ -369,6 +396,11 @@ textarea{
    ========================================================================= */
 const PAPER_CSS = `
 .paper{
+  /* One sheet of turbulence for the warding fog and one for paper fibre.
+     Declared here so the preview and the exported page use the same. */
+  --fogsheet:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='620' height='620'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.0055' numOctaves='5' seed='11'/><feGaussianBlur stdDeviation='6'/><feColorMatrix type='matrix' values='0.5 0.5 0.5 0 0.28  0.5 0.5 0.5 0 0.28  0.5 0.5 0.5 0 0.28  0.55 0.55 0.55 0 0.42'/></filter><rect width='620' height='620' filter='url(%23f)'/></svg>");
+  --fogmist:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='620' height='620'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.0042' numOctaves='5' seed='29'/><feGaussianBlur stdDeviation='4'/><feColorMatrix type='matrix' values='0.34 0.34 0.34 0 0  0.34 0.34 0.34 0 0  0.34 0.34 0.34 0 0  1.55 1.55 1.55 0 -0.62'/></filter><rect width='620' height='620' filter='url(%23m)'/></svg>");
+  --fibre:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.75 .95' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='260' height='260' filter='url(%23g)' opacity='.42'/></svg>");
   /* every knob below is overridable per-issue by the Style panel (inline style attr) */
   --ink:#241c12; --paper:#e9dcbf; --rule:#8a7146; --accent:#5a2d18;
   --ink-soft:color-mix(in srgb, var(--ink) 74%, #a9946a);
@@ -471,6 +503,74 @@ const PAPER_CSS = `
     color-mix(in srgb, var(--ink) calc(var(--fx) * 9%), transparent) 0 1px, transparent 1px 3px);
   mix-blend-mode:multiply;
 }
+
+/* PER-PICTURE ADJUSTMENT — contrast and brightness, so a plate that
+   fights its effect can be brought back into line without editing the
+   file. On .plate rather than the <img>, because every effect already
+   owns the image's own filter; two elements, two filters, neither
+   clobbering the other. */
+.paper figure.slot .plate{
+  filter:contrast(var(--imgc,1)) brightness(var(--imgb,1));
+}
+
+/* WARDING FOG — a tinted haze that drifts over the plate.
+
+   Built from drifting radial gradients rather than a noise mask. A mask
+   was tried first; the real difficulty with it is that an SVG used as a
+   mask is read by its alpha in some engines and its luminance in others,
+   so one sheet has to satisfy both. Gradients need no such care, layer
+   at several sizes and speeds, and read as fog well enough that the
+   extra fragility earns nothing.
+
+   --fxcolor is the chosen hue, --fx the strength. */
+.paper figure.fx-ward{
+  filter:drop-shadow(0 0 calc(3px + 20px*var(--fx)) color-mix(in srgb, var(--fxcolor) 60%, transparent))
+         drop-shadow(0 0 calc(1px + 5px*var(--fx)) color-mix(in srgb, var(--fxcolor) 80%, transparent));
+}
+.paper figure.fx-ward .plate{position:relative;overflow:hidden;background:var(--fxcolor)}
+.paper figure.fx-ward img{opacity:calc(1 - .30*var(--fx))}
+.paper figure.fx-ward .plate::after{
+  content:"";position:absolute;inset:-40%;pointer-events:none;
+  opacity:calc(.35 + .55*var(--fx));
+  background:
+    radial-gradient(38% 46% at 22% 30%, var(--fxcolor), transparent 62%),
+    radial-gradient(46% 38% at 74% 62%, var(--fxcolor), transparent 66%),
+    radial-gradient(30% 52% at 52% 88%, var(--fxcolor), transparent 60%),
+    radial-gradient(56% 40% at 40% 12%, var(--fxcolor), transparent 68%);
+  filter:blur(14px);
+  animation:fx-ward-drift 34s ease-in-out infinite alternate;
+  animation-play-state:var(--fxplay,running);
+}
+@keyframes fx-ward-drift{
+  from{transform:translate3d(-6%,-4%,0) scale(1)}
+  to  {transform:translate3d(7%,5%,0) scale(1.18)}
+}
+@media(prefers-reduced-motion:reduce){
+  .paper figure.fx-ward .plate::after{animation:none}
+}
+
+/* ROUGH PAPER — the notice-board stock: fibre, foxing, and a surface
+   that is not perfectly flat. Kept off the smooth setting entirely so
+   an issue that wants clean paper pays nothing for this. */
+.paper[data-paper="rough"]{
+  position:relative;
+  box-shadow:0 18px 44px rgba(20,14,4,.34), inset 0 0 90px rgba(120,88,40,.16);
+}
+.paper[data-paper="rough"]::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  opacity:.55;mix-blend-mode:multiply;
+  background-image:var(--fibre);
+}
+.paper[data-paper="rough"]::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  opacity:.5;mix-blend-mode:multiply;
+  background:
+    radial-gradient(ellipse 30% 18% at 12% 88%, color-mix(in srgb, var(--rule) 30%, transparent), transparent 70%),
+    radial-gradient(ellipse 22% 13% at 88% 9%,  color-mix(in srgb, var(--rule) 24%, transparent), transparent 72%),
+    radial-gradient(ellipse 16% 11% at 62% 46%, color-mix(in srgb, var(--rule) 16%, transparent), transparent 74%),
+    radial-gradient(ellipse 12% 22% at 4% 40%,  color-mix(in srgb, var(--rule) 18%, transparent), transparent 76%);
+}
+.paper[data-paper="rough"] > *{position:relative;z-index:1}
 
 /* SCRYSHEEN — a sheen of the binding spell crosses the plate */
 .paper figure.fx-sheen img{
@@ -745,6 +845,7 @@ const FX = [
   ["sheen","Scrysheen — spell-light crosses the plate"],
   ["weave","Illusory weave — drifting warp lines"],
   ["ghost","Ghostlight — breathing glow"],
+  ["ward","Warding fog — tinted haze, drifting"],
   ["unstable","Unstable conjuration — flicker and split"],
   ["fading","Fading charm — edges dissolve"],
   ["none","No enchantment — plain picture"]
@@ -899,7 +1000,10 @@ function figureHTML(slot, editing){
   const md = media.get(slot.mediaId);
   const fx = slot.fx && slot.fx!=="none" ? "fx-"+slot.fx : "";
   const cls = ["slot", slot.width==="full"?"full":"", slot.frame?"framed":"", fx].filter(Boolean).join(" ");
-  const fxVar = ' style="--fx:'+(((slot.fxAmount==null?75:slot.fxAmount)/100).toFixed(2))+'"';
+  const fxVar = ' style="--fx:'+(((slot.fxAmount==null?75:slot.fxAmount)/100).toFixed(2))+
+                ';--fxcolor:'+esc(slot.fxColor||"#57e0d8")+
+                ';--imgc:'+(((slot.contrast==null?100:slot.contrast)/100).toFixed(2))+
+                ';--imgb:'+(((slot.bright==null?100:slot.bright)/100).toFixed(2))+'"';
   if(!md){
     return editing
       ? '<figure class="'+cls+'" data-slot="'+slot.id+'"><figcaption>[missing image]</figcaption></figure>'
@@ -989,6 +1093,7 @@ async function addMediaAt(file, anchor){
       caption:"", width:"column", frame:true,
       fx:doc.style.fxDefault||"ink", fxAmount:doc.style.fxAmount==null?75:doc.style.fxAmount
     };
+    if(!slot.fxColor) slot.fxColor = "#57e0d8";
     doc.slots.push(slot);
     selectedSlot = slot.id;
     render(); openInspector(slot); scheduleSave();
@@ -1032,6 +1137,22 @@ function openInspector(slot){
   $("#i-frame").checked = !!slot.frame;
   $("#inspector").classList.add("open");
   render();
+  /* The colour only means anything to the warding fog, so it only
+     appears for it — an inert control on every other effect would just
+     be another thing to wonder about. */
+  const c = slot.contrast==null?100:slot.contrast;
+  const b = slot.bright==null?100:slot.bright;
+  $("#i-contrast").value = c; $("#i-contrast-val").textContent = c+"%";
+  $("#i-bright").value  = b; $("#i-bright-val").textContent  = b+"%";
+
+  const isWard = (slot.fx||"") === "ward";
+  const row = $("#i-fxcolor-row");
+  if(row){
+    row.style.display = isWard ? "" : "none";
+    const col = slot.fxColor || "#57e0d8";
+    $("#i-fxcolor").value = col;
+    $("#i-fxcolor-hex").value = col;
+  }
 }
 function closeInspector(){ $("#inspector").classList.remove("open"); selectedSlot=null; render(); }
 
@@ -1263,7 +1384,7 @@ function buildExport(){
        English",Georgia,serif — and unescaped the first one closes the
        attribute, taking every style variable after it with it. Every
        issue exported before this went out with its styling stripped. */
-    '<div class="paper" style="'+esc(styleVars(doc.style))+'">\n'+ mastheadHTML(doc.masthead, lang) +'\n<div class="body">\n'+
+    '<div class="paper" data-paper="'+esc(doc.style.paperType||"smooth")+'" style="'+esc(styleVars(doc.style))+'">\n'+ mastheadHTML(doc.masthead, lang) +'\n<div class="body">\n'+
     bodyHTML +'\n<div class="colophon">'+esc(t.printed)+'</div>\n</div>\n</div>\n'+
     /* The issue carries its own source. "</" is escaped or the JSON would
        close this script tag early and break the page. */
@@ -1287,7 +1408,10 @@ function doExport(){
 /* =========================================================================
    Wiring
    ========================================================================= */
-function applyStyle(){ $("#paper").setAttribute("style", styleVars(doc.style)); }
+function applyStyle(){
+  $("#paper").setAttribute("style", styleVars(doc.style));
+  $("#paper").setAttribute("data-paper", doc.style.paperType||"smooth");
+}
 function readCtl(el){
   if(el.type==="checkbox") return el.checked;
   if(el.type==="range"||el.type==="number") return +el.value;
@@ -1487,10 +1611,33 @@ function wire(){
     const s=slotById(selectedSlot); if(!s) return;
     s.frame=$("#i-frame").checked; render(); scheduleSave();
   });
+  /* switching effect changes whether the colour applies */
+  $("#i-fx").addEventListener("change", e=>{ const sl=slotById(selectedSlot); if(sl) openInspector(sl); });
   $("#i-fx").addEventListener("change",()=>{
     const s=slotById(selectedSlot); if(!s) return;
     s.fx=$("#i-fx").value; render(); scheduleSave();
   });
+  function setWardColour(v, from){
+    const hex = String(v||"").trim();
+    if(!/^#[0-9a-f]{6}$/i.test(hex)) return;            // half-typed hex is not a change
+    const sl = slotById(selectedSlot); if(!sl) return;
+    sl.fxColor = hex.toLowerCase();
+    if(from!=="picker") $("#i-fxcolor").value = sl.fxColor;
+    if(from!=="hex")    $("#i-fxcolor-hex").value = sl.fxColor;
+    render(); scheduleSave();
+  }
+  function setAdjust(which, v){
+    const sl = slotById(selectedSlot); if(!sl) return;
+    sl[which] = +v;
+    $("#i-"+(which==="contrast"?"contrast":"bright")+"-val").textContent = (+v)+"%";
+    render(); scheduleSave();
+  }
+  $("#i-contrast").addEventListener("input", e=>setAdjust("contrast", e.target.value));
+  $("#i-bright").addEventListener("input",  e=>setAdjust("bright",  e.target.value));
+
+  $("#i-fxcolor").addEventListener("input", e=>setWardColour(e.target.value,"picker"));
+  $("#i-fxcolor-hex").addEventListener("input", e=>setWardColour(e.target.value,"hex"));
+
   $("#i-fxamount").addEventListener("input",()=>{
     const s=slotById(selectedSlot); if(!s) return;
     s.fxAmount=+$("#i-fxamount").value;
@@ -1596,7 +1743,11 @@ function runTests(){
   doc.style=Object.assign({},STYLE_DEFAULTS,{cols:4});
   doc.markdown="## H\n\n!Body."; doc.slots=[];
   const html=buildExport();
-  ok("export carries style vars", html.indexOf('class="paper" style="')>-1 && html.indexOf("--cols:4")>-1);
+  /* Was a literal 'class="paper" style="'; the paper element now carries
+     data-paper between them, so match the parts rather than their order. */
+  ok("export carries style vars",
+     html.indexOf('class="paper"')>-1 && html.indexOf('style="')>-1 && html.indexOf("--cols:4")>-1);
+  ok("export records the paper stock", /data-paper="(smooth|rough)"/.test(html));
   {
     /* Text search is not enough: a broken attribute still contains the
        characters. This is what let the quote bug ship. */
