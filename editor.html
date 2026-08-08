@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808l">
+<meta name="wazoo-build" content="20260808m">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Penny Press — magical broadsheet forge</title>
@@ -181,8 +181,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808l"></script>
-<script src="assets/gate.js?v=20260808l"></script>
+<script src="assets/keyring.js?v=20260808m"></script>
+<script src="assets/gate.js?v=20260808m"></script>
 </head>
 <body>
 
@@ -194,6 +194,7 @@ textarea{
   </select>
   <button id="btn-new">New issue</button>
   <span class="spacer"></span>
+  <button id="btn-save" disabled title="Keep this issue in this browser (Ctrl+S)">Save</button>
   <span class="hint" id="save-state">—</span>
   <button id="btn-export">Export broadsheet</button>
   <button id="btn-city" class="primary">Publish to the city…</button>
@@ -978,17 +979,31 @@ async function idbDel(id){
    ========================================================================= */
 const LS_KEY="pennypress.doc";
 let saveTimer=null;
-function scheduleSave(){
-  $("#save-state").textContent="saving…";
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{
-    try{
-      localStorage.setItem(LS_KEY, JSON.stringify(doc));
-      $("#save-state").textContent = idbOK ? "saved" : "saved (text only — images live in this tab)";
-    }catch(e){
-      $("#save-state").textContent="save failed";
-    }
-  },500);
+/* Saving is a decision, not a reflex.
+
+   There is no autosave: twenty-three places in this file used to call
+   scheduleSave after every keystroke, slider nudge and colour change.
+   scheduleSave now only records that there is something to save, so
+   those calls all become "mark unsaved" without any of them changing,
+   and saveNow is the one thing that writes. */
+let unsaved = false;
+function markSaveState(){
+  const el = $("#save-state"); if(!el) return;
+  el.textContent = unsaved ? "unsaved changes" : (idbOK ? "saved" : "saved (text only — images live in this tab)");
+  el.style.color = unsaved ? "#d8b46a" : "";
+  const b = $("#btn-save"); if(b) b.disabled = !unsaved;
+}
+function scheduleSave(){ unsaved = true; markSaveState(); }
+function saveNow(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(doc));
+    unsaved = false;
+    markSaveState();
+    toast("Saved to this browser.", 2200);
+  }catch(e){
+    $("#save-state").textContent = "save failed — " + e.message;
+    toast("Could not save: "+e.message, 5000);
+  }
 }
 async function loadSaved(){
   let raw=null;
@@ -1585,6 +1600,13 @@ function wire(){
     syncFields(); closeInspector(); render(); scheduleSave();
   });
 
+  $("#btn-save").addEventListener("click",saveNow);
+  addEventListener("keydown",e=>{
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){ e.preventDefault(); saveNow(); }
+  });
+  /* Losing an hour's typing to a stray tab close is worse than a prompt. */
+  addEventListener("beforeunload",e=>{ if(unsaved){ e.preventDefault(); e.returnValue=""; } });
+
   $("#btn-export").addEventListener("click",doExport);
 
   // ---- preview interactions ----
@@ -1857,7 +1879,7 @@ function injectPaperCSS(){
   syncFields();
   syncCalendar();
   render();
-  $("#save-state").textContent="ready";
+  unsaved=false; markSaveState();
   if(!idbOK) toast("This browser won't keep images across reloads here — export before you close the tab.", 7000);
 })();
 </script>
