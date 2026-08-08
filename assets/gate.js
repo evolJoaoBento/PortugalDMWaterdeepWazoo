@@ -24,6 +24,26 @@
 
   var CSS = `
   /* ── the banner ───────────────────────────────────────────────── */
+  .ward-stale{
+    position:relative;z-index:80;
+    display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;
+    padding:11px 20px;
+    font-family:"Cinzel",Georgia,serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:#0f1a10;background:linear-gradient(180deg,#c8b25a,#a2892f);
+    border-bottom:2px solid #6d5a18;
+  }
+  .ward-stale b{color:#14200f}
+  .ward-stale span{
+    text-transform:none;letter-spacing:0;font-family:"EB Garamond",Georgia,serif;
+    font-size:15px;flex:1 1 300px;color:#1d2a15;
+  }
+  .ward-stale button{
+    font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:#f6f2e0;background:#3f3a12;border:1px solid #241f06;border-radius:2px;
+    padding:6px 12px;cursor:pointer;
+  }
+  .ward-stale button:hover{background:#55501a}
+
   .ward-banner{
     position:relative;z-index:70;
     display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline;
@@ -278,11 +298,50 @@
     return { banner: banner, ward: ward };
   }
 
+
+  /* ── is this page stale? ────────────────────────────────────────
+     The HTML cannot carry a cache-busting version the way the shared
+     assets can, because its URL is what people navigate to, and Pages
+     serves it with a ten minute cache. So a workshop opened recently
+     keeps running the old build after a deploy — which reads exactly
+     like a fix that was never made.
+
+     Rather than ask anyone to remember Ctrl-Shift-R, fetch this page
+     again past the cache and compare build stamps. If they differ, say
+     so and offer the reload. */
+  function watchForNewBuild() {
+    var meta = document.querySelector('meta[name="wazoo-build"]');
+    if (!meta) return;
+    var running = meta.getAttribute('content');
+
+    fetch(location.pathname + '?stamp=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (html) {
+        if (!html) return;
+        var m = html.match(/name="wazoo-build"\s+content="([^"]+)"/);
+        if (!m || m[1] === running) return;
+
+        var bar = document.createElement('div');
+        bar.className = 'ward-stale';
+        bar.innerHTML =
+          '<b>This page is out of date.</b>' +
+          '<span>A newer build of the workshop has been published — ' +
+          'the copy you are looking at came from the browser cache.</span>' +
+          '<button type="button">Load the new one</button>';
+        bar.querySelector('button').addEventListener('click', function () {
+          location.replace(location.pathname + '?b=' + m[1]);
+        });
+        document.body.insertBefore(bar, document.body.firstChild);
+      })
+      .catch(function () { /* offline is not stale */ });
+  }
+
   function start() {
     if (!window.Keyring) {
       console.warn('gate.js needs keyring.js loaded first');
       return;
     }
+    watchForNewBuild();
     var parts = build();
     var ward  = parts.ward;
     var why   = document.getElementById('ward-why');
