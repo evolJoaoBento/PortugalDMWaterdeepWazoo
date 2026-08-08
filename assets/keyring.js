@@ -66,7 +66,11 @@
         if (repo.permissions && repo.permissions.push === false) {
           return { ok: false, why: 'this key can read but not write' };
         }
-        return { ok: true, repo: repo.full_name };
+        /* A fine-grained token's own scopes are not in this response —
+           permissions.push reflects the account's access, not the key's.
+           So a read-only key passes here and only fails when it tries to
+           write. Say what has actually been proved. */
+        return { ok: true, repo: repo.full_name, writeUnproven: true };
       } catch (e) {
         return { ok: false, why: 'could not reach GitHub — ' + e.message };
       }
@@ -139,6 +143,16 @@
       if (r.status === 409 || r.status === 422) {
         throw new Error(path + ' changed under us (' + r.status +
                         ') — reload and redo the edit');
+      }
+      if (r.status === 403) {
+        /* The token reads but cannot write. Almost always Contents is set
+           to Read-only, or this repository was never ticked under
+           Repository access. GitHub's own message does not say which, so
+           say it here rather than leave it to be guessed at. */
+        throw new Error('the key may read but not write. On the token, set ' +
+                        'Contents to "Read and write" and make sure ' + REPO +
+                        ' is selected under Repository access, then unseal again. ' +
+                        '(GitHub said: resource not accessible by personal access token)');
       }
       if (!r.ok) throw new Error('write ' + r.status + ' — ' + (await r.text()).slice(0, 200));
       return r.json();

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808m">
+<meta name="wazoo-build" content="20260808n">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Penny Press — magical broadsheet forge</title>
@@ -181,8 +181,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808m"></script>
-<script src="assets/gate.js?v=20260808m"></script>
+<script src="assets/keyring.js?v=20260808n"></script>
+<script src="assets/gate.js?v=20260808n"></script>
 </head>
 <body>
 
@@ -374,7 +374,7 @@ textarea{
     </span>
     <label>Picture tint</label>
     <span class="swatchrow">
-      <input type="color" id="i-tintcolor" value="#2a1c4f" title="The hue laid over the picture itself">
+      <input type="color" id="i-tintcolor" value="#aaf2f3" title="The hue laid over the picture itself">
       <input type="text" id="i-tintcolor-hex" spellcheck="false" maxlength="7" aria-label="Picture tint as hex">
     </span>
   </div>
@@ -1051,7 +1051,7 @@ function figureHTML(slot, editing){
                 ';--fxcolor:'+esc(slot.fxColor||"#57e0d8")+
                 ';--imgc:'+(((slot.contrast==null?100:slot.contrast)/100).toFixed(2))+
                 ';--imgb:'+(((slot.bright==null?100:slot.bright)/100).toFixed(2))+
-                ';--tintcolor:'+esc(slot.tintColor||"#2a1c4f")+'"';
+                ';--tintcolor:'+esc(slot.tintColor||"#aaf2f3")+'"';
   if(!md){
     return editing
       ? '<figure class="'+cls+'" data-slot="'+slot.id+'"><figcaption>[missing image]</figcaption></figure>'
@@ -1142,7 +1142,7 @@ async function addMediaAt(file, anchor){
       fx:doc.style.fxDefault||"ink", fxAmount:doc.style.fxAmount==null?75:doc.style.fxAmount
     };
     if(!slot.fxColor) slot.fxColor = "#57e0d8";
-    if(!slot.tintColor) slot.tintColor = "#2a1c4f";
+    if(!slot.tintColor) slot.tintColor = "#aaf2f3";
     doc.slots.push(slot);
     selectedSlot = slot.id;
     render(); openInspector(slot); scheduleSave();
@@ -1201,7 +1201,7 @@ function openInspector(slot){
     const col = slot.fxColor || "#57e0d8";
     $("#i-fxcolor").value = col;
     $("#i-fxcolor-hex").value = col;
-    const tint = slot.tintColor || "#2a1c4f";
+    const tint = slot.tintColor || "#aaf2f3";
     $("#i-tintcolor").value = tint;
     $("#i-tintcolor-hex").value = tint;
   }
@@ -1688,7 +1688,7 @@ function wire(){
         s.fxColor = col;
         $("#i-fxcolor").value = col;
         $("#i-fxcolor-hex").value = col;
-        const tint = s.tintColor || "#2a1c4f";
+        const tint = s.tintColor || "#aaf2f3";
         s.tintColor = tint;
         $("#i-tintcolor").value = tint;
         $("#i-tintcolor-hex").value = tint;

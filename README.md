@@ -46,7 +46,9 @@ armour, and it says so itself.
 ### Getting in
 
 1. Make a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new)
-2. Scope it to **this repository only**, permission **Contents: Read and write**, nothing else
+2. Scope it to **this repository only**, permission **Contents: Read and write**, nothing else.
+   *Read-only is the usual mistake:* reading, listing and opening all work with it, and the
+   first sign anything is wrong is a 403 when you publish.
 3. Open either workshop and give it to the ward
 
 The token is kept in that browser's `localStorage`, never in the page or the
