@@ -135,8 +135,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808c"></script>
-<script src="assets/gate.js?v=20260808c"></script>
+<script src="assets/keyring.js?v=20260808d"></script>
+<script src="assets/gate.js?v=20260808d"></script>
 </head>
 <body>
 
@@ -1581,34 +1581,56 @@ function injectPaperCSS(){
   async function openIssue(name){
     if(!name) return;
     if(!confirm("Open “"+name.replace(/\.json$/,"")+"”?\n\nThe issue open in this forge will be replaced.")) return;
+
+    /* Fetch everything before touching the forge. The first version of
+       this swapped doc first and loaded pictures after, so one picture
+       that would not come back threw past the re-render and left the
+       document changed underneath a screen still showing the old issue
+       — which looks exactly like "it did not replace anything". */
+    let src, loaded = [], missing = [];
     try{
       say("Fetching "+name+"…");
-      const src = await (await fetch("data/issues/"+name+"?t="+Date.now(),{cache:"no-store"})).json();
+      const r = await fetch("data/issues/"+name+"?t="+Date.now(),{cache:"no-store"});
+      if(!r.ok) throw new Error(name+" — "+r.status);
+      src = await r.json();
 
-      Object.assign(doc.masthead, src.masthead||{});
-      Object.assign(doc.style, src.style||{});
-      doc.markdown = src.markdown||"";
-      doc.slots.length = 0; (src.slots||[]).forEach(s=>doc.slots.push(s));
-
-      media.clear();
       for(const m of (src.media||[])){
-        if(!m.file) continue;
-        const blob = await (await fetch(m.file+"?t="+Date.now(),{cache:"no-store"})).blob();
-        const dataUrl = await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(blob); });
-        media.set(m.id,{ id:m.id, name:m.name, mime:blob.type, dataUrl:dataUrl, w:m.w, h:m.h });
+        if(!m.file){ missing.push(m.name||m.id); continue; }
+        try{
+          /* fetch() resolves for a 404 rather than throwing, and its body
+             is the error page — without this check that becomes a blob
+             the forge would happily treat as a picture. */
+          const res = await fetch(m.file+"?t="+Date.now(),{cache:"no-store"});
+          if(!res.ok) throw new Error(res.status);
+          const blob = await res.blob();
+          if(!/^image\//.test(blob.type)) throw new Error("not an image");
+          const dataUrl = await new Promise((ok,no)=>{
+            const fr=new FileReader(); fr.onload=()=>ok(fr.result); fr.onerror=()=>no(new Error("unreadable")); fr.readAsDataURL(blob);
+          });
+          loaded.push({ id:m.id, name:m.name, mime:blob.type, dataUrl:dataUrl, w:m.w, h:m.h });
+        }catch(e){ missing.push((m.name||m.file)+" ("+e.message+")"); }
       }
+    }catch(e){
+      say("Could not open it: "+e.message+" — nothing was changed.","err");
+      return;
+    }
 
-      /* put the masthead fields back on screen */
-      ["title","tagline","dateline","price","issue","lang"].forEach(k=>{
-        const el = document.getElementById("f-"+k);
-        if(el && k in doc.masthead) el.value = doc.masthead[k];
-      });
-      const mdBox = document.getElementById("md");
-      if(mdBox) mdBox.value = doc.markdown;
+    /* Nothing above this line has altered the forge. From here it is all
+       local and cannot fail halfway. */
+    Object.assign(doc.masthead, src.masthead||{});
+    Object.assign(doc.style, src.style||{});
+    doc.markdown = src.markdown||"";
+    doc.slots.length = 0; (src.slots||[]).forEach(s=>doc.slots.push(s));
+    media.clear();
+    loaded.forEach(m=>media.set(m.id,m));
 
-      render(); scheduleSave(); showTarget();
-      say("Opened "+name.replace(/\.json$/,"")+" — "+media.size+" picture(s).","ok");
-    }catch(e){ say("Could not open it: "+e.message,"err"); }
+    syncFields();          /* the forge's own — masthead and every style control */
+    const mdBox = document.getElementById("md");
+    if(mdBox) mdBox.value = doc.markdown;
+    render(); scheduleSave(); showTarget();
+
+    say("Opened "+name.replace(/\.json$/,"")+" — "+media.size+" picture(s).","ok");
+    if(missing.length) say(missing.length+" picture(s) missing: "+missing.join(", "),"err");
   }
 
   /* ── wiring ─────────────────────────────────────────────────────── */
