@@ -135,15 +135,15 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808d"></script>
-<script src="assets/gate.js?v=20260808d"></script>
+<script src="assets/keyring.js?v=20260808e"></script>
+<script src="assets/gate.js?v=20260808e"></script>
 </head>
 <body>
 
 <div class="toolbar">
   <span class="brand">Penny Press</span>
   <button id="btn-import">Import .md</button>
-  <select id="pick-issue" title="Open a published broadsheet">
+  <select id="pick-issue" title="Reopen a broadsheet that was published from this forge. An issue published before the forge could save its source — or exported by hand — has a page on the site but nothing to reopen.">
     <option value="">Choose broadsheet…</option>
   </select>
   <button id="btn-new">New issue</button>
@@ -1567,14 +1567,21 @@ function injectPaperCSS(){
     if(!sel || !Keyring.has()) return;
     try{
       const files = (await City.list("data/issues")).filter(f=>/\.json$/i.test(f.name));
+      /* "published" and "reopenable" are not the same thing: an issue
+         has a page on the site, but only the ones published from this
+         forge left a source behind to reopen. Saying "none published"
+         when a broadsheet is plainly on the site is just wrong. */
       sel.innerHTML = '<option value="">'+
-        (files.length ? "Choose broadsheet…" : "No broadsheets published yet")+'</option>';
+        (files.length ? "Choose broadsheet…" : "Nothing to reopen yet")+'</option>';
       files.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
         const o=document.createElement("option");
         o.value=f.name; o.textContent=f.name.replace(/\.json$/,"").replace(/-/g," ");
         sel.appendChild(o);
       });
-      say(files.length+" published broadsheet(s) to choose from.");
+      say(files.length
+        ? files.length+" broadsheet(s) can be reopened."
+        : "No sources to reopen. Issues published from this forge save one; " +
+          "anything published before that has a page but no source.");
     }catch(e){ say("Could not list the broadsheets: "+e.message,"err"); }
   }
 
