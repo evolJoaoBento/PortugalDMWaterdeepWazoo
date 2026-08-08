@@ -115,6 +115,15 @@ textarea{
   padding:2px 6px;font-size:11px;line-height:1.4;background:#2a2216cc;color:#f2e6cf;
   border:1px solid #6b5636;border-radius:3px;
 }
+/* Which picture is the front-page cover, visible without opening every
+   inspector in turn. Editor-only: this markup never leaves the forge. */
+.paper figure.slot .covertag{
+  position:absolute;top:2px;left:2px;z-index:5;
+  font:600 9px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+  color:#f2e6cf;background:#7a4a12dd;border:1px solid #b5762a;border-radius:3px;
+  padding:3px 6px;pointer-events:none;
+}
+@media print{.paper figure.slot .covertag{display:none!important}}
 .orphans{
   border:1px dashed #b5762a;background:#f6ecd4;color:#5a3d18;padding:8px 10px;margin:0 0 14px;
   font:13px/1.4 system-ui;border-radius:4px;
@@ -380,6 +389,10 @@ textarea{
   </div>
   <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c">
     <input type="checkbox" id="i-frame" style="width:auto"> Aged photo frame
+  </label>
+  <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#c8b58c"
+         title="The picture the press room shows beside the latest issue">
+    <input type="checkbox" id="i-cover" style="width:auto"> Front-page cover
   </label>
   <div class="row">
     <button id="i-replace">Replace</button>
@@ -1061,6 +1074,7 @@ function figureHTML(slot, editing){
   const bar = editing
     ? '<div class="slotbar"><button data-act="width" data-slot="'+slot.id+'" title="Toggle width">↔</button>'
       + '<button data-act="del" data-slot="'+slot.id+'" title="Delete">✕</button></div>'
+      + (slot.cover ? '<span class="covertag">cover</span>' : "")
     : "";
   return '<figure class="'+cls+'" data-slot="'+slot.id+'"'+fxVar+'>'+bar+
     '<div class="plate"><img src="'+md.dataUrl+'" alt="'+esc(slot.caption||md.name||"")+'"'+dims+' loading="lazy"></div>'+
@@ -1173,6 +1187,31 @@ function deleteSlot(id){
    Inspector
    ========================================================================= */
 function slotById(id){ return doc.slots.find(s=>s.id===id); }
+
+/* ── the front-page cover ────────────────────────────────────────────
+   The press room shows one picture beside the latest issue. It used to
+   be whichever picture happened to be first, which is why it looked
+   arbitrary — so a picture is chosen for the job instead.
+
+   The flag lives on the slot, not on the document: sourceDoc() embeds
+   doc.slots verbatim, so the choice survives publishing and reopening
+   with no plumbing, follows the slot when its picture is replaced, and
+   dies with the slot when it is deleted. */
+function setCover(id, on){
+  doc.slots.forEach(s=>{ if(s.id!==id) delete s.cover; });
+  const s = slotById(id); if(!s) return;
+  if(on) s.cover = true; else delete s.cover;
+}
+/* Pure so it can be tested: slots and the published paths, in — the
+   path for the front card, out. Falls back the way it always did, both
+   when nothing was chosen and when the chosen slot's picture has gone
+   missing, so an issue is never left without a card. */
+function coverPathFor(slots, urls, used){
+  const chosen = (slots||[]).find(s=>s.cover);
+  const path = chosen && urls.get(chosen.mediaId);
+  if(path) return path;
+  return used.length ? (urls.get(used[0].id)||"preview.jpg") : "preview.jpg";
+}
 function fxOptionsHTML(){
   return FX.map(f=>'<option value="'+f[0]+'">'+esc(f[1])+'</option>').join("");
 }
@@ -1184,6 +1223,7 @@ function openInspector(slot){
   $("#i-fxamount").value = slot.fxAmount==null?75:slot.fxAmount;
   $("#i-fx-val").textContent = $("#i-fxamount").value+"%";
   $("#i-frame").checked = !!slot.frame;
+  $("#i-cover").checked = !!slot.cover;
   $("#inspector").classList.add("open");
   render();
   /* The colour only means anything to the warding fog, so it only
@@ -1670,6 +1710,15 @@ function wire(){
     const s=slotById(selectedSlot); if(!s) return;
     s.frame=$("#i-frame").checked; render(); scheduleSave();
   });
+  /* One cover per issue: naming a new one un-names the old, so the flag
+     can never disagree with itself. Cleared with delete rather than set
+     to false, so a slot that was never chosen carries nothing at all
+     into the source the page embeds. */
+  $("#i-cover").addEventListener("change",()=>{
+    const s=slotById(selectedSlot); if(!s) return;
+    setCover(s.id, $("#i-cover").checked);
+    render(); scheduleSave();
+  });
   $("#i-fx").addEventListener("change",()=>{
     const s=slotById(selectedSlot); if(!s) return;
     s.fx=$("#i-fx").value;
@@ -1824,6 +1873,31 @@ function runTests(){
   ok("fx: animation runs by default", styleVars({}).indexOf("--fxplay:running")>-1);
   media.delete("mtest");
 
+  // the front-page cover
+  doc.slots = [{id:"c1",mediaId:"m1"},{id:"c2",mediaId:"m2"}];
+  setCover("c1", true); setCover("c2", true);
+  ok("cover: only one picture holds it", !doc.slots[0].cover && doc.slots[1].cover===true,
+     JSON.stringify(doc.slots));
+  setCover("c2", false);
+  ok("cover: unchecking leaves nothing behind", !("cover" in doc.slots[1]), JSON.stringify(doc.slots[1]));
+
+  const cu = new Map([["m1","assets/issues/x/01.webp"],["m2","assets/issues/x/02.webp"]]);
+  const cused = [{id:"m1"},{id:"m2"}];
+  ok("cover: nothing marked falls back to the first picture",
+     coverPathFor(doc.slots, cu, cused)==="assets/issues/x/01.webp");
+  setCover("c2", true);
+  ok("cover: the marked picture wins", coverPathFor(doc.slots, cu, cused)==="assets/issues/x/02.webp");
+  ok("cover: a marked picture that never published falls back",
+     coverPathFor([{id:"c9",mediaId:"gone",cover:true}], cu, cused)==="assets/issues/x/01.webp");
+  ok("cover: an issue with no pictures still gets a card",
+     coverPathFor([], new Map(), [])==="preview.jpg");
+  media.set("mcov",{id:"mcov",name:"c.webp",mime:"image/webp",dataUrl:"data:image/webp;base64,AA",w:10,h:6});
+  ok("cover: the badge shows while editing",
+     figureHTML({id:"c1",mediaId:"mcov",cover:true},true).indexOf("covertag")>-1);
+  ok("cover: the badge is editor-only",
+     figureHTML({id:"c1",mediaId:"mcov",cover:true},false).indexOf("covertag")===-1);
+  media.delete("mcov");
+
   doc.masthead={title:"T",tagline:"",dateline:"D",price:"1cp",issue:"7",lang:"en"};
   doc.style=Object.assign({},STYLE_DEFAULTS,{cols:4});
   doc.markdown="## H\n\n!Body."; doc.slots=[];
@@ -1846,6 +1920,7 @@ function runTests(){
   ok("export has doctype", html.indexOf("<!doctype html>")===0);
   ok("export has no gaps", html.indexOf('class="gap"')===-1);
   ok("export has no slotbar", html.indexOf("slotbar")===-1);
+  ok("export has no cover badge", html.indexOf("covertag")===-1);
   ok("export inlines paper css", html.indexOf(".paper .body{column-count:var(--cols)")>-1);
   ok("export ships the illusion keyframes",
      ["fx-sheen","fx-weave","fx-ghost","fx-unstable","fx-fading"].every(k=>html.indexOf("@keyframes "+k)>-1));
@@ -2067,7 +2142,11 @@ function injectPaperCSS(){
                        "issue "+stem+": source");
 
       /* The press room's front card reads this beside the issue. */
-      const cover = used.length ? (urls.get(used[0].id)||"preview.jpg") : "preview.jpg";
+      const chosen = doc.slots.find(s=>s.cover);
+      const cover = coverPathFor(doc.slots, urls, used);
+      say(chosen && urls.get(chosen.mediaId)
+            ? "cover — the picture you marked"
+            : "cover — no picture marked, using the first one");
       await City.write(stem+".json", JSON.stringify({
         headline: doc.masthead.title||"The Waterdeep Wazoo",
         dek: doc.masthead.tagline||"",
