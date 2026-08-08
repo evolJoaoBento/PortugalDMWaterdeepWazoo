@@ -42,6 +42,9 @@ input[type=text]{cursor:text}
 .fields label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#9a8a6a;
   text-transform:uppercase;letter-spacing:.08em}
 .fields label.wide{grid-column:1/-1}
+.cal{display:flex;gap:6px}
+.cal select{flex:1 1 auto;min-width:0}
+.cal input{width:74px;flex:0 0 auto}
 .fields input,.fields select{width:100%}
 .md-head{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:11px;
   text-transform:uppercase;letter-spacing:.1em;color:#9a8a6a;border-bottom:1px solid #2a2216}
@@ -135,8 +138,8 @@ textarea{
   font-family:ui-monospace,Consolas,monospace;font-size:13px;z-index:200;display:none;white-space:pre-wrap}
 @media(max-width:900px){.split{grid-template-columns:1fr}.pane-left{max-height:45vh}}
 </style>
-<script src="assets/keyring.js?v=20260808e"></script>
-<script src="assets/gate.js?v=20260808e"></script>
+<script src="assets/keyring.js?v=20260808f"></script>
+<script src="assets/gate.js?v=20260808f"></script>
 </head>
 <body>
 
@@ -164,6 +167,13 @@ textarea{
       </label>
       <label>Dateline
         <input type="text" id="f-dateline" placeholder="12 Ches, 1492 DR">
+      </label>
+      <label class="wide">Calendar of Harptos
+        <span class="cal">
+          <select id="f-cal-month"></select>
+          <input type="number" id="f-cal-day" min="1" max="30" step="1" value="1" title="Day of the month">
+          <input type="number" id="f-cal-year" step="1" placeholder="1492" title="Year in Dalereckoning">
+        </span>
       </label>
       <label>Price
         <input type="text" id="f-price" placeholder="one copper">
@@ -991,6 +1001,143 @@ function openInspector(slot){
 function closeInspector(){ $("#inspector").classList.remove("open"); selectedSlot=null; render(); }
 
 /* =========================================================================
+   The Calendar of Harptos
+
+   Twelve months of thirty days, with five festival days standing between
+   certain months rather than inside any of them, which is why a year is
+   365 and not 360. Shieldmeet follows Midsummer once every four years.
+
+   Kept numerically as well as in words: the dateline a reader sees is
+   prose, but "Flamerule 8, 1492 DR" cannot be sorted, filtered or asked
+   questions of. doc.date carries the month index, the day, the festival
+   and the day-of-year alongside the text so later work has something to
+   compute with.
+   ========================================================================= */
+const HARPTOS = [
+  {key:"hammer",     name:"Hammer",            common:"Deepwinter",             days:30},
+  {key:"midwinter",  name:"Midwinter",         common:"festival",               days:1, festival:true},
+  {key:"alturiak",   name:"Alturiak",          common:"The Claw of Winter",     days:30},
+  {key:"ches",       name:"Ches",              common:"The Claw of the Sunsets",days:30},
+  {key:"tarsakh",    name:"Tarsakh",           common:"The Claw of the Storms", days:30},
+  {key:"greengrass", name:"Greengrass",        common:"festival",               days:1, festival:true},
+  {key:"mirtul",     name:"Mirtul",            common:"The Melting",            days:30},
+  {key:"kythorn",    name:"Kythorn",           common:"The Time of Flowers",    days:30},
+  {key:"flamerule",  name:"Flamerule",         common:"Summertide",             days:30},
+  {key:"midsummer",  name:"Midsummer",         common:"festival",               days:1, festival:true},
+  {key:"shieldmeet", name:"Shieldmeet",        common:"every fourth year",      days:1, festival:true, leap:true},
+  {key:"eleasis",    name:"Eleasis",           common:"Highsun",                days:30},
+  {key:"eleint",     name:"Eleint",            common:"The Fading",             days:30},
+  {key:"highharvest",name:"Highharvestide",    common:"festival",               days:1, festival:true},
+  {key:"marpenoth",  name:"Marpenoth",         common:"Leaffall",               days:30},
+  {key:"uktar",      name:"Uktar",             common:"The Rotting",            days:30},
+  {key:"feast",      name:"The Feast of the Moon", common:"festival",           days:1, festival:true},
+  {key:"nightal",    name:"Nightal",           common:"The Drawing Down",       days:30}
+];
+const isShieldmeetYear = y => Number(y) % 4 === 0;
+
+/* Where a date falls in its year, counting the festivals in their places. */
+function harptosDayOfYear(key, day, year){
+  let n = 0;
+  for(const m of HARPTOS){
+    if(m.leap && !isShieldmeetYear(year)) continue;      // no Shieldmeet that year
+    if(m.key === key) return n + (m.festival ? 1 : Math.max(1, Math.min(30, +day||1)));
+    n += m.days;
+  }
+  return null;
+}
+function harptosMonthNumber(key){                         // 1..12, festivals get null
+  let n = 0;
+  for(const m of HARPTOS){ if(!m.festival) n++; if(m.key===key) return m.festival ? null : n; }
+  return null;
+}
+function harptosText(key, day, year){
+  const m = HARPTOS.find(x=>x.key===key);
+  if(!m) return "";
+  const yr = (year===""||year==null) ? "" : (" "+year+" DR");
+  return m.festival ? (m.name + (yr ? "," + yr : "")) : (m.name+" "+(+day||1)+(yr ? "," + yr : ""));
+}
+/* Build doc.date from the three controls. Text and numbers together. */
+function buildDate(){
+  const key  = ($("#f-cal-month")||{}).value || "";
+  const day  = +(($("#f-cal-day")||{}).value || 1);
+  const year = (($("#f-cal-year")||{}).value || "").trim();
+  const m = HARPTOS.find(x=>x.key===key);
+  if(!m){ doc.date=null; return null; }
+  doc.date = {
+    calendar:"harptos",
+    year: year===""? null : +year,
+    month: harptosMonthNumber(key),
+    monthKey: key,
+    monthName: m.name,
+    day: m.festival ? null : day,
+    festival: m.festival ? m.name : null,
+    dayOfYear: harptosDayOfYear(key, day, +year||0),
+    shieldmeetYear: year===""? null : isShieldmeetYear(year),
+    text: harptosText(key, day, year)
+  };
+  return doc.date;
+}
+/* Read an existing dateline back into the controls, so an issue written
+   before the calendar existed still lands on the right day. */
+function parseDateline(text){
+  const t = String(text||"");
+  const m = HARPTOS.slice().sort((a,b)=>b.name.length-a.name.length)
+                   .find(x=>new RegExp(x.name.replace(/ /g,"\\s+"),"i").test(t));
+  if(!m) return null;
+  const nums = (t.match(/\d+/g)||[]).map(Number);
+  const year = nums.find(n=>n>=100);
+  const day  = nums.find(n=>n<100);
+  return {key:m.key, day: m.festival? null : (day||1), year: year==null? "" : year};
+}
+function syncCalendar(){
+  const from = parseDateline(doc.masthead.dateline);
+  const mSel = $("#f-cal-month"), dIn = $("#f-cal-day"), yIn = $("#f-cal-year");
+  if(!mSel) return;
+  if(from){
+    mSel.value = from.key;
+    if(from.day!=null) dIn.value = from.day;
+    yIn.value = from.year;
+  }
+  const m = HARPTOS.find(x=>x.key===mSel.value);
+  dIn.disabled = !!(m && m.festival);                     // a festival has no day number
+  if(m && m.leap && yIn.value && !isShieldmeetYear(yIn.value)){
+    toast("Shieldmeet only falls in years divisible by four.", 3600);
+  }
+  buildDate();
+}
+function calendarChanged(){
+  const m = HARPTOS.find(x=>x.key===$("#f-cal-month").value);
+  $("#f-cal-day").disabled = !!(m && m.festival);
+  const d = buildDate();
+  if(d && d.text){
+    doc.masthead.dateline = d.text;
+    const el = $("#f-dateline"); if(el) el.value = d.text;
+  }
+  render(); scheduleSave();
+}
+
+/* Everything needed to rebuild this issue, embedded in what it exports
+   so that any published page can be reopened — not only the ones whose
+   source happens to sit in data/issues. */
+function sourceDoc(){
+  return {
+    pennyPress: 1,
+    masthead: doc.masthead,
+    date: doc.date || null,
+    style: doc.style,
+    markdown: doc.markdown,
+    slots: doc.slots,
+    media: [...media.values()].map(m=>({
+      id:m.id, name:m.name, w:m.w, h:m.h,
+      /* During publish the drawer points dataUrl at the committed file,
+         so this records the path. A plain export leaves it null and the
+         pictures live in the page itself. */
+      file: /^data:/.test(m.dataUrl||"") ? null : (m.dataUrl||null)
+    }))
+  };
+}
+
+/* =========================================================================
    Export
    ========================================================================= */
 function slug(s){
@@ -1012,8 +1159,17 @@ function buildExport(){
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'+
     '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">\n'+
     '<style>'+READER_CSS+PAPER_CSS+'</style>\n</head>\n<body>'+lostNote+'\n'+
-    '<div class="paper" style="'+styleVars(doc.style)+'">\n'+ mastheadHTML(doc.masthead, lang) +'\n<div class="body">\n'+
-    bodyHTML +'\n<div class="colophon">'+esc(t.printed)+'</div>\n</div>\n</div>\n</body>\n</html>\n';
+    /* esc() matters here: the font stacks carry double quotes — "IM Fell
+       English",Georgia,serif — and unescaped the first one closes the
+       attribute, taking every style variable after it with it. Every
+       issue exported before this went out with its styling stripped. */
+    '<div class="paper" style="'+esc(styleVars(doc.style))+'">\n'+ mastheadHTML(doc.masthead, lang) +'\n<div class="body">\n'+
+    bodyHTML +'\n<div class="colophon">'+esc(t.printed)+'</div>\n</div>\n</div>\n'+
+    /* The issue carries its own source. "</" is escaped or the JSON would
+       close this script tag early and break the page. */
+    '<script type="application/json" id="penny-source">'+
+      JSON.stringify(sourceDoc()).replace(/<\//g,'<\\/')+
+    '<\/script>\n</body>\n</html>\n';
 }
 function doExport(){
   const html = buildExport();
@@ -1121,6 +1277,20 @@ function wire(){
   $("#md").addEventListener("input",()=>{ doc.markdown=$("#md").value; render(); scheduleSave(); });
 
   // import markdown
+  /* fill the month list once */
+  (function(){
+    const sel=$("#f-cal-month"); if(!sel) return;
+    HARPTOS.forEach(m=>{
+      const o=document.createElement("option");
+      o.value=m.key;
+      o.textContent = m.festival ? m.name+" \u00b7 "+m.common : m.name+" \u00b7 "+m.common;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change",calendarChanged);
+    $("#f-cal-day").addEventListener("input",calendarChanged);
+    $("#f-cal-year").addEventListener("input",calendarChanged);
+  })();
+
   $("#btn-import").addEventListener("click",()=>$("#file-md").click());
   $("#file-md").addEventListener("change",e=>{
     const f=e.target.files[0]; if(!f) return;
@@ -1320,6 +1490,15 @@ function runTests(){
   doc.markdown="## H\n\n!Body."; doc.slots=[];
   const html=buildExport();
   ok("export carries style vars", html.indexOf('class="paper" style="')>-1 && html.indexOf("--cols:4")>-1);
+  {
+    /* Text search is not enough: a broken attribute still contains the
+       characters. This is what let the quote bug ship. */
+    const _d = new DOMParser().parseFromString(html,"text/html");
+    const _st = (_d.querySelector(".paper") && _d.querySelector(".paper").getAttribute("style")) || "";
+    ok("style attribute survives parsing", /--cols:\s*4/.test(_st) && /--maxw:/.test(_st), "len="+_st.length);
+    ok("quotes in a font stack do not truncate it",
+       ((_d.querySelector(".paper")||{style:{getPropertyValue:()=>""}}).style.getPropertyValue("--mastfont")||"").indexOf("Fell")>-1);
+  }
   ok("export keeps drop cap class", html.indexOf('class="lede"')>-1);
   ok("export has doctype", html.indexOf("<!doctype html>")===0);
   ok("export has no gaps", html.indexOf('class="gap"')===-1);
@@ -1355,6 +1534,7 @@ function injectPaperCSS(){
     doc.markdown=SAMPLE;
   }
   syncFields();
+  syncCalendar();
   render();
   $("#save-state").textContent="ready";
   if(!idbOK) toast("This browser won't keep images across reloads here — export before you close the tab.", 7000);
@@ -1531,15 +1711,11 @@ function injectPaperCSS(){
       await City.write(stem+".html", html, "issue "+stem+": the broadsheet");
 
       /* The source, so this issue can be opened and edited again later. */
-      const source = {
-        _comment:"Penny Press source for "+stem+". Open it from the forge's publish panel.",
-        stem: stem,
-        masthead: doc.masthead,
-        style: doc.style,
-        markdown: doc.markdown,
-        slots: doc.slots,
-        media: used.map(md=>({ id:md.id, name:md.name, w:md.w, h:md.h, file:urls.get(md.id)||null }))
-      };
+      const source = Object.assign({
+        _comment:"Penny Press source for "+stem+". Open it from the forge's picker.",
+        stem: stem
+      }, sourceDoc());
+      source.media = used.map(md=>({ id:md.id, name:md.name, w:md.w, h:md.h, file:urls.get(md.id)||null }));
       await City.write("data/issues/"+stem+".json", JSON.stringify(source,null,2)+"\n",
                        "issue "+stem+": source");
 
@@ -1566,22 +1742,30 @@ function injectPaperCSS(){
     const sel = document.getElementById("pick-issue");
     if(!sel || !Keyring.has()) return;
     try{
-      const files = (await City.list("data/issues")).filter(f=>/\.json$/i.test(f.name));
+      /* Every published page belongs in this list, not only the ones with
+         a source in data/issues. Pages carry their own source now, so the
+         root is the real index and data/issues is the faster path. */
+      const [srcDir, root] = await Promise.all([
+        City.list("data/issues"), City.list("")
+      ]);
+      const haveSource = new Set(srcDir.filter(f=>/\.json$/i.test(f.name))
+                                       .map(f=>f.name.replace(/\.json$/i,"")));
+      const pages = root.filter(f=>/^The-[A-Za-z-]+-[a-z]+-\d+-\d+\.html$/i.test(f.name))
+                        .map(f=>f.name.replace(/\.html$/i,""));
+      const stems = [...new Set([...haveSource, ...pages])].sort();
+      const files = stems.map(st=>({ name: st+".json", stem: st, direct: haveSource.has(st) }));
       /* "published" and "reopenable" are not the same thing: an issue
          has a page on the site, but only the ones published from this
          forge left a source behind to reopen. Saying "none published"
          when a broadsheet is plainly on the site is just wrong. */
       sel.innerHTML = '<option value="">'+
         (files.length ? "Choose broadsheet…" : "Nothing to reopen yet")+'</option>';
-      files.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
+      files.forEach(f=>{
         const o=document.createElement("option");
-        o.value=f.name; o.textContent=f.name.replace(/\.json$/,"").replace(/-/g," ");
+        o.value=f.stem; o.textContent=f.stem.replace(/-/g," ");
         sel.appendChild(o);
       });
-      say(files.length
-        ? files.length+" broadsheet(s) can be reopened."
-        : "No sources to reopen. Issues published from this forge save one; " +
-          "anything published before that has a page but no source.");
+      say(files.length ? files.length+" broadsheet(s) can be reopened." : "Nothing published yet.");
     }catch(e){ say("Could not list the broadsheets: "+e.message,"err"); }
   }
 
@@ -1596,10 +1780,20 @@ function injectPaperCSS(){
        — which looks exactly like "it did not replace anything". */
     let src, loaded = [], missing = [];
     try{
-      say("Fetching "+name+"…");
-      const r = await fetch("data/issues/"+name+"?t="+Date.now(),{cache:"no-store"});
-      if(!r.ok) throw new Error(name+" — "+r.status);
-      src = await r.json();
+      say("Fetching "+stem+"…");
+      const direct = await fetch("data/issues/"+stem+".json?t="+Date.now(),{cache:"no-store"});
+      if(direct.ok){
+        src = await direct.json();
+      }else{
+        /* No source file — read the one the page carries. */
+        say("No source file; reading it out of the page itself…");
+        const page = await fetch(stem+".html?t="+Date.now(),{cache:"no-store"});
+        if(!page.ok) throw new Error(stem+" — "+page.status);
+        const html = await page.text();
+        const m = html.match(/<script type="application\/json" id="penny-source">([\s\S]*?)<\/script>/);
+        if(!m) throw new Error("this page predates self-describing issues — nothing to reopen");
+        src = JSON.parse(m[1].replace(/<\\//g,"</"));
+      }
 
       for(const m of (src.media||[])){
         if(!m.file){ missing.push(m.name||m.id); continue; }
@@ -1632,11 +1826,12 @@ function injectPaperCSS(){
     loaded.forEach(m=>media.set(m.id,m));
 
     syncFields();          /* the forge's own — masthead and every style control */
+    syncCalendar();
     const mdBox = document.getElementById("md");
     if(mdBox) mdBox.value = doc.markdown;
     render(); scheduleSave(); showTarget();
 
-    say("Opened "+name.replace(/\.json$/,"")+" — "+media.size+" picture(s).","ok");
+    say("Opened "+stem+" — "+media.size+" picture(s).","ok");
     if(missing.length) say(missing.length+" picture(s) missing: "+missing.join(", "),"err");
   }
 
