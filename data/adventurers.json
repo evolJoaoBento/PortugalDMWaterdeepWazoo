@@ -1,0 +1,50 @@
+{
+  "_comment": "The Adventurers' Company. Hand-edited. Portraits in assets/adventurers/. `public` means that player has set their D&D Beyond sheet privacy to Public — only then can it be embedded, because an iframe is always logged out.",
+  "updated": "1492-07-08",
+  "members": [
+    {
+      "id": "ganja",
+      "ddbId": "168950625",
+      "name": "Ganja",
+      "race": "Goliath",
+      "class": "Barbarian",
+      "level": 5,
+      "portrait": "assets/adventurers/ganja.webp",
+      "blurb": "",
+      "public": false
+    },
+    {
+      "id": "jacinto-pinto",
+      "ddbId": "168938738",
+      "name": "Jacinto Pinto",
+      "race": "Half-Elf",
+      "class": "Wizard",
+      "level": 5,
+      "portrait": "assets/adventurers/jacinto-pinto.webp",
+      "blurb": "",
+      "public": false
+    },
+    {
+      "id": "quim-das-bolas-de-fogo",
+      "ddbId": "168947295",
+      "name": "Quim das Bolas de Fogo",
+      "race": "Human",
+      "class": "Barbarian",
+      "level": 5,
+      "portrait": "assets/adventurers/quim-das-bolas-de-fogo.webp",
+      "blurb": "",
+      "public": false
+    },
+    {
+      "id": "violet-rarnoz",
+      "ddbId": "169493126",
+      "name": "Violet Rarnoz",
+      "race": "Half-Elf",
+      "class": "Warlock",
+      "level": 5,
+      "portrait": "assets/adventurers/violet-rarnoz.webp",
+      "blurb": "",
+      "public": false
+    }
+  ]
+}

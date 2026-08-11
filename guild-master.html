@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="wazoo-build" content="20260808n">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>The Guild Master &mdash; Waterdeep</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
+
+<style>
+.wall{display:grid;gap:14px;padding:14px}
+.wall.two{grid-template-columns:repeat(2,1fr)}
+.wall.four{grid-template-columns:repeat(4,1fr)}
+.tablet{position:relative;height:78vh;border:2px solid #2b2014;border-radius:10px;overflow:hidden;background:#0b0805}
+.tablet > b{display:block;padding:5px 9px;background:#1a1309;font:500 10.5px/1.5 "Cinzel",serif;letter-spacing:.13em;text-transform:uppercase;color:#a89070}
+.tablet iframe{width:100%;height:calc(100% - 25px);border:0;background:#fff;display:block}
+.shut{height:calc(100% - 25px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;padding:18px}
+.shut img{width:104px;height:104px;object-fit:cover;border-radius:50%;border:1px solid #3a2c1a}
+.shut .sigil{
+  width:104px;height:104px;border-radius:50%;border:1px solid #3a2c1a;
+  display:grid;place-items:center;background:#160f09;color:#5b4326;font:600 34px/1 "Cinzel",serif;
+}
+.shut p{margin:0;font:400 15px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d}
+.note{margin:0;padding:12px 16px;font:400 14.5px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d;border-bottom:1px solid #2b2014}
+.bar{display:flex;gap:9px;align-items:center;padding:11px 16px}
+.bar button{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#c8a86a;background:rgba(20,15,9,.6);border:1px solid #3a2c1a;border-radius:2px;
+  padding:8px 14px;cursor:pointer;transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.bar button:hover{background:rgba(58,44,26,.5);color:#e8d9b8}
+.bar button:focus-visible{outline:none;border-color:#c8a86a}
+.bar button.on{
+  background:linear-gradient(180deg,#6d4a2b,#4a2e18);border-color:#c8a86a;color:#f2e4c6;
+  box-shadow:0 0 0 1px rgba(200,168,106,.3) inset;
+}
+#tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px}
+</style>
+<script src="assets/company.js?v=20260808n"></script>
+<script src="assets/keyring.js?v=20260808n"></script>
+<script src="assets/gate.js?v=20260808n"></script>
+</head>
+<body>
+
+<p class="note">A frame is always a logged-out visitor, whoever you are. Only a sheet whose
+privacy is set to <b>Public</b> will show here &mdash; the rest open in their own tab, where
+your own login counts.</p>
+
+<div class="bar">
+  <button id="grid-2" type="button" class="on" aria-pressed="true">2 up</button>
+  <button id="grid-4" type="button" aria-pressed="false">4 up</button>
+</div>
+
+<div id="wall" class="wall two"></div>
+<pre id="tests"></pre>
+
+<script>
+/* =========================================================================
+   The wall. One tablet per member.
+
+   A cross-origin frame is opaque — this page cannot read whether D&D
+   Beyond served a sheet or its 403 dragon, cannot see the frame's title,
+   and onload fires either way. So the roster is asked, not the frame.
+
+   esc, sheetUrl and isPublic come from assets/company.js — this page and
+   the public register share them. Do not redefine them here.
+   ========================================================================= */
+/* A missing portrait and a portrait path that 404s both end up at the
+   same drawn sigil — matching adventurers.html, so a member with no
+   picture never sits as an empty tile. The onerror value is a fixed
+   string with no name- or path-derived content spliced in, so there
+   is nothing here for a hostile `name` to break out of. */
+function sigilHTML(m, hidden){
+  return '<div class="sigil" aria-hidden="true"' + (hidden ? ' style="display:none"' : '') +
+    '>' + esc((m.name || "?").charAt(0)) + '</div>';
+}
+
+function tileHTML(m){
+  var url = sheetUrl(m);
+  var head = '<b>' + esc(m.name) + '</b>';
+  if(isPublic(m) && url){
+    return '<div class="tablet">' + head +
+      '<iframe src="' + esc(url) + '" loading="lazy" title="' + esc(m.name) + '"></iframe></div>';
+  }
+  var face = m.portrait
+    ? '<img src="' + esc(m.portrait) + '" alt="" ' +
+      'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'">' +
+      sigilHTML(m, true)
+    : sigilHTML(m, false);
+  var door = url
+    ? '<a class="go" href="' + esc(url) + '" target="_blank" rel="noopener">Open in tab &#8599;</a>'
+    : '';
+  return '<div class="tablet">' + head +
+    '<div class="shut">' + face + '<p>Sheet is Private</p>' + door + '</div></div>';
+}
+
+function wallHTML(members){
+  if(!members || !members.length){
+    return '<p class="note">No one has signed the register yet.</p>';
+  }
+  return members.map(tileHTML).join("");
+}
+
+async function loadWall(){
+  var wall = document.getElementById("wall");
+  try{
+    var res = await fetch("data/adventurers.json", { cache: "no-cache" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    var data = await res.json();
+    wall.innerHTML = wallHTML(data.members || []);
+  }catch(e){
+    wall.innerHTML = '<p class="note">The register could not be read &mdash; ' + esc(e.message) + '</p>';
+  }
+}
+
+function wire(){
+  var two = document.getElementById("grid-2");
+  var four = document.getElementById("grid-4");
+  two.addEventListener("click", function(){
+    document.getElementById("wall").className = "wall two";
+    two.classList.add("on"); two.setAttribute("aria-pressed", "true");
+    four.classList.remove("on"); four.setAttribute("aria-pressed", "false");
+  });
+  four.addEventListener("click", function(){
+    document.getElementById("wall").className = "wall four";
+    four.classList.add("on"); four.setAttribute("aria-pressed", "true");
+    two.classList.remove("on"); two.setAttribute("aria-pressed", "false");
+  });
+}
+
+(function boot(){
+  if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  wire();
+  /* The ward lifts once the key is accepted. Building before that would
+     put four frames behind the door for nobody to see. */
+  document.addEventListener("ward:open", loadWall);
+})();
+
+/* =========================================================================
+   Self-tests:  guild-master.html?test=1
+   ========================================================================= */
+function runTests(){
+  const out=[]; let pass=0, fail=0;
+  const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
+
+  const shut = {id:"ganja", ddbId:"168950625", name:"Ganja", race:"Goliath", class:"Barbarian",
+                level:5, portrait:"assets/adventurers/ganja.webp", public:false};
+  const open = Object.assign({}, shut, {public:true});
+
+  ok("public gets an iframe", tileHTML(open).indexOf("<iframe") > -1, tileHTML(open));
+  ok("iframe points at the sheet",
+     tileHTML(open).indexOf("dndbeyond.com/characters/168950625") > -1, tileHTML(open));
+  ok("private gets no iframe", tileHTML(shut).indexOf("<iframe") === -1, tileHTML(shut));
+  ok("private says why", tileHTML(shut).indexOf("Private") > -1, tileHTML(shut));
+  ok("private offers a tab", tileHTML(shut).indexOf('target="_blank"') > -1, tileHTML(shut));
+  ok("both label the name", tileHTML(open).indexOf("Ganja") > -1 && tileHTML(shut).indexOf("Ganja") > -1);
+  ok("hostile name escaped",
+     tileHTML(Object.assign({}, shut, {name:"<b>x</b>"})).indexOf("&lt;b&gt;") > -1);
+  ok("no ddbId cannot embed",
+     tileHTML({name:"Nobody", public:true}).indexOf("<iframe") === -1);
+
+  ok("wall renders one tile per member", (wallHTML([shut, open]).match(/class="tablet"/g)||[]).length === 2);
+  ok("empty wall says so", wallHTML([]).indexOf("No one has signed") > -1, wallHTML([]));
+
+  const el=document.getElementById("tests");
+  el.style.display="block";
+  el.textContent = "Guild Master self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
+    "\n"+"=".repeat(46)+"\n"+pass+" passed, "+fail+" failed\n";
+  document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Guild Master tests";
+}
+</script>
+</body>
+</html>
