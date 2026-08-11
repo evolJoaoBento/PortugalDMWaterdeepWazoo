@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="wazoo-build" content="20260808n">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Adventurers&rsquo; Company &mdash; Waterdeep</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
+
+<style>
+/* The register itself. Page-owned, so changing it never forces a ?v= bump
+   across the other six pages. */
+.roster{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));margin:26px 0 0}
+.member{
+  display:flex;flex-direction:column;
+  background:linear-gradient(180deg,rgba(28,22,14,.86),rgba(14,11,7,.92));
+  border:1px solid #3a2c1a;border-radius:3px;overflow:hidden;
+  box-shadow:0 8px 26px rgba(0,0,0,.45);
+}
+.member img,.member .sigil{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#160f09}
+.member .sigil{display:grid;place-items:center;color:#5b4326;font:600 42px/1 "Cinzel",serif}
+.member .body{padding:13px 14px 15px}
+.member h3{margin:0;font:600 18px/1.25 "Cinzel",serif;color:#e8d9b8;letter-spacing:.02em}
+.member .kind{margin:4px 0 0;font:400 13px/1.4 "EB Garamond",Georgia,serif;color:#a28f6d;letter-spacing:.04em}
+.member .blurb{margin:9px 0 0;font:400 15px/1.5 "EB Garamond",Georgia,serif;color:#c8b795}
+.member .go{margin:11px 0 0;display:inline-block;font:500 10.5px/1 "Cinzel",serif;letter-spacing:.16em;text-transform:uppercase;color:#c8a86a;text-decoration:none}
+.roster-error{margin:26px 0;padding:14px 16px;border:1px solid #6d3a32;border-radius:3px;background:rgba(60,20,16,.35);color:#e2a89f;font:400 15px/1.5 "EB Garamond",Georgia,serif}
+.masterway{margin:34px 0 0;text-align:center}
+#tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px}
+</style>
+<script src="assets/company.js?v=20260808n"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>The Adventurers&rsquo; Company</h1>
+  <div id="roster" class="roster"></div>
+  <div class="masterway"><a class="go" href="guild-master.html" rel="nofollow">Guild Master &rarr;</a></div>
+</div>
+
+<pre id="tests"></pre>
+
+<script src="assets/backdrop.js?v=20260808n"></script>
+<script>
+/* =========================================================================
+   Self-tests:  adventurers.html?test=1
+   ========================================================================= */
+function cardHTML(m){
+  var url  = sheetUrl(m);
+  var line = memberLine(m);
+  var face = m.portrait
+    ? '<img src="' + esc(m.portrait) + '" alt="" loading="lazy">'
+    : '<div class="sigil" aria-hidden="true">' + esc((m.name || "?").charAt(0)) + '</div>';
+  return '<article class="member">' + face +
+    '<div class="body">' +
+      '<h3>' + esc(m.name) + '</h3>' +
+      (line ? '<p class="kind">' + esc(line) + '</p>' : '') +
+      (m.blurb ? '<p class="blurb">' + esc(m.blurb) + '</p>' : '') +
+      (url ? '<a class="go" href="' + esc(url) + '" target="_blank" rel="noopener">View sheet &#8599;</a>' : '') +
+    '</div></article>';
+}
+
+function runTests(){
+  const out=[]; let pass=0, fail=0;
+  const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
+
+  const m = {id:"ganja", ddbId:"168950625", name:"Ganja", race:"Goliath",
+             class:"Barbarian", level:5, portrait:"assets/adventurers/ganja.webp",
+             blurb:"Owes three temples.", public:false};
+
+  ok("escapes angle brackets", esc("<b>") === "&lt;b&gt;", esc("<b>"));
+  ok("escapes quotes", esc('a"b').indexOf("&quot;") > -1, esc('a"b'));
+
+  ok("sheet url", sheetUrl(m) === "https://www.dndbeyond.com/characters/168950625", sheetUrl(m));
+  ok("no id, no url", sheetUrl({name:"x"}) === "", sheetUrl({name:"x"}));
+
+  ok("member line", memberLine(m) === "Goliath Barbarian 5", memberLine(m));
+  ok("member line skips gaps", memberLine({class:"Bard"}) === "Bard", memberLine({class:"Bard"}));
+
+  ok("public is strict", isPublic(m) === false && isPublic({public:true}) === true);
+  ok("absent public is false", isPublic({}) === false);
+
+  const card = cardHTML(m);
+  ok("card shows the name", card.indexOf("Ganja") > -1, card);
+  ok("card shows the line", card.indexOf("Goliath Barbarian 5") > -1, card);
+  ok("card links the sheet", card.indexOf("/characters/168950625") > -1, card);
+  ok("card escapes a hostile name",
+     cardHTML(Object.assign({}, m, {name:"<script>x</scr"+"ipt>"})).indexOf("&lt;script&gt;") > -1);
+  ok("no portrait gives a sigil",
+     cardHTML(Object.assign({}, m, {portrait:""})).indexOf('class="sigil"') > -1);
+  ok("empty blurb prints nothing",
+     cardHTML(Object.assign({}, m, {blurb:""})).indexOf('class="blurb"') === -1);
+
+  const el=document.getElementById("tests");
+  el.style.display="block";
+  el.textContent = "Adventurers' Company self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
+    "\n"+"=".repeat(46)+"\n"+pass+" passed, "+fail+" failed\n";
+  document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Company tests";
+}
+
+(function boot(){
+  if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+})();
+</script>
+</body>
+</html>
