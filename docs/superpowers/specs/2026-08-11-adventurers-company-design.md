@@ -40,6 +40,34 @@ set to Public will embed.**
 headers for these characters. Names, portraits, classes and levels cannot be fetched by
 the page; the roster is hand-maintained.
 
+**3a. The DM's own credentials cannot rescue the frame, and this was tested to exhaustion.**
+The obvious objection is "I can open these sheets myself, so why can't the page?" Three routes
+were tried and all are closed:
+
+- *Plain iframe with the DM logged in* — the frame renders D&D Beyond's header offering
+  **Sign in / Create Account**. It is an anonymous visitor.
+- *`document.requestStorageAccessFor('https://www.dndbeyond.com')`* — returns
+  `NotAllowedError`. Chromium restricts that API to declared Related Website Sets.
+- *A third-party cookie exception for `[*.]dndbeyond.com`, plus a tracking-prevention
+  exception, in the DM's own Edge* — no change. The frame stayed anonymous.
+
+That last result is the conclusive one. A cookie exception only rescues cookies marked
+`SameSite=None`; it changed nothing, so D&D Beyond's session cookie is `SameSite=Lax`. Lax is
+enforced on the cookie's own instruction, not as a user-grantable permission, so **no setting
+in any browser can send it into a cross-site frame.** Opening a sheet is a top-level
+navigation, which carries Lax cookies; embedding one is a cross-site subresource, which does
+not. Same URL, same account, different cookie rule — the DM's rights were never the obstacle.
+
+**3b. A popup is not a frame, and that is the way through.**
+`window.open` creates a top-level browsing context, so it carries the DM's session exactly as
+clicking the link does — verified: a dealt window renders a **Private** sheet in full. Hence
+*Deal the table* on `guild-master.html`: one positioned window per member, laid out by
+`tileRects` in the squarest grid that fits the screen. Browsers allow one window per user
+gesture and block the rest, so the button reports how many landed ("1 dealt, 3 blocked")
+rather than failing silently; allowing pop-ups for the site deals all four. Windows are named
+per member so a second deal reuses them, and the handles are kept so the table can be closed —
+`close()` and `closed` are on the cross-origin allowlist, `moveTo`/`resizeTo` are not.
+
 **4. A frame's failure cannot be detected.**
 A cross-origin iframe is opaque: the page cannot read its title, inspect its document,
 or catch its errors, and `onload` fires whether DDB served a sheet or the 403 dragon.

@@ -27,7 +27,9 @@
 }
 .shut p{margin:0;font:400 15px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d}
 .note{margin:0;padding:12px 16px;font:400 14.5px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d;border-bottom:1px solid #2b2014}
-.bar{display:flex;gap:9px;align-items:center;padding:11px 16px}
+.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:11px 16px}
+.bar .rule{width:1px;align-self:stretch;background:#2b2014;margin:0 5px}
+.bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 .bar button{
   font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
   color:#c8a86a;background:rgba(20,15,9,.6);border:1px solid #3a2c1a;border-radius:2px;
@@ -47,13 +49,18 @@
 </head>
 <body>
 
-<p class="note">A frame is always a logged-out visitor, whoever you are. Only a sheet whose
-privacy is set to <b>Public</b> will show here &mdash; the rest open in their own tab, where
-your own login counts.</p>
+<p class="note">A frame is always a logged-out visitor, whoever you are &mdash; D&amp;D Beyond&rsquo;s
+session cookie is <code>SameSite=Lax</code>, which no browser setting overrides. So only a sheet
+set to <b>Public</b> shows on the wall below. <b>Deal the table</b> ignores all that: each sheet
+opens as its own window, which <i>does</i> carry your login, so private sheets render in full.</p>
 
 <div class="bar">
   <button id="grid-2" type="button" class="on" aria-pressed="true">2 up</button>
   <button id="grid-4" type="button" aria-pressed="false">4 up</button>
+  <span class="rule"></span>
+  <button id="deal" type="button">Deal the table</button>
+  <button id="clear" type="button">Close the table</button>
+  <span id="said" class="said"></span>
 </div>
 
 <div id="wall" class="wall two"></div>
@@ -106,13 +113,85 @@ function wallHTML(members){
   return members.map(tileHTML).join("");
 }
 
+/* =========================================================================
+   The table.
+
+   The wall is the compromise; this is the part that actually works for a
+   private sheet. A popup is a top-level browsing context, so it carries
+   your D&D Beyond session exactly as clicking the link does — and a
+   top-level request is the one place a SameSite=Lax cookie is sent.
+
+   Windows are named per member, so dealing twice reuses a member's own
+   window rather than littering the desktop. The handles are kept so the
+   table can be cleared again: close() and closed are on the cross-origin
+   allowlist, but moveTo/resizeTo are not — so a second deal cannot
+   re-tile a window that is already open.
+   ========================================================================= */
+var roster = [];
+var dealt  = {};
+
+function openable(members){
+  return (members || []).filter(function(m){ return !!sheetUrl(m); });
+}
+
+/* Lay n windows over a screen of W by H, in the squarest grid that fits. */
+function tileRects(n, W, H){
+  if(!n) return [];
+  var cols = Math.ceil(Math.sqrt(n));
+  var rows = Math.ceil(n / cols);
+  var w = Math.floor(W / cols), h = Math.floor(H / rows);
+  var out = [];
+  for(var i = 0; i < n; i++){
+    out.push({ left: (i % cols) * w, top: Math.floor(i / cols) * h, width: w, height: h });
+  }
+  return out;
+}
+
+function say(msg){ document.getElementById("said").textContent = msg || ""; }
+
+function dealTable(){
+  var list = openable(roster);
+  if(!list.length){ say("Nobody on the register has a sheet to open."); return; }
+
+  var baseL = typeof screen.availLeft === "number" ? screen.availLeft : 0;
+  var baseT = typeof screen.availTop  === "number" ? screen.availTop  : 0;
+  var rects = tileRects(list.length, screen.availWidth, screen.availHeight);
+  var blocked = 0;
+
+  list.forEach(function(m, i){
+    var r = rects[i];
+    var win = window.open(sheetUrl(m), "sheet-" + m.id,
+      "popup=yes,width=" + r.width + ",height=" + r.height +
+      ",left=" + (baseL + r.left) + ",top=" + (baseT + r.top));
+    if(win) dealt[m.id] = win; else blocked++;
+  });
+
+  /* A blocked popup returns null and says nothing else. Browsers allow the
+     first window off a click and often stop the rest, so saying how many
+     landed is the difference between "broken" and "one setting away". */
+  say(blocked
+    ? (list.length - blocked) + " dealt, " + blocked + " blocked — allow pop-ups for this site, then deal again."
+    : list.length + " sheets dealt.");
+}
+
+function closeTable(){
+  var shut = 0;
+  Object.keys(dealt).forEach(function(id){
+    var win = dealt[id];
+    try{ if(win && !win.closed){ win.close(); shut++; } }catch(e){}
+    delete dealt[id];
+  });
+  say(shut ? shut + " closed." : "Nothing left open.");
+}
+
 async function loadWall(){
   var wall = document.getElementById("wall");
   try{
     var res = await fetch("data/adventurers.json", { cache: "no-cache" });
     if(!res.ok) throw new Error("HTTP " + res.status);
     var data = await res.json();
-    wall.innerHTML = wallHTML(data.members || []);
+    roster = data.members || [];
+    wall.innerHTML = wallHTML(roster);
   }catch(e){
     wall.innerHTML = '<p class="note">The register could not be read &mdash; ' + esc(e.message) + '</p>';
   }
@@ -131,6 +210,8 @@ function wire(){
     four.classList.add("on"); four.setAttribute("aria-pressed", "true");
     two.classList.remove("on"); two.setAttribute("aria-pressed", "false");
   });
+  document.getElementById("deal").addEventListener("click", dealTable);
+  document.getElementById("clear").addEventListener("click", closeTable);
 }
 
 (function boot(){
@@ -166,6 +247,27 @@ function runTests(){
 
   ok("wall renders one tile per member", (wallHTML([shut, open]).match(/class="tablet"/g)||[]).length === 2);
   ok("empty wall says so", wallHTML([]).indexOf("No one has signed") > -1, wallHTML([]));
+
+  /* ── the table ─────────────────────────────────────────────────── */
+  const four = tileRects(4, 1920, 1080);
+  ok("four sheets make four rects", four.length === 4, JSON.stringify(four));
+  ok("four sheets tile two by two",
+     new Set(four.map(r => r.left)).size === 2 && new Set(four.map(r => r.top)).size === 2,
+     JSON.stringify(four));
+  ok("no rect leaves the screen",
+     four.every(r => r.left >= 0 && r.top >= 0 && r.left + r.width <= 1920 && r.top + r.height <= 1080),
+     JSON.stringify(four));
+  ok("one sheet gets the whole screen",
+     tileRects(1, 1920, 1080)[0].width === 1920, JSON.stringify(tileRects(1, 1920, 1080)));
+  ok("five sheets need three columns",
+     new Set(tileRects(5, 1920, 1080).map(r => r.left)).size === 3);
+  ok("nobody to deal is not a crash", tileRects(0, 1920, 1080).length === 0);
+
+  ok("only members with a sheet are dealt",
+     openable([shut, {id:"x", name:"No Sheet"}]).length === 1,
+     JSON.stringify(openable([shut, {id:"x", name:"No Sheet"}])));
+  ok("a private member is still dealt",
+     openable([shut]).length === 1, "the whole point: popups carry your login");
 
   const el=document.getElementById("tests");
   el.style.display="block";
