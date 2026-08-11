@@ -14,12 +14,167 @@
 html,body{height:100%}
 body{margin:0;background:#0b0805;overflow:hidden}
 #tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px;overflow:auto;height:100%}
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:5;
+  display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+  padding:10px 14px;background:rgba(11,8,5,.92);border-bottom:1px solid #2b2014;
+}
+#bar button{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#c8a86a;background:rgba(20,15,9,.6);border:1px solid #3a2c1a;border-radius:2px;
+  padding:8px 14px;cursor:pointer;
+}
+#bar button:hover{background:rgba(58,44,26,.5);color:#e8d9b8}
+#bar button.on{background:linear-gradient(180deg,#6d4a2b,#4a2e18);border-color:#c8a86a;color:#f2e4c6}
+#bar .rule{width:1px;align-self:stretch;background:#2b2014;margin:0 5px}
+#bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
+#table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
 <script src="assets/fog.js?v=20260808n"></script>
 </head>
 <body>
+<div id="bar">
+  <button id="open-map" type="button">Load a map&hellip;</button>
+  <span class="rule"></span>
+  <button id="open-screen" type="button">Open the players&rsquo; screen</button>
+  <span class="rule"></span>
+  <span id="said" class="said"></span>
+</div>
+<canvas id="table"></canvas>
+<input id="file" type="file" accept="image/*" hidden>
 <pre id="tests"></pre>
 <script>
+/* =========================================================================
+   The table.
+
+   Both this page and the projector are the same origin, so they share
+   IndexedDB. The map is stored once, here; the projector is told only
+   its id and fetches the blob itself. A 15 MB image never crosses the
+   channel.
+   ========================================================================= */
+/* Storage lives in assets/fog.js, because the projector page opens the
+   same database and one definition of the schema is the point. */
+const FOG_ALPHA = 0.78;          /* EDITOR_FOG_ALPHA in dnd_map.py */
+const ZMIN = 0.02, ZMAX = 40;
+
+let idbOK = true;
+
+const state = { mapId:null, name:"", img:null, w:0, h:0, rotation:0, strokes:[], view:{z:1,tx:0,ty:0} };
+let mask = document.createElement("canvas");
+
+function emptyMessage(){ return "No map on the table"; }
+
+function say(msg){ document.getElementById("said").textContent = msg || ""; }
+
+function sizeCanvas(){
+  const cv = document.getElementById("table");
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = Math.round(cv.clientWidth  * dpr);
+  cv.height = Math.round(cv.clientHeight * dpr);
+  return cv;
+}
+
+function redraw(){
+  const cv = document.getElementById("table");
+  const g = cv.getContext("2d");
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle = "#0b0805";
+  g.fillRect(0,0,cv.width,cv.height);
+
+  if(!state.img){
+    g.fillStyle = "#6d5a3a";
+    g.font = '16px "EB Garamond", Georgia, serif';
+    g.textAlign = "center";
+    g.fillText(emptyMessage(), cv.width/2, cv.height/2);
+    return;
+  }
+
+  const v = state.view;
+  g.imageSmoothingQuality = "high";
+  g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+  g.globalAlpha = FOG_ALPHA;
+  g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z);
+  g.globalAlpha = 1;
+}
+
+function remask(){
+  if(state.w && state.h) Fog.rasterise(state.strokes, state.w, state.h, mask);
+  redraw();
+}
+
+/* Swap in a stored map: decode it, fit it, and pick its fog back up. */
+async function loadMapRecord(rec){
+  const raw = await createImageBitmap(rec.blob);
+  const f = await Fog.getFog(rec.id);
+  state.mapId = rec.id; state.name = rec.name;
+  state.rotation = (f && f.rotation) || 0;
+  state.strokes = (f && f.strokes) || [];
+  /* Bring the picture to the orientation the saved strokes assume. */
+  state.img = Fog.rotateImage(raw, state.rotation);
+  state.w = state.img.width; state.h = state.img.height;
+  const cv = sizeCanvas();
+  state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
+  remask();
+  say(rec.name);
+}
+
+async function chooseMap(file){
+  try{
+    const bmp = await createImageBitmap(file);
+    const id = "m" + Date.now().toString(36);
+    await Fog.putMap(id, file.name, file, bmp.width, bmp.height);
+    await loadMapRecord({id:id, name:file.name, blob:file, w:bmp.width, h:bmp.height});
+  }catch(e){
+    say("Could not read " + file.name + " — " + e.message);
+  }
+}
+
+/* ── pan and zoom ──────────────────────────────────────────────────── */
+function wireView(){
+  const cv = document.getElementById("table");
+
+  cv.addEventListener("wheel", function(e){
+    if(!state.img) return;
+    e.preventDefault();
+    const dpr = window.devicePixelRatio || 1;
+    const f = e.deltaY < 0 ? 1.15 : 1/1.15;
+    state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
+    redraw();
+  }, {passive:false});
+
+  /* Right-drag pans, as dnd_map.py does, leaving the left button for paint. */
+  let panning = false, lx = 0, ly = 0;
+  cv.addEventListener("contextmenu", e => e.preventDefault());
+  cv.addEventListener("pointerdown", function(e){
+    if(e.button !== 2) return;
+    panning = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener("pointermove", function(e){
+    if(!panning) return;
+    const dpr = window.devicePixelRatio || 1;
+    state.view.tx += (e.clientX - lx) * dpr;
+    state.view.ty += (e.clientY - ly) * dpr;
+    lx = e.clientX; ly = e.clientY;
+    redraw();
+  });
+  cv.addEventListener("pointerup", function(){ panning = false; });
+
+  window.addEventListener("resize", function(){
+    sizeCanvas();
+    redraw();
+  });
+}
+
+function wire(){
+  const file = document.getElementById("file");
+  document.getElementById("open-map").addEventListener("click", () => file.click());
+  file.addEventListener("change", function(){
+    if(file.files && file.files[0]) chooseMap(file.files[0]);
+    file.value = "";
+  });
+  wireView();
+}
+
 /* =========================================================================
    Self-tests:  map-table.html?test=1
    ========================================================================= */
@@ -90,6 +245,8 @@ function runTests(){
      Fog.rotateImage(small, 2).width === 20 && Fog.rotateImage(small, 2).height === 60);
   ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
 
+  ok("an empty table says so", emptyMessage() === "No map on the table", emptyMessage());
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -97,8 +254,16 @@ function runTests(){
   document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Map Table tests";
 }
 
-(function boot(){
+(async function boot(){
   if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  sizeCanvas();
+  wire();
+  try{ await Fog.openDb(); }
+  catch(e){
+    idbOK = false;
+    say("This browser will not open its map store here — serve the site over http, not file://");
+  }
+  redraw();
 })();
 </script>
 </body>
