@@ -14,6 +14,7 @@
 
 - **No build step, no package manager, no CLI test runner.** Tests run in a browser at `?test=1`. Serve with `python -m http.server 8731 --bind 127.0.0.1`.
 - **Page CSS stays inline in the page.** Do not add to `assets/wazoo.css` — changing a shared asset forces bumping `?v=` in all six existing pages. New pages reference the current token `?v=20260808n` unchanged.
+- **Shared JS for the two new pages lives in `assets/company.js`**, a new file. Because no existing page references it, adding it does not trigger the bump-everywhere rule — that rule bites only when an already-shared asset changes. It carries `esc`, `sheetUrl`, `memberLine` and `isPublic`; page-specific rendering stays in the page.
 - **The repository is public.** No player real names, no D&D Beyond handles, no credentials in any committed file.
 - **A cross-origin iframe is opaque.** Never write code that tries to read an embedded sheet's contents, title, or load result. The `public` flag in the JSON is the only signal.
 - **Warded pages build after the ward lifts.** Listen for `ward:open` on `document`; do not render sheet frames at load.
@@ -168,16 +169,19 @@ Do **not** commit `scripts/fetch-portraits.py` — it is a one-shot. Leave it un
 ### Task 2: adventurers.html — the pure functions, tested first
 
 **Files:**
+- Create: `assets/company.js`
 - Create: `adventurers.html`
 
 **Interfaces:**
 - Consumes: the member shape from Task 1.
-- Produces, on `window`, for the page's own tests and for Task 3:
-  - `esc(s) -> string` — HTML-escapes `& < > "`
-  - `sheetUrl(m) -> string` — `https://www.dndbeyond.com/characters/<ddbId>`, or `""` when `ddbId` is missing
-  - `memberLine(m) -> string` — e.g. `"Goliath Barbarian 5"`, skipping absent parts
-  - `isPublic(m) -> boolean` — true only when `m.public === true`
-  - `cardHTML(m) -> string` — one `<article class="member">…</article>`
+- Produces, on `window`, for both new pages and their tests:
+  - In `assets/company.js`, shared by `adventurers.html` and `guild-master.html`:
+    - `esc(s) -> string` — HTML-escapes `& < > "`
+    - `sheetUrl(m) -> string` — `https://www.dndbeyond.com/characters/<ddbId>`, or `""` when `ddbId` is missing
+    - `memberLine(m) -> string` — e.g. `"Goliath Barbarian 5"`, skipping absent parts
+    - `isPublic(m) -> boolean` — true only when `m.public === true`
+  - In `adventurers.html` itself, because only that page renders cards:
+    - `cardHTML(m) -> string` — one `<article class="member">…</article>`
 
 - [ ] **Step 1: Write the page shell with a failing test suite**
 
@@ -218,6 +222,7 @@ Create `adventurers.html`. Follow the head convention of the other public pages 
 .masterway{margin:34px 0 0;text-align:center}
 #tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px}
 </style>
+<script src="assets/company.js?v=20260808n"></script>
 </head>
 <body>
 
@@ -285,35 +290,58 @@ function runTests(){
 Run `python -m http.server 8731 --bind 127.0.0.1`, open `http://127.0.0.1:8731/adventurers.html?test=1`.
 Expected: the page throws `esc is not defined` — nothing is implemented yet. Confirm the failure is that, not a syntax error in the test block.
 
-- [ ] **Step 3: Implement the five functions**
+- [ ] **Step 3a: Write the shared file**
 
-Insert above `runTests()`:
+Create `assets/company.js`. It is loaded by this page and by `guild-master.html` in Task 4, so nothing page-specific belongs in it.
 
 ```javascript
-/* =========================================================================
-   The register
-   ========================================================================= */
-function esc(s){
-  return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
-    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c];
-  });
-}
+/* ═══════════════════════════════════════════════════════════════════
+   The Company — what the roster pages both need.
 
-function sheetUrl(m){
-  return m && m.ddbId ? "https://www.dndbeyond.com/characters/" + encodeURIComponent(m.ddbId) : "";
-}
+   Two pages read data/adventurers.json: the public register and the
+   Guild Master's wall. This is the part they share. Card and tile
+   markup stays in the page that draws it.
 
-/* "Goliath Barbarian 5" — and whatever subset of that actually exists. */
-function memberLine(m){
-  return [m.race, m.class, m.level].filter(function(x){
-    return x !== null && x !== undefined && x !== "";
-  }).join(" ");
-}
+   New file, referenced by those two pages only — so it does not drag
+   the rest of the site into a ?v= bump the way editing wazoo.css or
+   keyring.js would.
+   ═══════════════════════════════════════════════════════════════════ */
+(function (root) {
+  'use strict';
 
-/* Only an explicit true. A missing flag must mean "not public": the
-   fallback tile always works, a broken embed does not. */
-function isPublic(m){ return m && m.public === true; }
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c];
+    });
+  }
 
+  function sheetUrl(m){
+    return m && m.ddbId ? "https://www.dndbeyond.com/characters/" + encodeURIComponent(m.ddbId) : "";
+  }
+
+  /* "Goliath Barbarian 5" — and whatever subset of that actually exists. */
+  function memberLine(m){
+    return [m.race, m.class, m.level].filter(function(x){
+      return x !== null && x !== undefined && x !== "";
+    }).join(" ");
+  }
+
+  /* Only an explicit true. A missing flag must mean "not public": the
+     fallback tile always works, a broken embed does not. */
+  function isPublic(m){ return !!m && m.public === true; }
+
+  root.esc = esc;
+  root.sheetUrl = sheetUrl;
+  root.memberLine = memberLine;
+  root.isPublic = isPublic;
+})(window);
+```
+
+- [ ] **Step 3b: Implement the card**
+
+Insert above `runTests()` in `adventurers.html`:
+
+```javascript
 function cardHTML(m){
   var url  = sheetUrl(m);
   var line = memberLine(m);
@@ -338,11 +366,12 @@ Expected: `14 passed, 0 failed`, and the tab title reads `PASS 14/14`.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add adventurers.html
+git add assets/company.js adventurers.html
 git commit -m "feat: the Adventurers' Company page, register functions
 
 Card rendering with its own suite at adventurers.html?test=1, following
-the Penny Press convention. Nothing is fetched yet."
+the Penny Press convention. The parts the Guild Master's wall will also
+need live in assets/company.js. Nothing is fetched yet."
 ```
 
 ---
@@ -439,7 +468,7 @@ must not look the same."
 - Create: `guild-master.html`
 
 **Interfaces:**
-- Consumes: the member shape from Task 1; `Keyring`/`City` from `assets/keyring.js`; the `ward:open` event from `assets/gate.js`.
+- Consumes: the member shape from Task 1; `esc`, `sheetUrl` and `isPublic` from `assets/company.js` (Task 2) — do **not** redefine them here; `Keyring` from `assets/keyring.js`; the `ward:open` event from `assets/gate.js`.
 - Produces: nothing later depends on it.
 
 - [ ] **Step 1: Write the page with a failing test suite**
@@ -475,6 +504,7 @@ Create `guild-master.html`. This one is a DM tool, so it takes `noindex, nofollo
 .bar{display:flex;gap:9px;align-items:center;padding:11px 16px}
 #tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px}
 </style>
+<script src="assets/company.js?v=20260808n"></script>
 <script src="assets/keyring.js?v=20260808n"></script>
 <script src="assets/gate.js?v=20260808n"></script>
 </head>
@@ -549,21 +579,14 @@ Insert above `runTests()`:
    A cross-origin frame is opaque — this page cannot read whether D&D
    Beyond served a sheet or its 403 dragon, cannot see the frame's title,
    and onload fires either way. So the roster is asked, not the frame.
+
+   esc, sheetUrl and isPublic come from assets/company.js — this page and
+   the public register share them. Do not redefine them here.
    ========================================================================= */
-function esc(s){
-  return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
-    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c];
-  });
-}
-
-function sheetUrl(m){
-  return m && m.ddbId ? "https://www.dndbeyond.com/characters/" + encodeURIComponent(m.ddbId) : "";
-}
-
 function tileHTML(m){
   var url = sheetUrl(m);
   var head = '<b>' + esc(m.name) + '</b>';
-  if(m.public === true && url){
+  if(isPublic(m) && url){
     return '<div class="tablet">' + head +
       '<iframe src="' + esc(url) + '" loading="lazy" title="' + esc(m.name) + '"></iframe></div>';
   }
