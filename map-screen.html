@@ -96,7 +96,6 @@ const ch = Fog.open(async function(m){
     if(m.mapId) await showMap(m.mapId, m.rotation); else { st.img = null; redraw(); }
     return;
   }
-  if(m.t === "map"){ st.strokes = []; await showMap(m.id, 0); return; }
   if(m.t === "view"){ st.view = m.view; redraw(); return; }
   if(m.t === "stroke"){ st.strokes.push(m.stroke); remask(); return; }
   if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }

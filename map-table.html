@@ -131,7 +131,11 @@ async function loadMapRecord(rec){
   try{ localStorage.setItem(LAST_KEY, rec.id); }catch(e){}
   remask();
   say(rec.name);
-  send({t:"map", id:rec.id});
+  /* syncPayload, not a bare map id: this also runs when the table reloads
+     and restores the last map from localStorage, and a screen that is
+     already open must pick up the restored fog and rotation, not be
+     wiped back to a blank slate. */
+  send(syncPayload(state));
 }
 
 async function chooseMap(file){
