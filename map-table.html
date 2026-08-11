@@ -36,6 +36,19 @@ body{margin:0;background:#0b0805;overflow:hidden}
 <div id="bar">
   <button id="open-map" type="button">Load a map&hellip;</button>
   <span class="rule"></span>
+  <button id="t-brush" type="button" class="on">Brush</button>
+  <button id="t-rect" type="button">Rectangle</button>
+  <input id="brush" type="range" min="4" max="240" value="40" title="Brush size">
+  <span class="rule"></span>
+  <button id="a-reveal" type="button" class="on">Reveal</button>
+  <button id="a-hide" type="button">Hide</button>
+  <span class="rule"></span>
+  <button id="all-reveal" type="button">Reveal all</button>
+  <button id="all-fog" type="button">Fog all</button>
+  <button id="rotate" type="button">Rotate</button>
+  <button id="undo" type="button">Undo</button>
+  <button id="redo" type="button">Redo</button>
+  <span class="rule"></span>
   <button id="open-screen" type="button">Open the players&rsquo; screen</button>
   <span class="rule"></span>
   <span id="said" class="said"></span>
@@ -114,6 +127,8 @@ async function loadMapRecord(rec){
   state.w = state.img.width; state.h = state.img.height;
   const cv = sizeCanvas();
   state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
+  stack.strokes = state.strokes; stack.undone.length = 0;
+  try{ localStorage.setItem(LAST_KEY, rec.id); }catch(e){}
   remask();
   say(rec.name);
 }
@@ -158,6 +173,8 @@ function wireView(){
     redraw();
   });
   cv.addEventListener("pointerup", function(){ panning = false; });
+  /* A lost pointer capture must not leave panning stuck true. */
+  cv.addEventListener("pointercancel", function(){ panning = false; });
 
   window.addEventListener("resize", function(){
     sizeCanvas();
@@ -173,6 +190,132 @@ function wire(){
     file.value = "";
   });
   wireView();
+
+  const pick = (onId, offId, set) => {
+    const on = document.getElementById(onId), off = document.getElementById(offId);
+    on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
+  };
+  pick("t-brush", "t-rect", () => tool = "brush");
+  pick("t-rect", "t-brush", () => tool = "rect");
+  pick("a-reveal", "a-hide", () => reveal = true);
+  pick("a-hide", "a-reveal", () => reveal = false);
+  document.getElementById("brush").addEventListener("input", function(){ brush = +this.value; });
+  document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
+  document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
+  document.getElementById("rotate").addEventListener("click", rotate);
+  document.getElementById("undo").addEventListener("click", undo);
+  document.getElementById("redo").addEventListener("click", redo);
+  document.addEventListener("keydown", function(e){
+    if(!(e.ctrlKey || e.metaKey)) return;
+    if(e.key === "z"){ e.preventDefault(); undo(); }
+    if(e.key === "y"){ e.preventDefault(); redo(); }
+  });
+  wirePaint();
+}
+
+/* ── the stroke stack ──────────────────────────────────────────────
+   Kept as three tiny pure functions so the suite can exercise the
+   ordering rules without a canvas or a map. */
+function applyPush(st, stroke){ st.strokes.push(stroke); st.undone.length = 0; return true; }
+function applyUndo(st){
+  if(!st.strokes.length) return false;
+  st.undone.push(st.strokes.pop()); return true;
+}
+function applyRedo(st){
+  if(!st.undone.length) return false;
+  st.strokes.push(st.undone.pop()); return true;
+}
+
+const LAST_KEY = "waterdeep-table.last";
+const stack = { strokes: state.strokes, undone: [] };
+let tool = "brush", reveal = true, brush = 40;
+
+let saveT = null;
+function saveFog(){
+  if(!state.mapId) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(() => { Fog.putFog(state.mapId, state.strokes, state.rotation).catch(()=>{}); }, 400);
+}
+
+/* Replaced in the channel task. Nothing is listening yet. */
+let send = function(){};
+
+function pushStroke(s){
+  applyPush(stack, s);
+  state.strokes = stack.strokes;
+  remask(); saveFog();
+  send({t:"stroke", stroke:s});
+}
+
+function undo(){
+  if(!applyUndo(stack)) return;
+  state.strokes = stack.strokes; remask(); saveFog();
+  send({t:"undo", strokes:state.strokes});
+}
+function redo(){
+  if(!applyRedo(stack)) return;
+  state.strokes = stack.strokes; remask(); saveFog();
+  send({t:"undo", strokes:state.strokes});
+}
+
+/* ── painting ──────────────────────────────────────────────────────── */
+function wirePaint(){
+  const cv = document.getElementById("table");
+  let drawing = false, prev = null, start = null;
+
+  const at = e => {
+    const dpr = window.devicePixelRatio || 1;
+    return Fog.canvasToImage(state.view, e.offsetX*dpr, e.offsetY*dpr);
+  };
+
+  cv.addEventListener("pointerdown", function(e){
+    if(e.button !== 0 || !state.img) return;
+    drawing = true; cv.setPointerCapture(e.pointerId);
+    const p = at(e);
+    if(tool === "brush"){ prev = p; pushStroke(Fog.line(p.x,p.y,p.x,p.y,brush,reveal)); }
+    else start = p;
+  });
+
+  cv.addEventListener("pointermove", function(e){
+    if(!drawing) return;
+    const p = at(e);
+    if(tool === "brush"){
+      pushStroke(Fog.line(prev.x, prev.y, p.x, p.y, brush, reveal));
+      prev = p;
+    }
+  });
+
+  cv.addEventListener("pointerup", function(e){
+    if(!drawing) return;
+    drawing = false;
+    if(tool === "rect" && start){
+      const p = at(e);
+      pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+      start = null;
+    }
+  });
+
+  /* A lost pointer capture (e.g. the OS steals the gesture) must not
+     strand a half-drawn stroke — end it without committing a rectangle. */
+  cv.addEventListener("pointercancel", function(){
+    if(!drawing) return;
+    drawing = false;
+    start = null;
+  });
+}
+
+function rotate(){
+  if(!state.img) return;
+  const oldH = state.h;
+  state.img = Fog.rotateImage(state.img, 1);
+  state.w = state.img.width; state.h = state.img.height;
+  state.rotation = (state.rotation + 1) % 4;
+  state.strokes = Fog.rotateStrokes(state.strokes, oldH);
+  stack.strokes = state.strokes; stack.undone.length = 0;
+  const c = sizeCanvas();
+  state.view = Fog.fitView(state.w, state.h, c.width, c.height);
+  remask(); saveFog();
+  send({t:"rotate"});   /* Task 4 replaces this with a full resend */
 }
 
 /* =========================================================================
@@ -247,6 +390,18 @@ function runTests(){
 
   ok("an empty table says so", emptyMessage() === "No map on the table", emptyMessage());
 
+  const stack = {strokes:[], undone:[]};
+  applyPush(stack, Fog.fill(true));
+  applyPush(stack, Fog.rect(0,0,5,5,false));
+  ok("pushing keeps order", stack.strokes.length === 2 && stack.strokes[1].k === "rect");
+  applyUndo(stack);
+  ok("undo pops the last", stack.strokes.length === 1 && stack.undone.length === 1);
+  applyRedo(stack);
+  ok("redo puts it back", stack.strokes.length === 2 && stack.undone.length === 0);
+  applyUndo(stack); applyPush(stack, Fog.fill(false));
+  ok("a new stroke drops the redo trail", stack.undone.length === 0 && stack.strokes.length === 2);
+  ok("undo on an empty stack is not a crash", applyUndo({strokes:[],undone:[]}) === false);
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -262,6 +417,11 @@ function runTests(){
   catch(e){
     idbOK = false;
     say("This browser will not open its map store here — serve the site over http, not file://");
+  }
+  let last = null; try{ last = localStorage.getItem(LAST_KEY); }catch(e){}
+  if(last){
+    const rec = await Fog.getMap(last).catch(() => null);
+    if(rec) await loadMapRecord(rec);
   }
   redraw();
 })();
