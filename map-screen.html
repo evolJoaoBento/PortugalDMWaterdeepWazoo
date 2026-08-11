@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="wazoo-build" content="20260808n">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>The Map &mdash; Waterdeep</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+<style>
+html,body{height:100%}
+body{margin:0;background:#000;overflow:hidden;cursor:none}
+#screen{position:fixed;inset:0;width:100%;height:100%;display:block}
+</style>
+<script src="assets/fog.js?v=20260808n"></script>
+</head>
+<body>
+<canvas id="screen"></canvas>
+<script>
+/* =========================================================================
+   The players' screen.
+
+   Draws what the table tells it to and nothing else: no toolbar, no
+   cursor, no chrome. Fog here is fully opaque — the 0.78 wash on the
+   DM's page exists so the DM can see through it, and that would be a
+   spoiler on a projector.
+
+   The map is never sent over the channel. This page is the same origin
+   as the table, so it opens the same IndexedDB and fetches the blob by
+   id itself.
+   ========================================================================= */
+/* Storage comes from assets/fog.js — the table writes the map, this page
+   reads it, and the schema is written once so the two cannot drift. */
+const st = { img:null, w:0, h:0, strokes:[], view:{z:1,tx:0,ty:0}, waiting:true };
+let mask = document.createElement("canvas");
+
+function sizeCanvas(){
+  const cv = document.getElementById("screen");
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(cv.clientWidth * dpr);
+  cv.height = Math.round(cv.clientHeight * dpr);
+  return cv;
+}
+
+function note(g, cv, text){
+  g.fillStyle = "#3a3128";
+  g.font = '18px "EB Garamond", Georgia, serif';
+  g.textAlign = "center";
+  g.fillText(text, cv.width/2, cv.height/2);
+}
+
+function redraw(){
+  const cv = document.getElementById("screen");
+  const g = cv.getContext("2d");
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle = "#000";
+  g.fillRect(0,0,cv.width,cv.height);
+
+  if(!st.img){
+    /* A black rectangle is indistinguishable from fog, from a bug, and
+       from a dead cable. Say which it is. */
+    note(g, cv, st.waiting ? "Waiting for the table…" : "No map on the table");
+    return;
+  }
+  const v = st.view;
+  g.imageSmoothingQuality = "high";
+  g.drawImage(st.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
+  g.drawImage(mask, v.tx, v.ty, st.w * v.z, st.h * v.z);   /* fully opaque */
+}
+
+function remask(){
+  if(st.w && st.h) Fog.rasterise(st.strokes, st.w, st.h, mask);
+  redraw();
+}
+
+/* The stored blob is always the original. The table sends how many
+   quarter-turns it is currently showing, and the strokes arrive already
+   rotated — so the picture has to be turned to match, or the fog sits
+   crooked over it. */
+async function showMap(id, rotation){
+  const rec = await Fog.getMap(id).catch(() => null);
+  if(!rec){ st.img = null; st.waiting = false; redraw(); return; }
+  const raw = await createImageBitmap(rec.blob);
+  st.img = Fog.rotateImage(raw, rotation || 0);
+  st.w = st.img.width; st.h = st.img.height;
+  remask();
+}
+
+const ch = Fog.open(async function(m){
+  st.waiting = false;
+  /* `sync` is the whole state and is sent both on request and whenever
+     the geometry changes under the screen, e.g. a rotate. */
+  if(m.t === "sync"){
+    st.strokes = m.strokes || [];
+    st.view = m.view || st.view;
+    if(m.mapId) await showMap(m.mapId, m.rotation); else { st.img = null; redraw(); }
+    return;
+  }
+  if(m.t === "map"){ st.strokes = []; await showMap(m.id, 0); return; }
+  if(m.t === "view"){ st.view = m.view; redraw(); return; }
+  if(m.t === "stroke"){ st.strokes.push(m.stroke); remask(); return; }
+  if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }
+});
+
+function hello(){ if(ch) ch.postMessage({t:"hello"}); }
+
+sizeCanvas();
+window.addEventListener("resize", function(){ sizeCanvas(); redraw(); });
+/* A projector window opened late, or reloaded when someone kicks the
+   cable, must catch up — otherwise it shows an empty map while the
+   table shows half the city, and that looks like a broken tool. */
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) hello(); });
+
+if(!ch){
+  const cv = document.getElementById("screen");
+  note(cv.getContext("2d"), cv, "This browser cannot link the two windows");
+} else {
+  redraw();
+  hello();
+}
+</script>
+</body>
+</html>

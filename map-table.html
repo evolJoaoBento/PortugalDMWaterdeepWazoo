@@ -131,6 +131,7 @@ async function loadMapRecord(rec){
   try{ localStorage.setItem(LAST_KEY, rec.id); }catch(e){}
   remask();
   say(rec.name);
+  send({t:"map", id:rec.id});
 }
 
 async function chooseMap(file){
@@ -155,6 +156,7 @@ function wireView(){
     const f = e.deltaY < 0 ? 1.15 : 1/1.15;
     state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
     redraw();
+    sendView();
   }, {passive:false});
 
   /* Right-drag pans, as dnd_map.py does, leaving the left button for paint. */
@@ -171,6 +173,7 @@ function wireView(){
     state.view.ty += (e.clientY - ly) * dpr;
     lx = e.clientX; ly = e.clientY;
     redraw();
+    sendView();
   });
   cv.addEventListener("pointerup", function(){ panning = false; });
   /* A lost pointer capture must not leave panning stuck true. */
@@ -179,6 +182,7 @@ function wireView(){
   window.addEventListener("resize", function(){
     sizeCanvas();
     redraw();
+    sendView();
   });
 }
 
@@ -211,6 +215,14 @@ function wire(){
     if(e.key === "y"){ e.preventDefault(); redo(); }
   });
   wirePaint();
+
+  document.getElementById("open-screen").addEventListener("click", function(){
+    const w = window.open("map-screen.html", "waterdeep-map-screen",
+      "popup=yes,width=1280,height=800,left=" + (screen.availWidth) + ",top=0");
+    /* A blocked popup returns null and says nothing else. */
+    say(w ? "Players' screen opened — drag it to the projector."
+          : "The players' screen was blocked — allow pop-ups for this site.");
+  });
 }
 
 /* ── the stroke stack ──────────────────────────────────────────────
@@ -237,8 +249,37 @@ function saveFog(){
   saveT = setTimeout(() => { Fog.putFog(state.mapId, state.strokes, state.rotation).catch(()=>{}); }, 400);
 }
 
-/* Replaced in the channel task. Nothing is listening yet. */
-let send = function(){};
+/* ── the channel ───────────────────────────────────────────────────
+   Only small things travel: a view, a stroke, a map id. The map blob
+   stays in IndexedDB, which the projector reads directly. */
+
+/* Everything a screen needs to draw the table as it currently stands.
+   The map is an id, not an image — that is what keeps this small.
+   Rotation must be here: the stored blob is always the original, and
+   the strokes travel already rotated, so a screen that decodes the
+   blob unturned lands the fog crooked. */
+function syncPayload(s){
+  return { t:"sync", mapId:s.mapId, view:s.view, strokes:s.strokes, rotation:s.rotation };
+}
+
+const ch = Fog.open(function(m){
+  /* The only thing the table listens for is a screen announcing itself. */
+  if(m.t === "hello") ch.postMessage(syncPayload(state));
+});
+
+let send = function(m){ if(ch) ch.postMessage(m); };
+
+/* The view changes on every wheel tick and every pan frame, so it is
+   sent at most once per frame rather than per event. */
+let viewPending = false;
+function sendView(){
+  if(!ch || viewPending) return;
+  viewPending = true;
+  requestAnimationFrame(function(){
+    viewPending = false;
+    send({t:"view", view:state.view});
+  });
+}
 
 function pushStroke(s){
   applyPush(stack, s);
@@ -315,7 +356,7 @@ function rotate(){
   const c = sizeCanvas();
   state.view = Fog.fitView(state.w, state.h, c.width, c.height);
   remask(); saveFog();
-  send({t:"rotate"});   /* Task 4 replaces this with a full resend */
+  send(syncPayload(state));
 }
 
 /* =========================================================================
@@ -402,6 +443,16 @@ function runTests(){
   ok("a new stroke drops the redo trail", stack.undone.length === 0 && stack.strokes.length === 2);
   ok("undo on an empty stack is not a crash", applyUndo({strokes:[],undone:[]}) === false);
 
+  /* ── the channel payload ──────────────────────────────────────────── */
+  const payload = syncPayload({mapId:"m1", view:{z:2,tx:3,ty:4}, strokes:[Fog.fill(true)], rotation:3});
+  ok("sync carries the map", payload.mapId === "m1", JSON.stringify(payload));
+  ok("sync carries the view", payload.view.z === 2 && payload.view.tx === 3);
+  ok("sync carries every stroke", payload.strokes.length === 1 && payload.strokes[0].k === "fill");
+  ok("sync carries the rotation", payload.rotation === 3,
+     "without it the screen decodes the blob unturned and the fog lands crooked");
+  ok("sync survives the channel", JSON.parse(JSON.stringify(payload)).strokes[0].reveal === true,
+     "the payload must be structured-clonable");
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -413,6 +464,7 @@ function runTests(){
   if(/[?&]test=1/.test(location.search)){ runTests(); return; }
   sizeCanvas();
   wire();
+  if(!ch) say("This browser cannot link the two windows — the players' screen will not follow.");
   try{ await Fog.openDb(); }
   catch(e){
     idbOK = false;
