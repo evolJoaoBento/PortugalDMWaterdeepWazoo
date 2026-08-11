@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="wazoo-build" content="20260808n">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>The Map Table &mdash; Waterdeep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
+<style>
+html,body{height:100%}
+body{margin:0;background:#0b0805;overflow:hidden}
+#tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px;overflow:auto;height:100%}
+</style>
+<script src="assets/fog.js?v=20260808n"></script>
+</head>
+<body>
+<pre id="tests"></pre>
+<script>
+/* =========================================================================
+   Self-tests:  map-table.html?test=1
+   ========================================================================= */
+function runTests(){
+  const out=[]; let pass=0, fail=0;
+  const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
+  const near=(a,b)=>Math.abs(a-b)<0.001;
+
+  /* alpha of the mask at a pixel: 255 = fogged, 0 = revealed */
+  const alphaAt=(cv,x,y)=>cv.getContext("2d").getImageData(x,y,1,1).data[3];
+
+  /* ── view maths ────────────────────────────────────────────────── */
+  const v = {z:2, tx:30, ty:-10};
+  const c = Fog.imageToCanvas(v, 100, 50);
+  ok("image to canvas", near(c.x, 230) && near(c.y, 90), JSON.stringify(c));
+  const i = Fog.canvasToImage(v, c.x, c.y);
+  ok("round trip", near(i.x, 100) && near(i.y, 50), JSON.stringify(i));
+
+  ok("fit scale takes the tighter axis", near(Fog.fitScale(1000, 500, 500, 500), 0.5),
+     String(Fog.fitScale(1000,500,500,500)));
+  ok("fit scale of nothing is 1", Fog.fitScale(0, 0, 500, 500) === 1);
+
+  const fv = Fog.fitView(1000, 500, 500, 500);
+  ok("fit view centres the image", near(fv.tx, 0) && near(fv.ty, 125), JSON.stringify(fv));
+
+  const z = Fog.zoomAt({z:1,tx:0,ty:0}, 200, 100, 2, 0.05, 40);
+  ok("zoom holds the cursor still",
+     near(Fog.canvasToImage(z,200,100).x, 200) && near(Fog.canvasToImage(z,200,100).y, 100),
+     JSON.stringify(z));
+  ok("zoom clamps to max", Fog.zoomAt({z:30,tx:0,ty:0}, 0, 0, 4, 0.05, 40).z === 40);
+  ok("zoom clamps to min", Fog.zoomAt({z:0.1,tx:0,ty:0}, 0, 0, 0.1, 0.05, 40).z === 0.05);
+
+  /* ── the mask ──────────────────────────────────────────────────── */
+  const blank = Fog.rasterise([], 40, 40);
+  ok("no strokes means all fog", alphaAt(blank, 20, 20) === 255, String(alphaAt(blank,20,20)));
+
+  const revealed = Fog.rasterise([Fog.fill(true)], 40, 40);
+  ok("fill reveals everything", alphaAt(revealed, 20, 20) === 0);
+
+  const box = Fog.rasterise([Fog.rect(10,10,30,30,true)], 40, 40);
+  ok("rect reveals inside", alphaAt(box, 20, 20) === 0);
+  ok("rect leaves outside fogged", alphaAt(box, 2, 2) === 255);
+
+  const back = Fog.rasterise([Fog.fill(true), Fog.rect(10,10,30,30,false)], 40, 40);
+  ok("a later stroke wins", alphaAt(back, 20, 20) === 255 && alphaAt(back, 2, 2) === 0);
+
+  const dot = Fog.rasterise([Fog.line(20,20,20,20,6,true)], 40, 40);
+  ok("a click leaves a dot", alphaAt(dot, 20, 20) === 0, "zero-length line must still paint");
+
+  const drag = Fog.rasterise([Fog.line(5,20,35,20,4,true)], 40, 40);
+  ok("a drag reveals along its path", alphaAt(drag, 20, 20) === 0 && alphaAt(drag, 20, 2) === 255);
+
+  const undone = Fog.rasterise([Fog.fill(true), Fog.rect(10,10,30,30,false)].slice(0,-1), 40, 40);
+  ok("dropping the last stroke undoes it", alphaAt(undone, 20, 20) === 0);
+
+  /* ── rotation ──────────────────────────────────────────────────── */
+  /* 90° clockwise on an image 100 tall: (x,y) -> (oldH - y, x) */
+  const rot = Fog.rotateStrokes([Fog.line(10, 20, 30, 40, 5, true)], 100);
+  ok("rotate maps a line's ends", rot[0].x0 === 80 && rot[0].y0 === 10 && rot[0].x1 === 60 && rot[0].y1 === 30,
+     JSON.stringify(rot[0]));
+  ok("rotate keeps the radius and the action", rot[0].r === 5 && rot[0].reveal === true);
+  ok("rotate leaves a fill alone", Fog.rotateStrokes([Fog.fill(true)], 100)[0].k === "fill");
+
+  const small = document.createElement("canvas"); small.width = 20; small.height = 60;
+  ok("rotating an image swaps its sides",
+     Fog.rotateImage(small, 1).width === 60 && Fog.rotateImage(small, 1).height === 20);
+  ok("two turns keep the shape",
+     Fog.rotateImage(small, 2).width === 20 && Fog.rotateImage(small, 2).height === 60);
+  ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
+
+  const el=document.getElementById("tests");
+  el.style.display="block";
+  el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
+    "\n"+"=".repeat(46)+"\n"+pass+" passed, "+fail+" failed\n";
+  document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Map Table tests";
+}
+
+(function boot(){
+  if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+})();
+</script>
+</body>
+</html>
