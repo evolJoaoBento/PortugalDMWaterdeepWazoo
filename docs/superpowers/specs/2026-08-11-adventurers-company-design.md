@@ -93,9 +93,21 @@ Master* button and page title.
   a broken embed does not.
 - Player real names and D&D Beyond handles are **not** stored. The repository is public.
 
-Known members at time of writing: `168950625` (Ganja, Goliath Barbarian 5), `168938738`,
-`168947295`, `169493126`. The remaining three need name, race, class, level and portrait,
-gathered from the sheets in the DM's logged-in browser.
+The roster, read from the four sheets in the DM's logged-in browser:
+
+| ddbId | name | race | class | level |
+|---|---|---|---|---|
+| 168950625 | Ganja | Goliath | Barbarian | 5 |
+| 168938738 | Jacinto Pinto | Half-Elf | Wizard | 5 |
+| 168947295 | Quim das Bolas de Fogo | Human | Barbarian | 5 |
+| 169493126 | Violet Rarnoz | Half-Elf | Warlock | 5 |
+
+Portraits live at `https://www.dndbeyond.com/avatars/<a>/<b>/<ts>-<ddbId>.jpeg` and fetch
+anonymously (checked: all four return `200 image/jpeg`, 0.3–1.5 MB). They are copied into
+`assets/adventurers/` rather than hotlinked, and re-encoded to WebP first — 3.5 MB of JPEG
+for four cards would repeat the mistake the Penny Press was rebuilt to avoid.
+
+Blurbs are not written yet. Cards render without one until the DM supplies them.
 
 ## adventurers.html
 
