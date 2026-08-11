@@ -53,7 +53,15 @@ assets/adventurers/<id>.webp       portraits
 adventurers.html                   public  — The Adventurers' Company
 guild-master.html                  warded  — the sheet wall
 index.html                         gains a shop sign pointing at adventurers.html
+press-room.html                    HIDDEN gains both new pages
 ```
+
+That last one is not optional. `press-room.html` builds its archive by listing every root
+`.html` through the contents API and excluding only the names in its `HIDDEN` array;
+anything else renders as reading matter, which is how `The-Notice-Board.html` comes to be
+listed. Left alone, the roster and the DM's sheet wall would both appear in the public
+archive. The symptom would also arrive late and look like a ghost, because that listing is
+cached in `sessionStorage` under `wazoo-files-v3`.
 
 Naming note: the footer link labelled *Guild* already points at `scriptorium.html`, and
 stays that way. The new roster is deliberately named `adventurers.html` to avoid two
