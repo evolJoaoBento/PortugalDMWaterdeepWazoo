@@ -64,6 +64,31 @@ function cardHTML(m){
     '</div></article>';
 }
 
+function rosterHTML(members){
+  if(!members || !members.length){
+    return '<p class="roster-error">No one has signed the register yet.</p>';
+  }
+  return members.map(cardHTML).join("");
+}
+
+/* A failure has to be visible. An empty roster and a roster that failed to
+   load look identical otherwise, and the second one is a bug. */
+function showError(msg){
+  document.getElementById("roster").innerHTML =
+    '<p class="roster-error">The register could not be read &mdash; ' + esc(msg) + '</p>';
+}
+
+async function loadRoster(){
+  try{
+    var res = await fetch("data/adventurers.json", { cache: "no-cache" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    var data = await res.json();
+    document.getElementById("roster").innerHTML = rosterHTML(data.members || []);
+  }catch(e){
+    showError(e.message);
+  }
+}
+
 function runTests(){
   const out=[]; let pass=0, fail=0;
   const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
@@ -95,6 +120,11 @@ function runTests(){
   ok("empty blurb prints nothing",
      cardHTML(Object.assign({}, m, {blurb:""})).indexOf('class="blurb"') === -1);
 
+  ok("no members says so", rosterHTML([]).indexOf("No one has signed") > -1, rosterHTML([]));
+  ok("members render in order",
+     rosterHTML([m, Object.assign({}, m, {id:"v", name:"Violet"})]).indexOf("Ganja") <
+     rosterHTML([m, Object.assign({}, m, {id:"v", name:"Violet"})]).indexOf("Violet"));
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Adventurers' Company self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -104,6 +134,7 @@ function runTests(){
 
 (function boot(){
   if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  loadRoster();
 })();
 </script>
 </body>
