@@ -72,7 +72,7 @@ serialised, never posted, never copied.
 
 ```
 db: waterdeep-table
-  store maps  { id, name, blob, w, h }
+  store maps  { id, name, blob }
   store fog   { mapId, strokes[], rotation }
 ```
 
@@ -85,12 +85,24 @@ reveals.
 
 | Message | Sent when | Payload |
 |---|---|---|
-| `view` | pan or zoom, throttled to one per animation frame | `{z, tx, ty}` |
+| `view` | pan or zoom, throttled to one per animation frame | `{rect}` — the image-space rectangle `{x0,y0,x1,y1}` the DM's canvas is showing |
 | `stroke` | a stroke completes | the stroke object |
-| `map` | the loaded map changes | `{id}` |
 | `undo` | undo or redo | `{strokes}` — the authoritative list, since replaying a pop is fiddlier than resending |
 | `hello` | a player screen loads | — |
-| `sync` | DM answers a `hello` | `{mapId, view, strokes, rotation}` |
+| `sync` | DM answers a `hello`, and whenever the geometry changes under the screen — a map loaded or restored, a rotate | `{mapId, rect, strokes, rotation}` |
+
+There is no `map` message. Loading a map sends a full `sync`, because the table also loads a
+map when it restores the last one at boot — and a bare id would wipe an already-open screen's
+strokes and rotation back to a blank slate.
+
+**The framing crosses as a rectangle of the map, not as `{z, tx, ty}`.** A view is expressed
+in the device pixels of the canvas that produced it, and the two canvases never agree: the
+player window opens at its own size, and a laptop at 150% display scaling beside a projector
+at 100% is the ordinary case. Sent verbatim, a view shows the players a cropped, off-centre
+map, and every pan carries the error along. Each page instead fits the rectangle to its own
+canvas — `Fog.viewRect` going out, `Fog.viewFromRect` coming in — so both frame the same
+ground whatever their size, aspect or scaling. The player page keeps the last rectangle rather
+than the derived view, so resizing that window re-fits instead of holding stale framing.
 
 **The `hello`/`sync` handshake is the part that is easy to omit and painful to lack.** A
 projector window opened after the session started — or reloaded when someone knocks the
@@ -118,6 +130,13 @@ both produce the same mask regardless.
 revealed, black where hidden. Undo pops the last stroke and rasterises from zero. That is O(n)
 in strokes rather than incremental, which for a few hundred canvas operations is imperceptible
 and much easier to get right than maintaining an undo stack of mask deltas.
+
+A *new* stroke is the one case that does not replay: a brush drag pushes one stroke per
+`pointermove`, so replaying the list each time is O(n²) over a mask that may be twenty-four
+megapixels. Every mask operation composites over what is already there, so `applyStroke` draws
+the single new stroke onto the mask as it stands and gets a pixel-identical result — the
+suite asserts that equality. Both draw through one internal helper so they cannot drift.
+Undo, redo, `sync`, rotate and map loading still replay from zero.
 
 Rendering follows `dnd_map.py` exactly: the DM draws fog at **0.78 alpha** (`EDITOR_FOG_ALPHA`
 in the original) so hidden ground is still visible to the DM; the player screen draws it fully

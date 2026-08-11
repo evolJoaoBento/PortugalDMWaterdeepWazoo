@@ -36,6 +36,30 @@
     return { z: z, tx: (cw - w * z) / 2, ty: (ch - h * z) / 2 };
   }
 
+  /* The image-space rectangle a canvas of cw × ch is currently showing.
+
+     A view is in the DEVICE pixels of the canvas that produced it, and the
+     two windows never share those: the projector opens at its own size,
+     and on Windows a laptop at 150% scaling beside a projector at 100% is
+     the ordinary case. Sending {z,tx,ty} across therefore crops the map.
+     A rectangle of the map means the same thing on both. */
+  function viewRect(v, cw, ch){
+    var a = canvasToImage(v, 0, 0), b = canvasToImage(v, cw, ch);
+    return { x0:a.x, y0:a.y, x1:b.x, y1:b.y };
+  }
+
+  /* The view that shows that rectangle on a canvas of cw × ch, contain-
+     fitted and centred. This is what lets two differently-sized,
+     differently-scaled displays frame the same part of the map: whichever
+     axis is tighter decides the scale, and the slack on the other axis
+     falls equally either side. */
+  function viewFromRect(r, cw, ch){
+    var rw = r.x1 - r.x0, rh = r.y1 - r.y0;
+    if(!(rw > 0) || !(rh > 0)) return { z:1, tx:0, ty:0 };
+    var z = Math.min(cw / rw, ch / rh);
+    return { z: z, tx: (cw - rw * z) / 2 - r.x0 * z, ty: (ch - rh * z) / 2 - r.y0 * z };
+  }
+
   /* Zoom about a canvas point, keeping whatever is under it still.
      The image point under the cursor must not move, so the translation
      has to absorb the scale change. */
@@ -54,6 +78,38 @@
   }
   function fill(reveal){ return {k:"fill", reveal:!!reveal}; }
 
+  /* One stroke into a mask context that is already the right size.
+     Both rasterise() and applyStroke() go through here, so a replayed
+     mask and an appended one cannot possibly draw a stroke differently. */
+  function drawStroke(g, s, w, h){
+    /* destination-out erases what is already there — that is a reveal.
+       source-over paints opaque black back — that is a hide. */
+    g.globalCompositeOperation = s.reveal ? "destination-out" : "source-over";
+    g.fillStyle = "#000";
+    g.strokeStyle = "#000";
+
+    if(s.k === "fill"){ g.fillRect(0, 0, w, h); return; }
+
+    if(s.k === "rect"){
+      g.fillRect(Math.min(s.x0, s.x1), Math.min(s.y0, s.y1),
+                 Math.abs(s.x1 - s.x0), Math.abs(s.y1 - s.y0));
+      return;
+    }
+
+    if(s.k === "line"){
+      /* A click is a zero-length line, and stroking one draws nothing
+         in every browser worth naming. Paint the cap by hand. */
+      if(s.x0 === s.x1 && s.y0 === s.y1){
+        g.beginPath(); g.arc(s.x0, s.y0, s.r, 0, Math.PI * 2); g.fill();
+        return;
+      }
+      g.lineWidth = s.r * 2;
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      g.beginPath(); g.moveTo(s.x0, s.y0); g.lineTo(s.x1, s.y1); g.stroke();
+    }
+  }
+
   /* Draw the strokes, in order, into an alpha mask of w×h.
      Starts fully fogged; a reveal erases, a hide paints back. */
   function rasterise(strokes, w, h, canvas){
@@ -68,37 +124,27 @@
     g.fillStyle = "#000";
     g.fillRect(0, 0, w, h);
 
-    (strokes || []).forEach(function(s){
-      /* destination-out erases what is already there — that is a reveal.
-         source-over paints opaque black back — that is a hide. */
-      g.globalCompositeOperation = s.reveal ? "destination-out" : "source-over";
-      g.fillStyle = "#000";
-      g.strokeStyle = "#000";
-
-      if(s.k === "fill"){ g.fillRect(0, 0, w, h); return; }
-
-      if(s.k === "rect"){
-        g.fillRect(Math.min(s.x0, s.x1), Math.min(s.y0, s.y1),
-                   Math.abs(s.x1 - s.x0), Math.abs(s.y1 - s.y0));
-        return;
-      }
-
-      if(s.k === "line"){
-        /* A click is a zero-length line, and stroking one draws nothing
-           in every browser worth naming. Paint the cap by hand. */
-        if(s.x0 === s.x1 && s.y0 === s.y1){
-          g.beginPath(); g.arc(s.x0, s.y0, s.r, 0, Math.PI * 2); g.fill();
-          return;
-        }
-        g.lineWidth = s.r * 2;
-        g.lineCap = "round";
-        g.lineJoin = "round";
-        g.beginPath(); g.moveTo(s.x0, s.y0); g.lineTo(s.x1, s.y1); g.stroke();
-      }
-    });
+    (strokes || []).forEach(function(s){ drawStroke(g, s, w, h); });
 
     g.globalCompositeOperation = "source-over";
     return cv;
+  }
+
+  /* One stroke onto the mask exactly as it already stands.
+
+     Every mask operation composites over what is there, so appending a
+     stroke gives the identical result to replaying the whole list — and a
+     brush drag pushes one stroke per pointermove, which makes the replay
+     O(n²) over a mask that may be twenty-four megapixels. The canvas is
+     NEVER resized here: assigning width or height clears it, which would
+     throw away the very thing being appended to. */
+  function applyStroke(stroke, w, h, canvas){
+    if(!canvas || !stroke) return canvas;
+    var g = canvas.getContext("2d");
+    g.setTransform(1,0,0,1,0,0);
+    drawStroke(g, stroke, w, h);
+    g.globalCompositeOperation = "source-over";
+    return canvas;
   }
 
   /* Rotate strokes 90° clockwise for an image that was `oldH` tall.
@@ -185,12 +231,20 @@
     });
   }
 
-  function putMap(id, name, blob, w, h){ return put(MAPS, {id:id, name:name, blob:blob, w:w, h:h}); }
+  /* No width or height: nothing ever read them back. Both pages take the
+     dimensions from the decoded, rotated image, which is the only place
+     they are true anyway. */
+  function putMap(id, name, blob){ return put(MAPS, {id:id, name:name, blob:blob}); }
   function getMap(id){ return get(MAPS, id); }
   function putFog(mapId, strokes, rotation){
     return put(FOG, {mapId:mapId, strokes:strokes, rotation:rotation || 0});
   }
   function getFog(mapId){ return get(FOG, mapId); }
+
+  /* What both pages say when there is nothing to show. It lives here
+     because the table asserts it and the projector displays it, and two
+     copies of a string are two chances for them to disagree. */
+  function emptyMessage(){ return "No map on the table"; }
 
   /* ── the channel ──────────────────────────────────────────────────── */
   function open(onMessage){
@@ -201,16 +255,19 @@
   }
 
   root.Fog = {
-    channelName: CHANNEL,
     imageToCanvas: imageToCanvas,
     canvasToImage: canvasToImage,
     fitScale: fitScale,
     fitView: fitView,
+    viewRect: viewRect,
+    viewFromRect: viewFromRect,
     zoomAt: zoomAt,
     line: line,
     rect: rect,
     fill: fill,
     rasterise: rasterise,
+    applyStroke: applyStroke,
+    emptyMessage: emptyMessage,
     rotateStrokes: rotateStrokes,
     rotateImage: rotateImage,
     openDb: openDb,

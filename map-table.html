@@ -70,12 +70,8 @@ body{margin:0;background:#0b0805;overflow:hidden}
 const FOG_ALPHA = 0.78;          /* EDITOR_FOG_ALPHA in dnd_map.py */
 const ZMIN = 0.02, ZMAX = 40;
 
-let idbOK = true;
-
-const state = { mapId:null, name:"", img:null, w:0, h:0, rotation:0, strokes:[], view:{z:1,tx:0,ty:0} };
+const state = { mapId:null, img:null, w:0, h:0, rotation:0, strokes:[], view:{z:1,tx:0,ty:0} };
 let mask = document.createElement("canvas");
-
-function emptyMessage(){ return "No map on the table"; }
 
 function say(msg){ document.getElementById("said").textContent = msg || ""; }
 
@@ -98,7 +94,7 @@ function redraw(){
     g.fillStyle = "#6d5a3a";
     g.font = '16px "EB Garamond", Georgia, serif';
     g.textAlign = "center";
-    g.fillText(emptyMessage(), cv.width/2, cv.height/2);
+    g.fillText(Fog.emptyMessage(), cv.width/2, cv.height/2);
     return;
   }
 
@@ -119,7 +115,7 @@ function remask(){
 async function loadMapRecord(rec){
   const raw = await createImageBitmap(rec.blob);
   const f = await Fog.getFog(rec.id);
-  state.mapId = rec.id; state.name = rec.name;
+  state.mapId = rec.id;
   state.rotation = (f && f.rotation) || 0;
   state.strokes = (f && f.strokes) || [];
   /* Bring the picture to the orientation the saved strokes assume. */
@@ -138,12 +134,14 @@ async function loadMapRecord(rec){
   send(syncPayload(state));
 }
 
+/* No decode here: nothing ever read a stored width or height back, and
+   loadMapRecord decodes anyway. A file that will not decode still rejects
+   in there, inside this same try. */
 async function chooseMap(file){
   try{
-    const bmp = await createImageBitmap(file);
     const id = "m" + Date.now().toString(36);
-    await Fog.putMap(id, file.name, file, bmp.width, bmp.height);
-    await loadMapRecord({id:id, name:file.name, blob:file, w:bmp.width, h:bmp.height});
+    await Fog.putMap(id, file.name, file);
+    await loadMapRecord({id:id, name:file.name, blob:file});
   }catch(e){
     say("Could not read " + file.name + " — " + e.message);
   }
@@ -261,9 +259,18 @@ function saveFog(){
    The map is an id, not an image — that is what keeps this small.
    Rotation must be here: the stored blob is always the original, and
    the strokes travel already rotated, so a screen that decodes the
-   blob unturned lands the fog crooked. */
-function syncPayload(s){
-  return { t:"sync", mapId:s.mapId, view:s.view, strokes:s.strokes, rotation:s.rotation };
+   blob unturned lands the fog crooked.
+
+   The framing travels as an image-space RECTANGLE, never as {z,tx,ty}.
+   Those numbers are in this canvas's device pixels; the projector's
+   canvas is another size at another devicePixelRatio, so applied
+   verbatim they crop the map and every pan carries the error along.
+   The canvas is read at send time because it is the sender's dimensions
+   that turn a view into a rectangle. */
+function syncPayload(s, canvas){
+  const cv = canvas || document.getElementById("table");
+  return { t:"sync", mapId:s.mapId, rect:Fog.viewRect(s.view, cv.width, cv.height),
+           strokes:s.strokes, rotation:s.rotation };
 }
 
 const ch = Fog.open(function(m){
@@ -281,14 +288,21 @@ function sendView(){
   viewPending = true;
   requestAnimationFrame(function(){
     viewPending = false;
-    send({t:"view", view:state.view});
+    const cv = document.getElementById("table");
+    send({t:"view", rect:Fog.viewRect(state.view, cv.width, cv.height)});
   });
 }
 
 function pushStroke(s){
   applyPush(stack, s);
   state.strokes = stack.strokes;
-  remask(); saveFog();
+  /* Just this stroke onto the mask as it stands. A brush drag pushes one
+     stroke per pointermove, so replaying the whole list each time is
+     O(n²) over a full-resolution mask. Undo, redo, sync, rotate and map
+     loading still replay from zero — that is what the spec's O(n)
+     rasterise is for, and none of them happen per pointer event. */
+  if(state.w && state.h) Fog.applyStroke(s, state.w, state.h, mask);
+  redraw(); saveFog();
   send({t:"stroke", stroke:s});
 }
 
@@ -367,6 +381,14 @@ function rotate(){
    Self-tests:  map-table.html?test=1
    ========================================================================= */
 function runTests(){
+  /* #bar is fixed and opaque over the first lines of the report, and
+     #table is fixed over all of it and swallows the wheel so the report
+     cannot even be scrolled. Neither is any use while the suite runs.
+     The canvas keeps its width/height attributes while hidden, which is
+     what the payload tests measure against. */
+  document.getElementById("bar").style.display = "none";
+  document.getElementById("table").style.display = "none";
+
   const out=[]; let pass=0, fail=0;
   const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
   const near=(a,b)=>Math.abs(a-b)<0.001;
@@ -387,6 +409,36 @@ function runTests(){
 
   const fv = Fog.fitView(1000, 500, 500, 500);
   ok("fit view centres the image", near(fv.tx, 0) && near(fv.ty, 125), JSON.stringify(fv));
+
+  /* ── the framing crosses the channel as an image rectangle ────────
+     A view is in the sender's DEVICE pixels. The projector's canvas is
+     another size at another devicePixelRatio — a laptop at 150% beside a
+     projector at 100% is the ordinary case — so a view applied verbatim
+     shows the players a cropped, off-centre map. A rectangle of the map
+     means the same thing on any canvas. */
+  const vr = Fog.viewRect({z:2, tx:-100, ty:-40}, 800, 600);
+  ok("a view names the image rectangle its canvas shows",
+     near(vr.x0, 50) && near(vr.y0, 20) && near(vr.x1, 450) && near(vr.y1, 320),
+     JSON.stringify(vr));
+
+  const rt = Fog.viewFromRect(vr, 800, 600);
+  ok("rect round-trips to the same view on the same canvas",
+     near(rt.z, 2) && near(rt.tx, -100) && near(rt.ty, -40), JSON.stringify(rt));
+
+  ok("an empty rectangle is refused rather than dividing by zero",
+     Fog.viewFromRect({x0:5,y0:5,x1:5,y1:5}, 800, 600).z === 1);
+
+  /* THE test for the projector bug: the same rectangle, fitted to a
+     canvas of a different size and aspect, must still show the same
+     ground. Contain-fitting means the tight axis matches exactly and the
+     slack axis becomes a centred superset — never a crop. */
+  const other = Fog.viewFromRect(vr, 700, 900);
+  const shown = Fog.viewRect(other, 700, 900);
+  ok("the same rect on a differently-sized canvas frames the same map",
+     near(shown.x0, vr.x0) && near(shown.x1, vr.x1) &&
+     shown.y0 <= vr.y0 + 0.001 && shown.y1 >= vr.y1 - 0.001 &&
+     near((shown.y0 + shown.y1) / 2, (vr.y0 + vr.y1) / 2),
+     "sent " + JSON.stringify(vr) + " but the screen would show " + JSON.stringify(shown));
 
   const z = Fog.zoomAt({z:1,tx:0,ty:0}, 200, 100, 2, 0.05, 40);
   ok("zoom holds the cursor still",
@@ -418,6 +470,20 @@ function runTests(){
   const undone = Fog.rasterise([Fog.fill(true), Fog.rect(10,10,30,30,false)].slice(0,-1), 40, 40);
   ok("dropping the last stroke undoes it", alphaAt(undone, 20, 20) === 0);
 
+  /* Appending one stroke to the mask must equal replaying the lot. That
+     equality is the whole licence for the brush to stop being O(n²). */
+  const many = [Fog.fill(true), Fog.rect(5,5,25,25,false),
+                Fog.line(10,30,30,30,4,true), Fog.line(20,20,20,20,7,false)];
+  const together = Fog.rasterise(many, 40, 40);
+  const oneAtATime = Fog.rasterise([], 40, 40);
+  many.forEach(s => Fog.applyStroke(s, 40, 40, oneAtATime));
+  const pixels = cv => cv.getContext("2d").getImageData(0, 0, 40, 40).data;
+  const a = pixels(together), b = pixels(oneAtATime);
+  let same = a.length === b.length;
+  for(let k = 0; same && k < a.length; k++) if(a[k] !== b[k]) same = false;
+  ok("applying strokes one at a time matches rasterising them together", same,
+     "an appended mask and a replayed mask must be identical, pixel for pixel");
+
   /* ── rotation ──────────────────────────────────────────────────── */
   /* 90° clockwise on an image 100 tall: (x,y) -> (oldH - y, x) */
   const rot = Fog.rotateStrokes([Fog.line(10, 20, 30, 40, 5, true)], 100);
@@ -433,7 +499,7 @@ function runTests(){
      Fog.rotateImage(small, 2).width === 20 && Fog.rotateImage(small, 2).height === 60);
   ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
 
-  ok("an empty table says so", emptyMessage() === "No map on the table", emptyMessage());
+  ok("an empty table says so", Fog.emptyMessage() === "No map on the table", Fog.emptyMessage());
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));
@@ -448,9 +514,17 @@ function runTests(){
   ok("undo on an empty stack is not a crash", applyUndo({strokes:[],undone:[]}) === false);
 
   /* ── the channel payload ──────────────────────────────────────────── */
-  const payload = syncPayload({mapId:"m1", view:{z:2,tx:3,ty:4}, strokes:[Fog.fill(true)], rotation:3});
+  const tcv = document.getElementById("table");
+  const fake = {mapId:"m1", view:{z:2,tx:3,ty:4}, strokes:[Fog.fill(true)], rotation:3};
+  const payload = syncPayload(fake, tcv);
+  const want = Fog.viewRect(fake.view, tcv.width, tcv.height);
   ok("sync carries the map", payload.mapId === "m1", JSON.stringify(payload));
-  ok("sync carries the view", payload.view.z === 2 && payload.view.tx === 3);
+  ok("sync carries the framing as an image rectangle",
+     payload.rect && near(payload.rect.x0, want.x0) && near(payload.rect.y0, want.y0) &&
+     near(payload.rect.x1, want.x1) && near(payload.rect.y1, want.y1),
+     JSON.stringify(payload.rect));
+  ok("sync sends no device-pixel view", payload.view === undefined,
+     "z/tx/ty belong to the sender's canvas; the screen must fit the rect to its own");
   ok("sync carries every stroke", payload.strokes.length === 1 && payload.strokes[0].k === "fill");
   ok("sync carries the rotation", payload.rotation === 3,
      "without it the screen decodes the blob unturned and the fog lands crooked");
@@ -471,13 +545,20 @@ function runTests(){
   if(!ch) say("This browser cannot link the two windows — the players' screen will not follow.");
   try{ await Fog.openDb(); }
   catch(e){
-    idbOK = false;
     say("This browser will not open its map store here — serve the site over http, not file://");
   }
   let last = null; try{ last = localStorage.getItem(LAST_KEY); }catch(e){}
   if(last){
     const rec = await Fog.getMap(last).catch(() => null);
-    if(rec) await loadMapRecord(rec);
+    /* loadMapRecord decodes and reads the fog store, and either can
+       reject. This path runs at the start of every session, so an
+       unguarded throw aborts boot before redraw() and leaves the DM a
+       blank page with no toolbar feedback. The spec asks for the failure
+       to be named, with the file name. */
+    if(rec){
+      try{ await loadMapRecord(rec); }
+      catch(e){ say("Could not read " + rec.name + " — " + e.message); }
+    }
   }
   redraw();
 })();

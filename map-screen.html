@@ -31,7 +31,12 @@ body{margin:0;background:#000;overflow:hidden;cursor:none}
    ========================================================================= */
 /* Storage comes from assets/fog.js — the table writes the map, this page
    reads it, and the schema is written once so the two cannot drift. */
-const st = { img:null, w:0, h:0, strokes:[], view:{z:1,tx:0,ty:0}, waiting:true };
+/* `rect` is the framing as the table sent it — in image space — and it is
+   the thing kept, not `view`. A view is in the sender's device pixels and
+   this canvas is another size at another devicePixelRatio, so the view is
+   derived from the rect against THIS canvas, and re-derived whenever the
+   canvas changes size. */
+const st = { img:null, w:0, h:0, strokes:[], rect:null, view:{z:1,tx:0,ty:0}, waiting:true };
 let mask = document.createElement("canvas");
 
 function sizeCanvas(){
@@ -42,9 +47,15 @@ function sizeCanvas(){
   return cv;
 }
 
+/* These lines exist so a dark projector can be told from fog and from a
+   bug, which means they have to be legible across a room. #3a3128 on
+   black is about 1.6:1 — it was not. This is the DM page's #6d5a3a, and
+   the size is scaled because the canvas is measured in device pixels, so
+   a bare 18 is about nine CSS pixels on a 2× display. */
 function note(g, cv, text){
-  g.fillStyle = "#3a3128";
-  g.font = '18px "EB Garamond", Georgia, serif';
+  const dpr = window.devicePixelRatio || 1;
+  g.fillStyle = "#6d5a3a";
+  g.font = Math.round(18 * dpr) + 'px "EB Garamond", Georgia, serif';
   g.textAlign = "center";
   g.fillText(text, cv.width/2, cv.height/2);
 }
@@ -59,7 +70,7 @@ function redraw(){
   if(!st.img){
     /* A black rectangle is indistinguishable from fog, from a bug, and
        from a dead cable. Say which it is. */
-    note(g, cv, st.waiting ? "Waiting for the table…" : "No map on the table");
+    note(g, cv, st.waiting ? "Waiting for the table…" : Fog.emptyMessage());
     return;
   }
   const v = st.view;
@@ -73,14 +84,48 @@ function remask(){
   redraw();
 }
 
+/* The table sends the image-space rectangle it is showing, never its own
+   {z,tx,ty}: those are its device pixels, and this canvas is another size
+   at another devicePixelRatio. Fitting the rectangle here is what makes
+   the two windows frame the same ground rather than the projector showing
+   a crop. The rect is kept so a resize can be re-fitted. */
+function applyRect(r){
+  if(!r) return;
+  st.rect = r;
+  const cv = document.getElementById("screen");
+  st.view = Fog.viewFromRect(r, cv.width, cv.height);
+}
+
 /* The stored blob is always the original. The table sends how many
    quarter-turns it is currently showing, and the strokes arrive already
    rotated — so the picture has to be turned to match, or the fog sits
-   crooked over it. */
+   crooked over it.
+
+   Two syncs close together — a rotate double-click — start two decodes
+   that can finish out of order, leaving the image at one rotation and the
+   strokes at another. Nothing repairs that: `stroke` and `view` never
+   touch st.img, so the fog stays crooked until the next sync. Hence the
+   generation counter: a call that is no longer the latest assigns
+   nothing, whether it succeeded or failed. */
+let mapGen = 0;
 async function showMap(id, rotation){
+  const gen = ++mapGen;
   const rec = await Fog.getMap(id).catch(() => null);
-  if(!rec){ st.img = null; st.waiting = false; redraw(); return; }
-  const raw = await createImageBitmap(rec.blob);
+  if(gen !== mapGen) return;
+  if(!rec){ st.img = null; st.w = 0; st.h = 0; st.waiting = false; redraw(); return; }
+
+  let raw;
+  try{ raw = await createImageBitmap(rec.blob); }
+  catch(e){
+    /* A blob that will not decode must not leave a live screen sitting on
+       "Waiting for the table…" while the table is plainly working — the
+       strokes have already been replaced by now, so there is no going
+       back to what was showing. Say there is no map. */
+    if(gen !== mapGen) return;
+    st.img = null; st.w = 0; st.h = 0; st.waiting = false; redraw(); return;
+  }
+  if(gen !== mapGen) return;
+
   st.img = Fog.rotateImage(raw, rotation || 0);
   st.w = st.img.width; st.h = st.img.height;
   remask();
@@ -92,19 +137,33 @@ const ch = Fog.open(async function(m){
      the geometry changes under the screen, e.g. a rotate. */
   if(m.t === "sync"){
     st.strokes = m.strokes || [];
-    st.view = m.view || st.view;
-    if(m.mapId) await showMap(m.mapId, m.rotation); else { st.img = null; redraw(); }
+    applyRect(m.rect);
+    if(m.mapId) await showMap(m.mapId, m.rotation);
+    else { mapGen++; st.img = null; st.w = 0; st.h = 0; redraw(); }
     return;
   }
-  if(m.t === "view"){ st.view = m.view; redraw(); return; }
-  if(m.t === "stroke"){ st.strokes.push(m.stroke); remask(); return; }
+  if(m.t === "view"){ applyRect(m.rect); redraw(); return; }
+  if(m.t === "stroke"){
+    st.strokes.push(m.stroke);
+    /* One stroke onto the mask, not a replay of every stroke so far — the
+       table sends one of these per pointermove. */
+    if(st.w && st.h) Fog.applyStroke(m.stroke, st.w, st.h, mask);
+    redraw();
+    return;
+  }
   if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }
 });
 
 function hello(){ if(ch) ch.postMessage({t:"hello"}); }
 
 sizeCanvas();
-window.addEventListener("resize", function(){ sizeCanvas(); redraw(); });
+/* Re-fit the last rectangle the table sent. Keeping the old view would
+   leave the projector framed for a window size it no longer has. */
+window.addEventListener("resize", function(){
+  const cv = sizeCanvas();
+  if(st.rect) st.view = Fog.viewFromRect(st.rect, cv.width, cv.height);
+  redraw();
+});
 /* A projector window opened late, or reloaded when someone kicks the
    cable, must catch up — otherwise it shows an empty map while the
    table shows half the city, and that looks like a broken tool. */
