@@ -9,7 +9,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
 
 <style>
@@ -21,9 +21,24 @@
 .tablet iframe{width:100%;height:calc(100% - 25px);border:0;background:#fff;display:block}
 .shut{height:calc(100% - 25px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;padding:18px}
 .shut img{width:104px;height:104px;object-fit:cover;border-radius:50%;border:1px solid #3a2c1a}
+.shut .sigil{
+  width:104px;height:104px;border-radius:50%;border:1px solid #3a2c1a;
+  display:grid;place-items:center;background:#160f09;color:#5b4326;font:600 34px/1 "Cinzel",serif;
+}
 .shut p{margin:0;font:400 15px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d}
 .note{margin:0;padding:12px 16px;font:400 14.5px/1.5 "EB Garamond",Georgia,serif;color:#a28f6d;border-bottom:1px solid #2b2014}
 .bar{display:flex;gap:9px;align-items:center;padding:11px 16px}
+.bar button{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#c8a86a;background:rgba(20,15,9,.6);border:1px solid #3a2c1a;border-radius:2px;
+  padding:8px 14px;cursor:pointer;transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.bar button:hover{background:rgba(58,44,26,.5);color:#e8d9b8}
+.bar button:focus-visible{outline:none;border-color:#c8a86a}
+.bar button.on{
+  background:linear-gradient(180deg,#6d4a2b,#4a2e18);border-color:#c8a86a;color:#f2e4c6;
+  box-shadow:0 0 0 1px rgba(200,168,106,.3) inset;
+}
 #tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px}
 </style>
 <script src="assets/company.js?v=20260808n"></script>
@@ -37,8 +52,8 @@ privacy is set to <b>Public</b> will show here &mdash; the rest open in their ow
 your own login counts.</p>
 
 <div class="bar">
-  <button id="grid-2" type="button">2 up</button>
-  <button id="grid-4" type="button">4 up</button>
+  <button id="grid-2" type="button" class="on" aria-pressed="true">2 up</button>
+  <button id="grid-4" type="button" aria-pressed="false">4 up</button>
 </div>
 
 <div id="wall" class="wall two"></div>
@@ -55,6 +70,16 @@ your own login counts.</p>
    esc, sheetUrl and isPublic come from assets/company.js — this page and
    the public register share them. Do not redefine them here.
    ========================================================================= */
+/* A missing portrait and a portrait path that 404s both end up at the
+   same drawn sigil — matching adventurers.html, so a member with no
+   picture never sits as an empty tile. The onerror value is a fixed
+   string with no name- or path-derived content spliced in, so there
+   is nothing here for a hostile `name` to break out of. */
+function sigilHTML(m, hidden){
+  return '<div class="sigil" aria-hidden="true"' + (hidden ? ' style="display:none"' : '') +
+    '>' + esc((m.name || "?").charAt(0)) + '</div>';
+}
+
 function tileHTML(m){
   var url = sheetUrl(m);
   var head = '<b>' + esc(m.name) + '</b>';
@@ -62,7 +87,11 @@ function tileHTML(m){
     return '<div class="tablet">' + head +
       '<iframe src="' + esc(url) + '" loading="lazy" title="' + esc(m.name) + '"></iframe></div>';
   }
-  var face = m.portrait ? '<img src="' + esc(m.portrait) + '" alt="">' : '';
+  var face = m.portrait
+    ? '<img src="' + esc(m.portrait) + '" alt="" ' +
+      'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'\'">' +
+      sigilHTML(m, true)
+    : sigilHTML(m, false);
   var door = url
     ? '<a class="go" href="' + esc(url) + '" target="_blank" rel="noopener">Open in tab &#8599;</a>'
     : '';
@@ -90,11 +119,17 @@ async function loadWall(){
 }
 
 function wire(){
-  document.getElementById("grid-2").addEventListener("click", function(){
+  var two = document.getElementById("grid-2");
+  var four = document.getElementById("grid-4");
+  two.addEventListener("click", function(){
     document.getElementById("wall").className = "wall two";
+    two.classList.add("on"); two.setAttribute("aria-pressed", "true");
+    four.classList.remove("on"); four.setAttribute("aria-pressed", "false");
   });
-  document.getElementById("grid-4").addEventListener("click", function(){
+  four.addEventListener("click", function(){
     document.getElementById("wall").className = "wall four";
+    four.classList.add("on"); four.setAttribute("aria-pressed", "true");
+    two.classList.remove("on"); two.setAttribute("aria-pressed", "false");
   });
 }
 
