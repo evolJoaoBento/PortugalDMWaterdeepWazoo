@@ -1,7 +1,7 @@
 # The map table — design
 
 Date: 2026-08-11
-Status: approved, not yet implemented
+Status: built — `map-table.html`, `map-screen.html`, `assets/fog.js`
 
 ## What this is
 
