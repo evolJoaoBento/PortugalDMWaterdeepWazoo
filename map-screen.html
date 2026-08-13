@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813b">
+<meta name="wazoo-build" content="20260813d">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
 <style>
 html,body{height:100%}
+/* No cursor by default: a parked arrow on a projector is chrome the
+   players should never see. It comes back while the mouse is actually
+   moving — see the timer below — because a DM who drags the pointer
+   across this window otherwise loses it entirely. */
 body{margin:0;background:#000;overflow:hidden;cursor:none}
+body.pointing{cursor:default}
 #screen{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
-<script src="assets/fog.js?v=20260813b"></script>
+<script src="assets/fog.js?v=20260813d"></script>
 </head>
 <body>
 <canvas id="screen"></canvas>
@@ -36,8 +41,19 @@ body{margin:0;background:#000;overflow:hidden;cursor:none}
    this canvas is another size at another devicePixelRatio, so the view is
    derived from the rect against THIS canvas, and re-derived whenever the
    canvas changes size. */
-const st = { img:null, w:0, h:0, strokes:[], rect:null, view:{z:1,tx:0,ty:0}, waiting:true };
+const st = { img:null, proxy:null, w:0, h:0, strokes:[], rect:null,
+             view:{z:1,tx:0,ty:0}, waiting:true };
 let mask = document.createElement("canvas");
+
+/* Asked for once, with alpha off: this canvas covers the projector and
+   nothing is ever seen through it, so there is no reason to blend it
+   against the page every frame. Only the first getContext of a canvas
+   honours the options, hence the single call site. */
+let ctx2d = null;
+function ctx(){
+  if(!ctx2d) ctx2d = document.getElementById("screen").getContext("2d", {alpha:false});
+  return ctx2d;
+}
 
 function sizeCanvas(){
   const cv = document.getElementById("screen");
@@ -45,6 +61,33 @@ function sizeCanvas(){
   cv.width = Math.round(cv.clientWidth * dpr);
   cv.height = Math.round(cv.clientHeight * dpr);
   return cv;
+}
+
+/* The DM's wheel arrives here as a stream of `view` messages, and this
+   window has the same 59-megapixel map to resample. Same rule as the
+   table: the proxy while the framing is moving, the real map once it
+   has been still for a moment. The players are looking at the sharp
+   one — nobody reads a map mid-zoom. */
+let moving = false, settleT = null;
+function nudge(){
+  moving = true;
+  clearTimeout(settleT);
+  settleT = setTimeout(function(){ moving = false; requestPaint(); }, Fog.SETTLE_MS);
+}
+
+/* Where the DM is pointing, in image space, and the rings they have
+   dropped. Never stored, never part of the fog. */
+let laser = null;
+const pings = [];
+let ringing = false;
+function animatePings(){
+  if(ringing) return;
+  ringing = true;
+  (function step(){
+    if(!pings.length){ ringing = false; requestPaint(); return; }
+    requestPaint();
+    requestAnimationFrame(step);
+  })();
 }
 
 /* These lines exist so a dark projector can be told from fog and from a
@@ -62,7 +105,7 @@ function note(g, cv, text){
 
 function redraw(){
   const cv = document.getElementById("screen");
-  const g = cv.getContext("2d");
+  const g = ctx();
   g.setTransform(1,0,0,1,0,0);
   g.fillStyle = "#000";
   g.fillRect(0,0,cv.width,cv.height);
@@ -74,13 +117,27 @@ function redraw(){
     return;
   }
   const v = st.view;
-  g.imageSmoothingQuality = "high";
-  g.drawImage(st.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
-  /* The map gets "high"; the fog is a two-valued mask and resampling it
-     well costs three to four times as much for an edge nobody can see
-     across a room. The table does the same, so the two agree. */
+  const src = Fog.sourceFor(moving, st.proxy, st.img);
+  g.imageSmoothingQuality = src.quality;
+  g.drawImage(src.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
+  /* The map gets "high" at rest; the fog is a two-valued mask and
+     resampling it well costs three to four times as much for an edge
+     nobody can see across a room. The table does the same, so the two
+     agree. */
   g.imageSmoothingQuality = "low";
   g.drawImage(mask, v.tx, v.ty, st.w * v.z, st.h * v.z);   /* fully opaque */
+
+  /* The DM's pointer goes on top of the fog: they point at things they
+     are about to reveal as often as at things already shown. */
+  const dpr = window.devicePixelRatio || 1, now = performance.now();
+  for(let i = pings.length - 1; i >= 0; i--){
+    const p = pings[i], c = Fog.imageToCanvas(v, p.x, p.y);
+    if(!Fog.drawPing(g, c.x, c.y, now - p.t0, dpr)) pings.splice(i, 1);
+  }
+  if(laser){
+    const c = Fog.imageToCanvas(v, laser.x, laser.y);
+    Fog.drawLaser(g, c.x, c.y, dpr);
+  }
 }
 
 /* One paint per frame however many messages arrive. A pan sends one
@@ -99,9 +156,10 @@ function remask(){
    the two windows frame the same ground rather than the projector showing
    a crop. The rect is kept so a resize can be re-fitted.
 
-   The fit is taken a tenth tighter than the rectangle — Fog.SCREEN_ZOOM.
-   A contain-fit letterboxes the slack axis, and a projector showing a
-   small map inside black bars is what the players actually see. */
+   The rectangle is the MAP the table is showing, trimmed of the empty
+   window around it, so fitting it fills this screen as far as the map's
+   own shape allows. Fog.SCREEN_ZOOM would tighten that further and is 1:
+   with the margins already gone, tightening would crop the map itself. */
 function applyRect(r){
   if(!r) return;
   st.rect = r;
@@ -125,7 +183,8 @@ async function showMap(id, rotation){
   const gen = ++mapGen;
   const rec = await Fog.getMap(id).catch(() => null);
   if(gen !== mapGen) return;
-  if(!rec){ st.img = null; st.w = 0; st.h = 0; st.waiting = false; redraw(); return; }
+  if(!rec){ st.img = Fog.release(st.img); st.proxy = Fog.release(st.proxy);
+            st.w = 0; st.h = 0; st.waiting = false; redraw(); return; }
 
   let raw;
   try{ raw = await createImageBitmap(rec.blob); }
@@ -135,13 +194,31 @@ async function showMap(id, rotation){
        strokes have already been replaced by now, so there is no going
        back to what was showing. Say there is no map. */
     if(gen !== mapGen) return;
-    st.img = null; st.w = 0; st.h = 0; st.waiting = false; redraw(); return;
+    st.img = Fog.release(st.img); st.proxy = Fog.release(st.proxy);
+    st.w = 0; st.h = 0; st.waiting = false; redraw(); return;
   }
   if(gen !== mapGen) return;
 
-  st.img = Fog.rotateImage(raw, rotation || 0);
+  const turned = Fog.rotateImage(raw, rotation || 0);
+  /* This page decodes the map again on EVERY sync — a rotate is a sync —
+     and each decode of a 6800×8700 blob is about 236 MB. Three of them
+     alive at once is enough to wedge the renderer, and a wedged renderer
+     on a projector is a black screen in front of the players. Let go of
+     the last one here. */
+  if(turned !== raw) Fog.release(raw);
+  Fog.release(st.img); Fog.release(st.proxy);
+  st.img = turned;
   st.w = st.img.width; st.h = st.img.height;
+  st.proxy = null;
   remask();
+  /* The proxy is built after the first paint rather than before it: the
+     players should see the map as soon as it decodes, and the proxy is
+     only wanted once the DM starts moving the framing. The generation
+     check applies here too — a second sync must not fit an old proxy to
+     a new map. */
+  const p = await Fog.makeProxy(st.img, st.w, st.h);
+  if(gen !== mapGen) return;
+  st.proxy = p;
 }
 
 const ch = Fog.open(async function(m){
@@ -150,12 +227,31 @@ const ch = Fog.open(async function(m){
      the geometry changes under the screen, e.g. a rotate. */
   if(m.t === "sync"){
     st.strokes = m.strokes || [];
+    /* A sync can mean the map has turned, and a dot or a ring drawn in
+       the old orientation would land on the wrong room. The table drops
+       its own at the same moment. */
+    pings.length = 0; laser = null;
     applyRect(m.rect);
     if(m.mapId) await showMap(m.mapId, m.rotation);
-    else { mapGen++; st.img = null; st.w = 0; st.h = 0; redraw(); }
+    else { mapGen++; Fog.release(st.img); Fog.release(st.proxy);
+           st.img = null; st.proxy = null; st.w = 0; st.h = 0; redraw(); }
     return;
   }
-  if(m.t === "view"){ applyRect(m.rect); requestPaint(); return; }
+  if(m.t === "view"){ applyRect(m.rect); nudge(); requestPaint(); return; }
+  /* The dot and the ring. Both are drawn and then forgotten: they never
+     touch the mask, the strokes or the store. A ring is stamped when it
+     ARRIVES rather than carrying the table's clock, so the two windows
+     cannot disagree about how old it is. */
+  if(m.t === "laser"){
+    laser = m.off ? null : {x:m.x, y:m.y};
+    requestPaint();
+    return;
+  }
+  if(m.t === "ping"){
+    pings.push({x:m.x, y:m.y, t0:performance.now()});
+    animatePings();
+    return;
+  }
   if(m.t === "stroke"){
     st.strokes.push(m.stroke);
     /* One stroke onto the mask, not a replay of every stroke so far. */
@@ -172,6 +268,22 @@ const ch = Fog.open(async function(m){
 });
 
 function hello(){ if(ch) ch.postMessage({t:"hello"}); }
+
+/* The cursor, while it is moving and for a moment after.
+
+   This window hides the pointer so the players never see an arrow
+   parked on the map. That also means a DM whose mouse strays onto this
+   monitor cannot find it — the pointer is simply gone. Showing it while
+   it moves costs the players nothing: nobody is moving a mouse over the
+   projector except the DM, and it fades again a second and a half after
+   they stop. */
+const CURSOR_LINGER = 1500;
+let cursorT = null;
+window.addEventListener("pointermove", function(){
+  document.body.classList.add("pointing");
+  clearTimeout(cursorT);
+  cursorT = setTimeout(function(){ document.body.classList.remove("pointing"); }, CURSOR_LINGER);
+});
 
 sizeCanvas();
 /* Re-fit the last rectangle the table sent. Keeping the old view would
