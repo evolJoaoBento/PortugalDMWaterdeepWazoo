@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814b">
+<meta name="wazoo-build" content="20260814c">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -18,7 +18,7 @@ body.pointing{cursor:default}
 #screen{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
-<script src="assets/spellfx.js?v=20260814b"></script>
+<script src="assets/spellfx.js?v=20260814c"></script>
 </head>
 <body>
 <canvas id="screen"></canvas>
@@ -85,7 +85,7 @@ function animatePings(){
   if(ringing) return;
   ringing = true;
   (function step(){
-    if(!pings.length){ ringing = false; requestPaint(); return; }
+    if(!pings.length && !SpellFx.playing()){ ringing = false; requestPaint(); return; }
     requestPaint();
     requestAnimationFrame(step);
   })();
@@ -139,6 +139,10 @@ function redraw(){
     const c = Fog.imageToCanvas(v, laser.x, laser.y);
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
+
+  /* Last, over the fog: an effect happens on top of the world, and the
+     players should see it whether or not that ground is revealed. */
+  SpellFx.draw(g, v);
 }
 
 /* One paint per frame however many messages arrive. A pan sends one
@@ -222,6 +226,20 @@ async function showMap(id, rotation){
   st.proxy = p;
 }
 
+/* The projector needs the catalogue for the same reason the table does:
+   a message carries a path, and only the index says whether that path is
+   a file in this repository or a fetch from the pack. */
+SpellFx.loadIndex();
+
+/* The effect a path names, or null if the catalogue has not arrived or
+   does not know it. */
+function fxByPath(path){
+  const idx = SpellFx.index();
+  if(!idx) return null;
+  for(let i = 0; i < idx.effects.length; i++) if(idx.effects[i].path === path) return idx.effects[i];
+  return null;
+}
+
 const ch = Fog.open(async function(m){
   st.waiting = false;
   /* `sync` is the whole state and is sent both on request and whenever
@@ -231,7 +249,7 @@ const ch = Fog.open(async function(m){
     /* A sync can mean the map has turned, and a dot or a ring drawn in
        the old orientation would land on the wrong room. The table drops
        its own at the same moment. */
-    pings.length = 0; laser = null;
+    pings.length = 0; laser = null; SpellFx.clear();
     applyRect(m.rect);
     if(m.mapId) await showMap(m.mapId, m.rotation);
     else { mapGen++; Fog.release(st.img); Fog.release(st.proxy);
@@ -251,6 +269,25 @@ const ch = Fog.open(async function(m){
   if(m.t === "ping"){
     pings.push({x:m.x, y:m.y, t0:performance.now()});
     animatePings();
+    return;
+  }
+  /* Warm a file up before it is needed, so the first cast of the evening
+     does not stutter here while the table plays it smoothly. A message
+     that arrives before the catalogue has loaded waits for it rather
+     than being dropped — the DM arms an effect seconds before casting
+     it, and this page may have opened a moment ago. */
+  if(m.t === "preload"){
+    const e = fxByPath(m.path);
+    if(e) SpellFx.preload(e);
+    else SpellFx.loadIndex().then(function(){
+      const late = fxByPath(m.path);
+      if(late) SpellFx.preload(late);
+    });
+    return;
+  }
+  if(m.t === "cast"){
+    const e = fxByPath(m.path);
+    if(e){ SpellFx.cast(e, m.rect); animatePings(); }
     return;
   }
   if(m.t === "stroke"){

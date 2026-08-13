@@ -161,6 +161,13 @@
   function playing(){ return live.length > 0; }
   function liveList(){ return live; }
 
+  /* Drop everything playing. A cast's rectangle is in the image space
+     the map had when it was drawn, and a rotate replaces that space —
+     the same reason the laser and its rings are dropped there. A spell
+     is a second long; ending one early is better than putting it over
+     the wrong room. */
+  function clear(){ live = []; }
+
   /* Drawn last by both pages, above the fog and above the laser: a DM
      sets fire to ground the players cannot see at least as often as
      ground they can. */
@@ -192,6 +199,7 @@
     boxOf: boxOf,
     draw: draw,
     playing: playing,
-    live: liveList
+    live: liveList,
+    clear: clear
   };
 })(window);
