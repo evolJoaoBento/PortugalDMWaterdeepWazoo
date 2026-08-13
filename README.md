@@ -159,6 +159,10 @@ touching the forge.
 ## Credits
 
 - Atlas of Waterdeep by [aidedd.org](https://www.aidedd.org/atlas/waterdeep), embedded from their site
+- Animated spell effects by Jack Kerouac —
+  [animated-spell-effects](https://github.com/jackkerouac/animated-spell-effects), **GPL-3.0**.
+  35 of them are bundled under `assets/spell-effects/` with the licence and the credits beside
+  them; the rest of the pack is indexed in `data/spell-effects.json` and fetched when first cast
 - Forgotten Realms and Waterdeep are Wizards of the Coast's; this is a
   personal campaign site and claims none of it
 - The panorama on the front page carries an artist's signature and is not yet

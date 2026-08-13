@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813d">
+<meta name="wazoo-build" content="20260814h">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -25,12 +25,34 @@ body{margin:0;background:#0b0805;overflow:hidden}
   padding:8px 14px;cursor:pointer;
 }
 #bar button:hover{background:rgba(58,44,26,.5);color:#e8d9b8}
+#bar button:disabled{opacity:.38;cursor:default}
+#bar button:disabled:hover{background:rgba(20,15,9,.6);color:#c8a86a}
+#fx-play{border-color:#7a3f1e;color:#e08a4a}
 #bar button.on{background:linear-gradient(180deg,#6d4a2b,#4a2e18);border-color:#c8a86a;color:#f2e4c6}
 #bar .rule{width:1px;align-self:stretch;background:#2b2014;margin:0 5px}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#fx-panel{
+  position:fixed;top:52px;left:14px;z-index:6;width:320px;max-height:70vh;display:none;
+  flex-direction:column;gap:8px;padding:10px;
+  background:rgba(11,8,5,.96);border:1px solid #3a2c1a;border-radius:3px;
+  box-shadow:0 12px 34px #000c;
+}
+#fx-panel.on{display:flex}
+#fx-search{
+  font:400 15px/1.4 "EB Garamond",Georgia,serif;color:#e8d9b8;
+  background:rgba(20,15,9,.8);border:1px solid #3a2c1a;border-radius:2px;padding:7px 9px;
+}
+#fx-list{overflow:auto;display:flex;flex-direction:column;gap:2px}
+#fx-list button{
+  font-family:"EB Garamond",Georgia,serif;font-size:14px;letter-spacing:0;text-transform:none;
+  text-align:left;padding:6px 8px;
+}
+#fx-list button .far{color:#8d7a5b;font-size:11px}
+#fx-credit{font:400 11px/1.4 "EB Garamond",Georgia,serif;color:#6d5a3a}
 </style>
-<script src="assets/fog.js?v=20260813d"></script>
+<script src="assets/fog.js?v=20260814a"></script>
+<script src="assets/spellfx.js?v=20260814e"></script>
 </head>
 <body>
 <div id="bar">
@@ -45,9 +67,18 @@ body{margin:0;background:#0b0805;overflow:hidden}
   <button id="undo" type="button">Undo</button>
   <button id="redo" type="button">Redo</button>
   <span class="rule"></span>
+  <button id="fx-open" type="button">Effects</button>
+  <button id="fx-play" type="button" disabled>Play</button>
+  <span id="fx-armed" class="said"></span>
+  <span class="rule"></span>
   <button id="open-screen" type="button">Open the players&rsquo; screen</button>
   <span class="rule"></span>
   <span id="said" class="said"></span>
+</div>
+<div id="fx-panel">
+  <input id="fx-search" type="search" placeholder="fireball, cone, lightning&hellip;" autocomplete="off">
+  <div id="fx-list"></div>
+  <div id="fx-credit">Animations by Jack Kerouac &mdash; Animated Spell Effects, GPL-3.0</div>
 </div>
 <canvas id="table"></canvas>
 <input id="file" type="file" accept="image/*" hidden>
@@ -151,6 +182,12 @@ function redraw(){
   g.imageSmoothingQuality = src.quality;
   g.drawImage(src.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
 
+  /* Effects belong to the world, so they go on before the fog does and
+     the fog covers them. A fireball in a room the players have not
+     reached must not light that room up for them; on this page the wash
+     is only 0.78, so the DM still sees it happen through the fog. */
+  SpellFx.draw(g, v);
+
   /* The map is resampled at "high" because it is a picture and the DM
      reads it. The fog is not a picture — it is a two-valued mask, black
      or nothing, and the only place resampling shows at all is the couple
@@ -173,7 +210,11 @@ function redraw(){
       const dpr = window.devicePixelRatio || 1;
       g.save();
       g.beginPath(); g.rect(b.x, b.y, b.w, b.h); g.clip();
-      if(preview.reveal){
+      if(armed){
+        /* Nothing to show inside the box: the spell is not there yet,
+           and the fog is not about to change. The outline alone says
+           where it will land. */
+      }else if(preview.reveal){
         g.imageSmoothingQuality = "high";
         g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
       }else{
@@ -188,7 +229,9 @@ function redraw(){
       g.save();
       g.setLineDash([7 * dpr, 5 * dpr]);
       g.lineWidth = Math.max(1, Math.round(dpr));
-      g.strokeStyle = preview.reveal ? "#e8d9b8" : "#8d7a5b";
+      /* An armed table previews in the colour of a spell, not of fog:
+         that box is about to burn, not to be revealed. */
+      g.strokeStyle = armed ? "#d0632a" : preview.reveal ? "#e8d9b8" : "#8d7a5b";
       g.strokeRect(b.x, b.y, b.w, b.h);
       g.restore();
     }
@@ -224,6 +267,12 @@ function drawPointer(g, cv){
     const c = Fog.imageToCanvas(v, laser.x, laser.y);
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
+
+  /* The staged box stays above the fog, unlike the cast it will become.
+     It is a tool, not a thing in the world, and a DM aiming a fireball
+     into a room the players have not reached still has to see where it
+     is going. */
+  drawStaged(g);
 }
 
 /* A ping has to be redrawn on frames nothing else asks for — it is an
@@ -234,11 +283,18 @@ function animatePings(){
   if(ringing) return;
   ringing = true;
   (function step(){
-    if(!pings.length){ ringing = false; requestPaint(); return; }
+    /* A staged ghost loops for as long as it is staged, so it keeps the
+       frames coming too. */
+    if(!pings.length && !SpellFx.playing() && !staged){ ringing = false; requestPaint(); return; }
     requestPaint();
     requestAnimationFrame(step);
   })();
 }
+
+/* A playing effect needs frames nothing else is asking for — exactly the
+   problem the ping already has. One loop serves both, so two rAF chains
+   cannot both believe they own the frame. */
+function animateFx(){ animatePings(); }
 
 /* Every handler asks for a paint; none of them paints. A wheel notch, a
    pan sample and a drag sample all arrive faster than the screen
@@ -364,6 +420,146 @@ function wireView(){
   });
 }
 
+/* ── the effects panel ─────────────────────────────────────────────
+   376 animations, and the DM has to find one mid-combat. Type a word,
+   pick a line, and the table is ARMED: the next left-drag is a cast
+   rather than a rectangle of fog. The armed effect is named in the bar
+   the whole time, because a mode you cannot see is a mode you forget
+   you are in — and forgetting this one means a fireball where you meant
+   to lift the fog off a corridor. */
+let armed = null;
+
+function armFx(effect){
+  armed = effect || null;
+  document.getElementById("fx-armed").textContent = armed ? "armed: " + armed.name : "";
+  document.getElementById("table").style.cursor = armed ? "copy" : "crosshair";
+  /* Putting the tool down puts down whatever was aimed with it. */
+  if(!armed) stage(null);
+  if(armed){
+    /* Both windows warm the file up, or the projector stutters through
+       the first cast of the evening while the table plays it smoothly. */
+    SpellFx.preload(armed);
+    send({t:"preload", path:armed.path});
+  }
+}
+
+/* A drag's two corners and an angle, as the message the projector will
+   receive. Separate from the gesture so the shape of what crosses the
+   channel can be asserted without a pointer, a map or a video. */
+function castPayload(effect, a, b, rot){
+  return { t:"cast", path:effect.path, rot: rot || 0,
+           rect:{ x0:Math.min(a.x, b.x), y0:Math.min(a.y, b.y),
+                  x1:Math.max(a.x, b.x), y1:Math.max(a.y, b.y) } };
+}
+
+/* ── the staged cast ───────────────────────────────────────────────
+   A drag no longer fires anything. It stages: a rectangle, an angle,
+   and the effect itself looping quietly inside the box while the DM
+   pushes it around until the bolt runs down the corridor rather than
+   across it. The projector is told nothing until Play — half the point
+   of aiming is that the players do not watch you do it.
+
+   Rect is image space, as everything on this table is; `rot` is
+   radians about the rect's centre, applied when drawing. */
+let staged = null;
+
+function stage(s){
+  staged = s;
+  document.getElementById("fx-play").disabled = !staged;
+  if(staged) animateFx();          /* the ghost loops, so frames must keep coming */
+  requestPaint();
+}
+
+/* Fire what is staged, and keep it staged: a second fireball down the
+   same corridor should be one more click, not another drag. */
+function playStaged(){
+  if(!staged) return;
+  const msg = castPayload(staged.effect,
+                          {x:staged.rect.x0, y:staged.rect.y0},
+                          {x:staged.rect.x1, y:staged.rect.y1}, staged.rot);
+  SpellFx.cast(staged.effect, msg.rect, msg.rot, say);
+  send(msg);
+  animateFx();
+}
+
+/* The staged box, its ghost and its handles — table only. Sizes are in
+   canvas pixels so the grips stay the same size to the hand however far
+   the map is zoomed. */
+const GRIP = 9, LIFT = 30;
+function drawStaged(g){
+  if(!staged) return;
+  const dpr = window.devicePixelRatio || 1;
+  const box = SpellFx.boxOf(state.view, staged.rect);
+  /* Dimmed, so a staged effect is never mistaken for one that has been
+     cast — the players are not seeing this.
+
+     And gone entirely while a cast is playing. The ghost loops in the
+     same box at the same angle, so leaving it up meant pressing Play
+     changed nothing anyone could see: the box was already animating,
+     and the real cast drew underneath it. Now the loop stops, the spell
+     goes off once at full strength, and the ghost comes back. */
+  if(!SpellFx.playing()){
+    SpellFx.drawFrame(g, SpellFx.ghost(staged.effect), box, staged.rot, 0.55);
+  }
+
+  g.save();
+  g.translate(box.x + box.w / 2, box.y + box.h / 2);
+  g.rotate(staged.rot);
+  g.strokeStyle = "#d0632a";
+  g.fillStyle = "#d0632a";
+  g.lineWidth = Math.max(1, Math.round(dpr));
+  g.setLineDash([7 * dpr, 5 * dpr]);
+  g.strokeRect(-box.w / 2, -box.h / 2, box.w, box.h);
+  g.setLineDash([]);
+  /* the stalk and knob you turn it by */
+  g.beginPath();
+  g.moveTo(0, -box.h / 2);
+  g.lineTo(0, -box.h / 2 - LIFT * dpr);
+  g.stroke();
+  g.beginPath();
+  g.arc(0, -box.h / 2 - LIFT * dpr, GRIP * 0.7 * dpr, 0, Math.PI * 2);
+  g.fill();
+  /* the corners you resize by */
+  const s = GRIP * 0.55 * dpr;
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(function(c){
+    g.fillRect(c[0] * box.w / 2 - s, c[1] * box.h / 2 - s, s * 2, s * 2);
+  });
+  g.restore();
+}
+
+function fxList(query){
+  const box = document.getElementById("fx-list");
+  const idx = SpellFx.index();
+  box.textContent = "";
+  if(!idx){ box.textContent = "No catalogue — data/spell-effects.json did not load."; return; }
+  /* Sixty is what a panel this tall can show without becoming a scroll
+     race; the search is how you get past it. */
+  SpellFx.search(idx.effects, query).slice(0, 60).forEach(function(e){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = e.name + " ";
+    const tag = document.createElement("span");
+    tag.className = "far";
+    tag.textContent = e.category + (e.shape ? " · " + e.shape : "") +
+                      (e.bundled ? "" : " · fetches");
+    b.appendChild(tag);
+    b.addEventListener("click", function(){ armFx(e); });
+    box.appendChild(b);
+  });
+}
+
+function wireFx(){
+  const panel = document.getElementById("fx-panel");
+  const search = document.getElementById("fx-search");
+  document.getElementById("fx-open").addEventListener("click", function(){
+    panel.classList.toggle("on");
+    if(panel.classList.contains("on")){ fxList(search.value); search.focus(); }
+  });
+  search.addEventListener("input", function(){ fxList(this.value); });
+  document.getElementById("fx-play").addEventListener("click", playStaged);
+  SpellFx.loadIndex().then(function(){ if(panel.classList.contains("on")) fxList(search.value); });
+}
+
 function wire(){
   const file = document.getElementById("file");
   document.getElementById("open-map").addEventListener("click", () => file.click());
@@ -377,25 +573,48 @@ function wire(){
     const on = document.getElementById(onId), off = document.getElementById(offId);
     on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
   };
-  pick("a-reveal", "a-hide", () => reveal = true);
-  pick("a-hide", "a-reveal", () => reveal = false);
+  /* Reaching for a fog tool disarms: the DM has said what they want the
+     next drag to be, and it is not a fireball. */
+  pick("a-reveal", "a-hide", () => { reveal = true; armFx(null); });
+  pick("a-hide", "a-reveal", () => { reveal = false; armFx(null); });
   document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
   document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
   document.getElementById("rotate").addEventListener("click", rotate);
   document.getElementById("undo").addEventListener("click", undo);
   document.getElementById("redo").addEventListener("click", redo);
   document.addEventListener("keydown", function(e){
+    /* Typing in the effects search box is typing, not shortcuts. Without
+       this, a space in "fire cone" is swallowed by the laser — the word
+       never lands and a red dot flashes on the projector while the DM
+       looks for a spell — and Ctrl-Z undoes a stroke instead of the
+       search term. Escape stays global on purpose: shutting the panel
+       from inside its own search box is what anyone would expect. */
+    const typing = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+
     /* Space is the laser, held. A toggle would be a mode to forget you
        are in, and forgetting it means a left-drag that pings the table
        instead of lifting fog. Held, there is nothing to forget.
        preventDefault because Space also re-presses whatever toolbar
        button was last clicked. */
-    if(e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey){
+    if(!typing && e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey){
       e.preventDefault();
       if(!e.repeat) setLaser(true);
       return;
     }
-    if(!(e.ctrlKey || e.metaKey)) return;
+    /* Enter fires what is aimed, wherever the focus happens to be —
+       including the search box, where the DM's hands already are. */
+    if(e.key === "Enter" && staged){ e.preventDefault(); playStaged(); return; }
+
+    /* Escape is a ladder: first it drops what is staged, and only then
+       does it put the tool down. Losing the effect you spent ten seconds
+       aiming AND the tool, on one keypress, is a bad trade. */
+    if(e.key === "Escape"){
+      if(staged){ stage(null); return; }
+      armFx(null);
+      document.getElementById("fx-panel").classList.remove("on");
+      return;
+    }
+    if(typing || !(e.ctrlKey || e.metaKey)) return;
     if(e.key === "z"){ e.preventDefault(); undo(); }
     if(e.key === "y"){ e.preventDefault(); redo(); }
   });
@@ -405,6 +624,7 @@ function wire(){
   /* Alt-tabbing away with Space down never delivers the keyup, and the
      dot would be left burning on the projector. */
   window.addEventListener("blur", function(){ setLaser(false); });
+  wireFx();
   wirePaint();
 
   document.getElementById("open-screen").addEventListener("click", function(){
@@ -476,9 +696,23 @@ function syncPayload(s, canvas){
            strokes:s.strokes, rotation:s.rotation };
 }
 
+/* This page's build, for comparing against the projector's. */
+const BUILD = (document.querySelector('meta[name="wazoo-build"]') || {}).content || "";
+
 const ch = Fog.open(function(m){
   /* The only thing the table listens for is a screen announcing itself. */
-  if(m.t === "hello") ch.postMessage(syncPayload(state));
+  if(m.t === "hello"){
+    ch.postMessage(syncPayload(state));
+    /* A projector window is opened once and left for hours, and an HTML
+       page cannot be cache-busted by a query token the way the shared
+       scripts can. So a screen that has been open since before an update
+       goes on running the old code without a word, and every fix after
+       that looks like it did not work. */
+    if(m.build && BUILD && m.build !== BUILD){
+      say("The players' screen is running an older build (" + m.build + ", this is " +
+          BUILD + ") — focus that window and hard-reload it, Ctrl-Shift-R.");
+    }
+  }
 });
 
 let send = function(m){ if(ch) ch.postMessage(m); };
@@ -566,12 +800,33 @@ function redo(){
 function wirePaint(){
   const cv = document.getElementById("table");
   let drawing = false, start = null;
+  /* What is being dragged on the staged box, if anything: its mode, and
+     whatever that mode needs to remember from the moment it was grabbed
+     — the pointer's offset for a move, the far corner for a resize. */
+  let grab = null;
 
   const at = (x, y) => {
     const dpr = window.devicePixelRatio || 1;
     const r = cv.getBoundingClientRect();
     return Fog.canvasToImage(state.view, (x - r.left) * dpr, (y - r.top) * dpr);
   };
+
+  /* The same pointer in canvas pixels, which is where the handles live:
+     a grip has to stay the size of a fingertip however far the map is
+     zoomed, so it cannot be measured in map pixels. */
+  const atCanvas = (x, y) => {
+    const dpr = window.devicePixelRatio || 1;
+    const r = cv.getBoundingClientRect();
+    return { x:(x - r.left) * dpr, y:(y - r.top) * dpr };
+  };
+
+  function grabAt(clientX, clientY){
+    if(!staged) return null;
+    const dpr = window.devicePixelRatio || 1;
+    const p = atCanvas(clientX, clientY);
+    const box = SpellFx.boxOf(state.view, staged.rect);
+    return SpellFx.handleAt(box, staged.rot, p.x, p.y, GRIP * dpr, LIFT * dpr);
+  }
 
   /* Ending a drag from anywhere: the preview goes, and the canvas is
      asked for the frame that no longer has it. */
@@ -592,6 +847,25 @@ function wirePaint(){
       animatePings();
       return;
     }
+    /* A staged effect owns the pointer wherever its handles are. Miss
+       them and the drag means what it always meant — a new box, or fog. */
+    const on = grabAt(e.clientX, e.clientY);
+    if(on){
+      cv.setPointerCapture(e.pointerId);
+      const p = at(e.clientX, e.clientY);
+      if(on === "move"){
+        grab = { mode:"move", from:p, rect:staged.rect };
+      }else if(on === "rotate"){
+        grab = { mode:"rotate" };
+      }else{
+        /* The corner across the box is nailed down for the whole drag,
+           taken once here — recomputing it as the box changes would let
+           it creep. */
+        grab = { mode:"resize", fixed:SpellFx.cornerAt(staged.rect, SpellFx.opposite(on), staged.rot) };
+      }
+      return;
+    }
+
     drawing = true; cv.setPointerCapture(e.pointerId);
     start = at(e.clientX, e.clientY);
     preview = { a:start, b:start, reveal:reveal };
@@ -608,6 +882,24 @@ function wirePaint(){
       requestPaint();
       return;
     }
+
+    /* Aiming what is already staged. Nothing here is sent — the
+       projector finds out when Play is pressed. */
+    if(grab && staged){
+      const p = at(e.clientX, e.clientY);
+      if(grab.mode === "move"){
+        staged.rect = SpellFx.moveRect(grab.rect, p.x - grab.from.x, p.y - grab.from.y);
+      }else if(grab.mode === "rotate"){
+        /* Alt is the escape hatch out of the fifteen-degree snap, for
+           the corridor that does not run on a nice angle. */
+        staged.rot = SpellFx.aimAt(SpellFx.centreOf(staged.rect), p.x, p.y, e.altKey);
+      }else{
+        staged.rect = SpellFx.resizeFrom(grab.fixed, staged.rot, p.x, p.y);
+      }
+      requestPaint();
+      return;
+    }
+
     if(!drawing || !start) return;
     /* Only the corner the pointer is at — the samples the browser
        buffered between frames say nothing a rectangle needs. One repaint
@@ -618,11 +910,23 @@ function wirePaint(){
   });
 
   cv.addEventListener("pointerup", function(e){
+    if(grab){ grab = null; return; }
     if(!drawing || !start) return;
     const p = at(e.clientX, e.clientY);
     /* A click paints nothing, so it must not cost an undo, a save and a
        message. Only a box with both sides to it is committed. */
-    if(bigEnough(start, p)) pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+    if(bigEnough(start, p)){
+      if(armed){
+        /* Staged, not cast. Nothing goes to the projector, nothing goes
+           into the undo stack — the DM aims first and fires with Play. */
+        stage({ effect:armed,
+                rect:{ x0:Math.min(start.x, p.x), y0:Math.min(start.y, p.y),
+                       x1:Math.max(start.x, p.x), y1:Math.max(start.y, p.y) },
+                rot:0 });
+      }else{
+        pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+      }
+    }
     stop();
   });
 
@@ -630,6 +934,7 @@ function wirePaint(){
      strand a preview on the canvas or commit a rectangle the DM never
      finished drawing. */
   cv.addEventListener("pointercancel", function(){
+    grab = null;
     if(!drawing) return;
     stop();
   });
@@ -662,6 +967,8 @@ async function rotate(){
      quarter-turn — the DM's hand has not moved. Drop them; the next
      twitch of the pointer puts the dot back where it belongs. */
   pings.length = 0;
+  SpellFx.clear();
+  stage(null);          /* aimed at ground that has just turned */
   if(laser){ laser = null; send({t:"laser", off:true}); }
   state.strokes = Fog.rotateStrokes(state.strokes, oldH);
   stack.strokes = state.strokes; stack.undone.length = 0;
@@ -843,6 +1150,173 @@ function runTests(){
   ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
 
   ok("an empty table says so", Fog.emptyMessage() === "No map on the table", Fog.emptyMessage());
+
+  /* ── where a fetched effect is kept ───────────────────────────────
+     The spell effects pack is 1.09 GB and the repository carries 35 of
+     it. Anything else is fetched once and kept, so the second cast
+     works with the router unplugged. It goes in the same database as
+     the maps, because both pages open that one and a second database
+     is a second schema to keep in step. */
+  ok("the store has somewhere to put a fetched effect",
+     typeof Fog.putFx === "function" && typeof Fog.getFx === "function");
+  ok("the database version leaves room for it", Fog.DB_VERSION === 2,
+     "adding a store needs a version, or the upgrade never runs");
+
+  /* ── the catalogue ────────────────────────────────────────────────
+     376 effects the DM has to find one of, mid-combat, without
+     scrolling. The index is a few kilobytes of paths; these are the
+     rules that turn it into an answer. */
+  ok("the pack is pinned to a commit, not to a moving branch",
+     /^[0-9a-f]{40}$/.test(SpellFx.PACK_COMMIT), SpellFx.PACK_COMMIT);
+
+  ok("a shape is read from the pack's own naming",
+     SpellFx.shapeOf("fire_ball_RAY_02.webm") === "ray" &&
+     SpellFx.shapeOf("frost_CONE_01.webm") === "cone" &&
+     SpellFx.shapeOf("fire_explosion_CIRCLE_01.webm") === "circle" &&
+     SpellFx.shapeOf("earth-hole_RECTANGLE_01.webm") === "rectangle" &&
+     SpellFx.shapeOf("smoke_pillar_SQUARE_01.webm") === "square");
+  ok("a file with no marker claims no shape",
+     SpellFx.shapeOf("shockwave_01_transcentre.webm") === "" &&
+     SpellFx.shapeOf("arrow_straight_01.webm") === "",
+     "guessing a footprint the animator did not draw for is worse than admitting none");
+  ok("CIRCLE inside a word is not a shape",
+     SpellFx.shapeOf("semicircleish_01.webm") === "");
+
+  const FX = [
+    {path:"fire/fire_ball_RAY_02.webm", name:"fire ball 02", category:"fire", shape:"ray", bundled:false},
+    {path:"fire/fire_explosion_CIRCLE_01.webm", name:"fire explosion 01", category:"fire", shape:"circle", bundled:true},
+    {path:"ice/frost_CONE_01.webm", name:"frost 01", category:"ice", shape:"cone", bundled:true}
+  ];
+  ok("an empty search is the whole catalogue", SpellFx.search(FX, "").length === 3);
+  ok("a search matches the name", SpellFx.search(FX, "explosion").length === 1);
+  ok("a search matches the category",
+     SpellFx.search(FX, "fire").length === 2 && SpellFx.search(FX, "ice").length === 1);
+  ok("a search matches the shape", SpellFx.search(FX, "cone")[0].path === "ice/frost_CONE_01.webm");
+  ok("search ignores case and stray spaces", SpellFx.search(FX, "  FROST ").length === 1);
+  ok("every word has to match",
+     SpellFx.search(FX, "fire cone").length === 0 && SpellFx.search(FX, "fire circle").length === 1,
+     "two words narrow the list; they do not widen it");
+  ok("what is in the repo is offered first",
+     SpellFx.search(FX, "")[0].bundled === true &&
+     SpellFx.search(FX, "").filter(e => !e.bundled).length === 1,
+     "an effect that needs the network should not be the first thing under the cursor");
+
+  ok("a bundled effect is read from this site",
+     SpellFx.urlFor(FX[1]) === "assets/spell-effects/fire/fire_explosion_CIRCLE_01.webm");
+  ok("anything else comes from the pinned commit",
+     SpellFx.urlFor(FX[0]) ===
+       "https://cdn.jsdelivr.net/gh/jackkerouac/animated-spell-effects@" +
+       SpellFx.PACK_COMMIT + "/spell-effects/fire/fire_ball_RAY_02.webm",
+     SpellFx.urlFor(FX[0]));
+
+  /* ── placing and reaping a cast ───────────────────────────────────
+     The video itself cannot be tested here — the suite is synchronous
+     and a decode is not — so the parts that decide WHERE and FOR HOW
+     LONG are pure, and those are the parts that can be wrong.
+
+     What is deliberately not covered: blobFor's cache-before-network
+     order is asynchronous, and the only honest check for it is casting
+     an unbundled effect, pulling the network out, and casting it again. */
+  const fxView = {z:2, tx:30, ty:-10};
+  const fxBox = SpellFx.boxOf(fxView, {x0:10, y0:20, x1:60, y1:70});
+  ok("a cast is placed through the view, like everything else",
+     near(fxBox.x, 50) && near(fxBox.y, 30) && near(fxBox.w, 100) && near(fxBox.h, 100),
+     JSON.stringify(fxBox));
+  const fxBack = SpellFx.boxOf(fxView, {x0:60, y0:70, x1:10, y1:20});
+  ok("a box dragged up and to the left is the same box",
+     near(fxBack.x, fxBox.x) && near(fxBack.w, fxBox.w),
+     "a negative width draws nothing");
+
+  const casts = [{done:false}, {done:true}, {done:false}];
+  ok("a finished cast is dropped", SpellFx.reap(casts).length === 2);
+  ok("reaping keeps the order of what is left",
+     SpellFx.reap([{done:false, path:"a"}, {done:true, path:"b"}, {done:false, path:"c"}])
+       .map(c => c.path).join("") === "ac");
+  ok("nothing playing is not an error", SpellFx.reap([]).length === 0 &&
+     SpellFx.playing() === false);
+
+  /* What a cast puts on the channel. Image space, like every other
+     rectangle here — the projector's canvas is a different size, and a
+     box in this window's device pixels lands somewhere else on it. */
+  const castMsg = castPayload({path:"fire/fire_explosion_CIRCLE_01.webm"},
+                              {x:900, y:400}, {x:300, y:120});
+  ok("a cast names the effect", castMsg.t === "cast" &&
+     castMsg.path === "fire/fire_explosion_CIRCLE_01.webm");
+  ok("a cast carries a normalised image-space rectangle",
+     castMsg.rect.x0 === 300 && castMsg.rect.y0 === 120 &&
+     castMsg.rect.x1 === 900 && castMsg.rect.y1 === 400, JSON.stringify(castMsg.rect));
+  ok("a cast carries no device pixels", castMsg.view === undefined && castMsg.z === undefined,
+     "z/tx/ty belong to this canvas and mean something else on the projector");
+  ok("a cast survives the channel",
+     JSON.parse(JSON.stringify(castMsg)).rect.x1 === 900, "it must be structured-clonable");
+  ok("a cast carries the angle it was aimed at",
+     near(castPayload({path:"x"}, {x:0,y:0}, {x:10,y:10}, Math.PI/4).rot, Math.PI/4) &&
+     castPayload({path:"x"}, {x:0,y:0}, {x:10,y:10}).rot === 0,
+     "a bolt aimed down a corridor on the table must not land across it on the projector");
+
+  /* ── aiming a staged effect ───────────────────────────────────────
+     A cast is staged before it is fired, and staging is geometry: an
+     angle, a hit test against a box that is no longer axis-aligned, and
+     a resize that has to keep the far corner nailed down. Every one of
+     those is wrong by a sign at some point, and the sign is invisible
+     until a fireball lands in the wrong room. */
+  const DEG = Math.PI / 180;
+  ok("an angle snaps to fifteen degrees",
+     near(SpellFx.snapAngle(20 * DEG), 15 * DEG) && near(SpellFx.snapAngle(23 * DEG), 30 * DEG),
+     String(SpellFx.snapAngle(20 * DEG) / DEG));
+  ok("holding the escape hatch keeps the exact angle",
+     near(SpellFx.snapAngle(23 * DEG, true), 23 * DEG));
+  ok("straight up is no rotation at all",
+     near(SpellFx.aimAt({x:0, y:0}, 0, -100), 0),
+     "the handle sits above the box, so up is zero and not a quarter turn");
+  ok("dragging the handle to the right is a quarter turn",
+     near(SpellFx.aimAt({x:0, y:0}, 100, 0), Math.PI / 2));
+
+  const sBox = {x:100, y:100, w:200, h:100};       /* centre 200,150 */
+  ok("the middle of the box is where you grab to move it",
+     SpellFx.handleAt(sBox, 0, 200, 150, 10, 28) === "move");
+  ok("a corner is a corner", SpellFx.handleAt(sBox, 0, 100, 100, 10, 28) === "nw" &&
+     SpellFx.handleAt(sBox, 0, 300, 200, 10, 28) === "se");
+  ok("the turning handle floats above the top edge",
+     SpellFx.handleAt(sBox, 0, 200, 100 - 28, 10, 28) === "rotate");
+  ok("nothing is nothing", SpellFx.handleAt(sBox, 0, 20, 20, 10, 28) === null);
+  ok("a turned box is grabbed where it looks, not where it was",
+     SpellFx.handleAt(sBox, Math.PI/2, 200 + 50 + 28, 150, 10, 28) === "rotate" &&
+     SpellFx.handleAt(sBox, Math.PI/2, 100, 100, 10, 28) === null,
+     "at a quarter turn the handle swings out to the side — half the box plus the lift — " +
+     "and the corner that used to be at the top left is empty space");
+
+  ok("moving shifts both corners together",
+     JSON.stringify(SpellFx.moveRect({x0:10,y0:20,x1:30,y1:40}, 5, -5)) ===
+     JSON.stringify({x0:15,y0:15,x1:35,y1:35}));
+
+  ok("corners come back turned",
+     near(SpellFx.cornerAt({x0:-10,y0:-10,x1:10,y1:10}, "nw", 0).x, -10) &&
+     near(SpellFx.cornerAt({x0:-10,y0:-10,x1:10,y1:10}, "nw", Math.PI).x, 10),
+     "half a turn puts the top-left where the bottom-right was");
+  ok("the opposite corner is the one held down",
+     SpellFx.opposite("nw") === "se" && SpellFx.opposite("ne") === "sw");
+
+  const heldCorner = SpellFx.cornerAt({x0:0,y0:0,x1:100,y1:50}, "se", 0);
+  const stretched = SpellFx.resizeFrom(heldCorner, 0, -100, -50);
+  ok("resizing keeps the far corner exactly where it was",
+     near(stretched.x1, 100) && near(stretched.y1, 50) &&
+     near(stretched.x0, -100) && near(stretched.y0, -50), JSON.stringify(stretched));
+  /* Turned, and dragged past the held corner, so the box flips: the held
+     POINT stays nailed down, but it is no longer the corner it was
+     called. Naming it would be asserting the wrong thing — what matters
+     is that it did not move, and that the dragged corner is under the
+     pointer. */
+  const turnedCorner = SpellFx.cornerAt({x0:0,y0:0,x1:100,y1:50}, "se", Math.PI/2);
+  const turnedStretch = SpellFx.resizeFrom(turnedCorner, Math.PI/2, 0, 0);
+  const turnedCorners = ["nw","ne","se","sw"].map(n => SpellFx.cornerAt(turnedStretch, n, Math.PI/2));
+  ok("and keeps it when the box has been turned",
+     turnedCorners.some(c => near(c.x, turnedCorner.x) && near(c.y, turnedCorner.y)),
+     "the corner under the other hand must not wander while the box grows: " +
+     JSON.stringify(turnedCorners));
+  ok("the corner being dragged ends up under the pointer",
+     turnedCorners.some(c => near(c.x, 0) && near(c.y, 0)),
+     JSON.stringify(turnedCorners));
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));

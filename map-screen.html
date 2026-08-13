@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813d">
+<meta name="wazoo-build" content="20260814h">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -17,7 +17,8 @@ body{margin:0;background:#000;overflow:hidden;cursor:none}
 body.pointing{cursor:default}
 #screen{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
-<script src="assets/fog.js?v=20260813d"></script>
+<script src="assets/fog.js?v=20260814a"></script>
+<script src="assets/spellfx.js?v=20260814e"></script>
 </head>
 <body>
 <canvas id="screen"></canvas>
@@ -84,7 +85,7 @@ function animatePings(){
   if(ringing) return;
   ringing = true;
   (function step(){
-    if(!pings.length){ ringing = false; requestPaint(); return; }
+    if(!pings.length && !SpellFx.playing()){ ringing = false; requestPaint(); return; }
     requestPaint();
     requestAnimationFrame(step);
   })();
@@ -120,6 +121,12 @@ function redraw(){
   const src = Fog.sourceFor(moving, st.proxy, st.img);
   g.imageSmoothingQuality = src.quality;
   g.drawImage(src.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
+
+  /* Effects go on before the fog and the fog covers them. Here the fog
+     is fully opaque, so a spell cast into ground the players have not
+     revealed is simply not shown to them — which is the whole reason
+     the fog is opaque on this page and a wash on the table's. */
+  SpellFx.draw(g, v);
   /* The map gets "high" at rest; the fog is a two-valued mask and
      resampling it well costs three to four times as much for an edge
      nobody can see across a room. The table does the same, so the two
@@ -138,6 +145,7 @@ function redraw(){
     const c = Fog.imageToCanvas(v, laser.x, laser.y);
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
+
 }
 
 /* One paint per frame however many messages arrive. A pan sends one
@@ -221,6 +229,20 @@ async function showMap(id, rotation){
   st.proxy = p;
 }
 
+/* The projector needs the catalogue for the same reason the table does:
+   a message carries a path, and only the index says whether that path is
+   a file in this repository or a fetch from the pack. */
+SpellFx.loadIndex();
+
+/* The effect a path names, or null if the catalogue has not arrived or
+   does not know it. */
+function fxByPath(path){
+  const idx = SpellFx.index();
+  if(!idx) return null;
+  for(let i = 0; i < idx.effects.length; i++) if(idx.effects[i].path === path) return idx.effects[i];
+  return null;
+}
+
 const ch = Fog.open(async function(m){
   st.waiting = false;
   /* `sync` is the whole state and is sent both on request and whenever
@@ -230,7 +252,7 @@ const ch = Fog.open(async function(m){
     /* A sync can mean the map has turned, and a dot or a ring drawn in
        the old orientation would land on the wrong room. The table drops
        its own at the same moment. */
-    pings.length = 0; laser = null;
+    pings.length = 0; laser = null; SpellFx.clear();
     applyRect(m.rect);
     if(m.mapId) await showMap(m.mapId, m.rotation);
     else { mapGen++; Fog.release(st.img); Fog.release(st.proxy);
@@ -252,6 +274,31 @@ const ch = Fog.open(async function(m){
     animatePings();
     return;
   }
+  /* Warm a file up before it is needed, so the first cast of the evening
+     does not stutter here while the table plays it smoothly. A message
+     that arrives before the catalogue has loaded waits for it rather
+     than being dropped — the DM arms an effect seconds before casting
+     it, and this page may have opened a moment ago. */
+  if(m.t === "preload"){
+    const e = fxByPath(m.path);
+    if(e) SpellFx.preload(e);
+    else SpellFx.loadIndex().then(function(){
+      const late = fxByPath(m.path);
+      if(late) SpellFx.preload(late);
+    });
+    return;
+  }
+  if(m.t === "cast"){
+    const e = fxByPath(m.path);
+    if(e){ SpellFx.cast(e, m.rect, m.rot); animatePings(); }
+    /* A screen opened moments ago may not have the catalogue yet, and a
+       dropped fireball is worse than a late one. */
+    else SpellFx.loadIndex().then(function(){
+      const late = fxByPath(m.path);
+      if(late){ SpellFx.cast(late, m.rect, m.rot); animatePings(); }
+    });
+    return;
+  }
   if(m.t === "stroke"){
     st.strokes.push(m.stroke);
     /* One stroke onto the mask, not a replay of every stroke so far. */
@@ -267,7 +314,15 @@ const ch = Fog.open(async function(m){
   if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }
 });
 
-function hello(){ if(ch) ch.postMessage({t:"hello"}); }
+/* Which build of the page this window is actually running. A projector
+   is opened once and left alone for hours, and its HTML cannot be
+   cache-busted by a query token the way the shared scripts are — so a
+   window that has been open since before an update keeps running the
+   old code, silently, while the table runs the new. Saying so is the
+   difference between "that fix did not work" and "reload the projector". */
+const BUILD = (document.querySelector('meta[name="wazoo-build"]') || {}).content || "";
+
+function hello(){ if(ch) ch.postMessage({t:"hello", build:BUILD}); }
 
 /* The cursor, while it is moving and for a moment after.
 

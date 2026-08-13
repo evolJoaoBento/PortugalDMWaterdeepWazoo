@@ -464,17 +464,28 @@
      and fetches the blob itself — a 15 MB image never crosses the
      channel. Rotation is stored beside the strokes, never baked into
      the blob. */
-  var DB = "waterdeep-table", MAPS = "maps", FOG = "fog";
+  var DB = "waterdeep-table", MAPS = "maps", FOG = "fog", FX = "fx";
+  var DB_VERSION = 2;
 
   function openDb(){
     return new Promise(function(res, rej){
-      var r = indexedDB.open(DB, 1);
+      var r = indexedDB.open(DB, DB_VERSION);
       r.onupgradeneeded = function(){
         var db = r.result;
         if(!db.objectStoreNames.contains(MAPS)) db.createObjectStore(MAPS, {keyPath:"id"});
         if(!db.objectStoreNames.contains(FOG))  db.createObjectStore(FOG,  {keyPath:"mapId"});
+        /* Spell effects fetched from the pack, keyed by their
+           pack-relative path. The 35 bundled ones never come here —
+           they are files in this repository. */
+        if(!db.objectStoreNames.contains(FX))   db.createObjectStore(FX,   {keyPath:"path"});
       };
-      r.onsuccess = function(){ res(r.result); };
+      r.onsuccess = function(){
+        /* A page left open on the old version blocks this one's upgrade
+           for as long as it lives. Letting go when asked is what keeps a
+           projector window opened yesterday from wedging today's table. */
+        r.result.onversionchange = function(){ r.result.close(); };
+        res(r.result);
+      };
       r.onerror = function(){ rej(r.error); };
     });
   }
@@ -510,6 +521,11 @@
     return put(FOG, {mapId:mapId, strokes:strokes, rotation:rotation || 0});
   }
   function getFog(mapId){ return get(FOG, mapId); }
+
+  /* Blobs, not object URLs: a URL made by one document is meaningless in
+     the other, and both windows read this store. */
+  function putFx(path, blob){ return put(FX, {path:path, blob:blob}); }
+  function getFx(path){ return get(FX, path); }
 
   /* What both pages say when there is nothing to show. It lives here
      because the table asserts it and the projector displays it, and two
@@ -556,8 +572,10 @@
     rotateStrokes: rotateStrokes,
     rotateImage: rotateImage,
     openDb: openDb,
+    DB_VERSION: DB_VERSION,
     putMap: putMap, getMap: getMap,
     putFog: putFog, getFog: getFog,
+    putFx: putFx, getFx: getFx,
     open: open
   };
 })(window);
