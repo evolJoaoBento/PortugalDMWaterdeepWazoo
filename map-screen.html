@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808n">
+<meta name="wazoo-build" content="20260813a">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -12,7 +12,7 @@ html,body{height:100%}
 body{margin:0;background:#000;overflow:hidden;cursor:none}
 #screen{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
-<script src="assets/fog.js?v=20260808n"></script>
+<script src="assets/fog.js?v=20260813a"></script>
 </head>
 <body>
 <canvas id="screen"></canvas>
@@ -76,12 +76,22 @@ function redraw(){
   const v = st.view;
   g.imageSmoothingQuality = "high";
   g.drawImage(st.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
+  /* The map gets "high"; the fog is a two-valued mask and resampling it
+     well costs three to four times as much for an edge nobody can see
+     across a room. The table does the same, so the two agree. */
+  g.imageSmoothingQuality = "low";
   g.drawImage(mask, v.tx, v.ty, st.w * v.z, st.h * v.z);   /* fully opaque */
 }
 
+/* One paint per frame however many messages arrive. A brush drag sends a
+   message per frame and a pan sends one per frame, but they are separate
+   messages and painting inside each would repaint the projector twice for
+   the same frame. */
+const requestPaint = Fog.coalesce(requestAnimationFrame, redraw);
+
 function remask(){
   if(st.w && st.h) Fog.rasterise(st.strokes, st.w, st.h, mask);
-  redraw();
+  requestPaint();
 }
 
 /* The table sends the image-space rectangle it is showing, never its own
@@ -142,13 +152,26 @@ const ch = Fog.open(async function(m){
     else { mapGen++; st.img = null; st.w = 0; st.h = 0; redraw(); }
     return;
   }
-  if(m.t === "view"){ applyRect(m.rect); redraw(); return; }
+  if(m.t === "view"){ applyRect(m.rect); requestPaint(); return; }
   if(m.t === "stroke"){
     st.strokes.push(m.stroke);
-    /* One stroke onto the mask, not a replay of every stroke so far — the
-       table sends one of these per pointermove. */
+    /* One stroke onto the mask, not a replay of every stroke so far. */
     if(st.w && st.h) Fog.applyStroke(m.stroke, st.w, st.h, mask);
-    redraw();
+    requestPaint();
+    return;
+  }
+  /* The tail of the drag in progress: the points the DM's pointer has
+     added since the last frame. They are appended to the stroke already
+     in the list — the same object the table is growing — and only the new
+     segments are drawn, starting at the last point already on this mask
+     so the join does not gap. */
+  if(m.t === "extend"){
+    const s = st.strokes[st.strokes.length - 1];
+    if(!s || s.k !== "path" || !m.pts || !m.pts.length) return;
+    const drawn = (s.pts.length >> 1) - 1;
+    for(let i = 0; i < m.pts.length; i++) s.pts.push(m.pts[i]);
+    if(st.w && st.h) Fog.applyStroke(s, st.w, st.h, mask, drawn);
+    requestPaint();
     return;
   }
   if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }
@@ -162,7 +185,7 @@ sizeCanvas();
 window.addEventListener("resize", function(){
   const cv = sizeCanvas();
   if(st.rect) st.view = Fog.viewFromRect(st.rect, cv.width, cv.height);
-  redraw();
+  requestPaint();
 });
 /* A projector window opened late, or reloaded when someone kicks the
    cable, must catch up — otherwise it shows an empty map while the

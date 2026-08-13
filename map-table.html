@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808n">
+<meta name="wazoo-build" content="20260813a">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -30,7 +30,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
-<script src="assets/fog.js?v=20260808n"></script>
+<script src="assets/fog.js?v=20260813a"></script>
 </head>
 <body>
 <div id="bar">
@@ -101,14 +101,28 @@ function redraw(){
   const v = state.view;
   g.imageSmoothingQuality = "high";
   g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+
+  /* The map is resampled at "high" because it is a picture and the DM
+     reads it. The fog is not a picture — it is a two-valued mask, black
+     or nothing, and the only place resampling shows at all is the couple
+     of pixels along a reveal's edge. "high" costs three to four times
+     "low" for that edge, every frame, so it does not get it. */
+  g.imageSmoothingQuality = "low";
   g.globalAlpha = FOG_ALPHA;
   g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z);
   g.globalAlpha = 1;
 }
 
+/* Every handler asks for a paint; none of them paints. A wheel notch, a
+   pan sample and a brush sample all arrive faster than the screen
+   refreshes, and painting inside each of them queued work the frame
+   could never drain — which is what the table being unsmooth actually
+   was, rather than any one drawing being slow. */
+const requestPaint = Fog.coalesce(requestAnimationFrame, redraw);
+
 function remask(){
   if(state.w && state.h) Fog.rasterise(state.strokes, state.w, state.h, mask);
-  redraw();
+  requestPaint();
 }
 
 /* Swap in a stored map: decode it, fit it, and pick its fog back up. */
@@ -157,7 +171,7 @@ function wireView(){
     const dpr = window.devicePixelRatio || 1;
     const f = e.deltaY < 0 ? 1.15 : 1/1.15;
     state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
-    redraw();
+    requestPaint();
     sendView();
   }, {passive:false});
 
@@ -174,7 +188,7 @@ function wireView(){
     state.view.tx += (e.clientX - lx) * dpr;
     state.view.ty += (e.clientY - ly) * dpr;
     lx = e.clientX; ly = e.clientY;
-    redraw();
+    requestPaint();
     sendView();
   });
   cv.addEventListener("pointerup", function(){ panning = false; });
@@ -183,7 +197,7 @@ function wireView(){
 
   window.addEventListener("resize", function(){
     sizeCanvas();
-    redraw();
+    requestPaint();
     sendView();
   });
 }
@@ -302,7 +316,7 @@ function pushStroke(s){
      loading still replay from zero — that is what the spec's O(n)
      rasterise is for, and none of them happen per pointer event. */
   if(state.w && state.h) Fog.applyStroke(s, state.w, state.h, mask);
-  redraw(); saveFog();
+  requestPaint(); saveFog();
   send({t:"stroke", stroke:s});
 }
 
@@ -317,48 +331,107 @@ function redo(){
   send({t:"undo", strokes:state.strokes});
 }
 
-/* ── painting ──────────────────────────────────────────────────────── */
+/* ── painting ──────────────────────────────────────────────────────
+   A drag is ONE stroke. It used to be one per pointermove, which cost on
+   three counts at once: a minute's painting became a list thousands of
+   entries long, every autosave and every `sync` carried all of it, and
+   Ctrl-Z removed three pixels rather than the stroke just drawn.
+
+   The path grows as the pointer moves and is drawn a tail at a time,
+   once per frame. `drawn` is the index of the last point already on the
+   mask; the projector is sent exactly the same new points and appends
+   them to its own copy, so both draw the identical segments. */
 function wirePaint(){
   const cv = document.getElementById("table");
-  let drawing = false, prev = null, start = null;
+  let drawing = false, live = null, drawn = -1, start = null;
 
-  const at = e => {
+  const at = (x, y) => {
     const dpr = window.devicePixelRatio || 1;
-    return Fog.canvasToImage(state.view, e.offsetX*dpr, e.offsetY*dpr);
+    const r = cv.getBoundingClientRect();
+    return Fog.canvasToImage(state.view, (x - r.left) * dpr, (y - r.top) * dpr);
   };
+
+  /* Draw and broadcast whatever the pointer has added since the last
+     frame — never per event. A 125 Hz mouse would otherwise post 125
+     channel messages a second and ask for 125 repaints. */
+  function flushNow(){
+    if(!live) return;
+    /* Ctrl-Z or a rotate can land between two frames of a drag, and both
+       take the stroke being drawn out from under it — undo pops it, rotate
+       replaces every stroke with a turned copy. Carrying on would paint
+       onto this mask and send tails for a stroke the list no longer holds,
+       and the projector would append them to somebody else's. */
+    if(stack.strokes[stack.strokes.length - 1] !== live){ live = null; drawn = -1; return; }
+    const n = (live.pts.length >> 1) - 1;
+    if(n <= drawn) return;
+    Fog.applyStroke(live, state.w, state.h, mask, drawn);
+    send({t:"extend", pts:live.pts.slice((drawn + 1) * 2)});
+    drawn = n;
+    requestPaint();
+    saveFog();
+  }
+  /* Lifting the pointer flushes immediately rather than asking for a
+     frame: the frame would arrive after `live` had been let go, and the
+     last few points of every stroke would be lost. */
+  const flush = Fog.coalesce(requestAnimationFrame, flushNow);
 
   cv.addEventListener("pointerdown", function(e){
     if(e.button !== 0 || !state.img) return;
     drawing = true; cv.setPointerCapture(e.pointerId);
-    const p = at(e);
-    if(tool === "brush"){ prev = p; pushStroke(Fog.line(p.x,p.y,p.x,p.y,brush,reveal)); }
+    const p = at(e.clientX, e.clientY);
+    if(tool === "brush"){
+      live = Fog.path([p.x, p.y], brush, reveal);
+      drawn = 0;
+      /* The stroke enters the list at once, so an undo mid-drag and a
+         `sync` mid-drag both see the stroke that is being drawn. */
+      applyPush(stack, live);
+      state.strokes = stack.strokes;
+      Fog.applyStroke(live, state.w, state.h, mask);
+      requestPaint(); saveFog();
+      send({t:"stroke", stroke:live});
+    }
     else start = p;
   });
 
   cv.addEventListener("pointermove", function(e){
-    if(!drawing) return;
-    const p = at(e);
-    if(tool === "brush"){
-      pushStroke(Fog.line(prev.x, prev.y, p.x, p.y, brush, reveal));
-      prev = p;
+    if(!drawing || tool !== "brush" || !live) return;
+    /* Every sample the browser buffered between frames, not just the last
+       one: dropping them corners off a fast stroke. */
+    const es = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for(const s of (es.length ? es : [e])){
+      const p = at(s.clientX, s.clientY);
+      live.pts.push(p.x, p.y);
     }
+    flush();
   });
 
   cv.addEventListener("pointerup", function(e){
     if(!drawing) return;
     drawing = false;
-    if(tool === "rect" && start){
-      const p = at(e);
+    if(tool === "brush"){
+      if(live){
+        const p = at(e.clientX, e.clientY);
+        live.pts.push(p.x, p.y);
+        flushNow();
+      }
+      live = null; drawn = -1;
+      return;
+    }
+    if(start){
+      const p = at(e.clientX, e.clientY);
       pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
       start = null;
     }
   });
 
   /* A lost pointer capture (e.g. the OS steals the gesture) must not
-     strand a half-drawn stroke — end it without committing a rectangle. */
+     strand a half-drawn stroke — end it without committing a rectangle.
+     A brush path stays: it is already in the list and already on both
+     masks, so dropping it here would only make the two disagree. */
   cv.addEventListener("pointercancel", function(){
     if(!drawing) return;
     drawing = false;
+    live = null; drawn = -1;
     start = null;
   });
 }
@@ -531,6 +604,75 @@ function runTests(){
   ok("sync survives the channel", JSON.parse(JSON.stringify(payload)).strokes[0].reveal === true,
      "the payload must be structured-clonable");
 
+  /* ── the mask is capped, so a frame costs a screen and not a map ──
+     Drawing a full-resolution mask over the map was the whole cost of a
+     frame: 40–60 ms for a 6.5 megapixel map, against 4 ms for the map
+     itself. The strokes stay in image space; only the raster they are
+     drawn into is capped. */
+  const dims = Fog.maskDims(1780, 3628);
+  ok("a big mask is capped on its long side", dims.w === 1005 && dims.h === 2048,
+     JSON.stringify(dims));
+  ok("the cap carries the scale that keeps strokes image-space",
+     near(dims.s, 2048 / 3628), String(dims.s));
+  ok("a map smaller than the cap is not blown up",
+     Fog.maskDims(40, 40).s === 1 && Fog.maskDims(40, 40).w === 40);
+
+  const capped = Fog.rasterise([Fog.rect(100, 100, 900, 900, true)], 1780, 3628);
+  ok("a capped mask is raster-sized, not map-sized",
+     capped.width === 1005 && capped.height === 2048, capped.width + "x" + capped.height);
+  ok("a stroke still lands where image space says it should",
+     alphaAt(capped, Math.round(500 * dims.s), Math.round(500 * dims.s)) === 0 &&
+     alphaAt(capped, Math.round(1400 * dims.s), Math.round(1400 * dims.s)) === 255,
+     "the cap must scale the drawing, not the coordinates");
+
+  /* ── a drag is one stroke ─────────────────────────────────────────
+     One stroke per pointermove meant a thousand-entry list per drag, a
+     thousand-entry write every save, and a Ctrl-Z that removed three
+     pixels. A drag is a path, and a path is one undo. */
+  const dotP = Fog.rasterise([Fog.path([20, 20], 6, true)], 40, 40);
+  ok("a path of one point leaves a dot", alphaAt(dotP, 20, 20) === 0,
+     "a click is a path that never grew");
+
+  const dragP = Fog.rasterise([Fog.path([5, 20, 20, 20, 35, 20], 4, true)], 40, 40);
+  ok("a path reveals along every segment",
+     alphaAt(dragP, 20, 20) === 0 && alphaAt(dragP, 33, 20) === 0 && alphaAt(dragP, 20, 2) === 255);
+
+  /* The live drag draws only what has just been added. If that ever
+     stopped matching a replay, the projector and the table would drift
+     apart over a long stroke and only a reload would show it. */
+  const grown = Fog.path([5, 20], 4, true);
+  const live = Fog.rasterise([], 40, 40);
+  Fog.applyStroke(grown, 40, 40, live);
+  grown.pts.push(20, 20);
+  Fog.applyStroke(grown, 40, 40, live, 0);
+  grown.pts.push(35, 20);
+  Fog.applyStroke(grown, 40, 40, live, 1);
+  const whole = Fog.rasterise([grown], 40, 40);
+  const g1 = pixels(live), g2 = pixels(whole);
+  let grownSame = g1.length === g2.length;
+  for(let k = 0; grownSame && k < g1.length; k++) if(g1[k] !== g2[k]) grownSame = false;
+  ok("a path grown a tail at a time matches replaying it whole", grownSame,
+     "the tail must start at the last point already drawn, or the joins gap");
+
+  const rotP = Fog.rotateStrokes([Fog.path([10, 20, 30, 40], 5, true)], 100)[0];
+  ok("rotate maps every point of a path",
+     rotP.k === "path" && rotP.pts[0] === 80 && rotP.pts[1] === 10 &&
+     rotP.pts[2] === 60 && rotP.pts[3] === 30, JSON.stringify(rotP));
+
+  /* ── one paint per frame ──────────────────────────────────────────
+     redraw() used to run inside every wheel tick and every pointermove.
+     A 125 Hz mouse asked for 125 full repaints a second; at 50 ms each
+     the queue never drained, which is what "not smooth" actually was. */
+  let painted = 0; const queued = [];
+  const askPaint = Fog.coalesce(fn => queued.push(fn), () => painted++);
+  askPaint(); askPaint(); askPaint();
+  ok("many requests inside one frame schedule one paint",
+     queued.length === 1 && painted === 0, queued.length + " scheduled, " + painted + " painted");
+  queued.shift()();
+  ok("the paint happens when the frame comes", painted === 1);
+  askPaint();
+  ok("the frame after that can be scheduled again", queued.length === 1);
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -538,8 +680,98 @@ function runTests(){
   document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Map Table tests";
 }
 
+/* =========================================================================
+   Frame cost:  map-table.html?bench=1
+
+   The suite proves the fog is right; this says what a frame costs, which
+   is the other thing that has to hold. It runs against whatever map the
+   table last had, or a synthetic one the size of the Waterdeep map.
+
+   Canvas 2D queues work for the GPU, so timing a loop of draws measures
+   almost nothing unless something forces it through. A one-pixel
+   getImageData does; it is why the numbers here are honest and also why
+   they are a shade pessimistic.
+   ========================================================================= */
+async function runBench(){
+  const cv = sizeCanvas();
+  const g = cv.getContext("2d");
+  const flush = () => g.getImageData(0, 0, 1, 1);
+  const ms = (fn, n) => { fn(); flush();
+    const t = performance.now();
+    for(let i = 0; i < n; i++){ fn(); flush(); }
+    return +((performance.now() - t) / n).toFixed(2); };
+
+  if(!state.img){
+    const c = document.createElement("canvas");
+    c.width = 1780; c.height = 3628;
+    const cg = c.getContext("2d");
+    cg.fillStyle = "#4a3b28"; cg.fillRect(0, 0, c.width, c.height);
+    state.img = await createImageBitmap(c);
+    state.w = c.width; state.h = c.height;
+    state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
+    state.strokes = []; stack.strokes = state.strokes;
+  }
+
+  /* A map's worth of painting, so the mask is not trivially empty. */
+  const drag = Fog.path([], 40, true);
+  for(let i = 0; i < 400; i++) drag.pts.push((i * 137) % state.w, (i * 271) % state.h);
+  state.strokes = [drag]; stack.strokes = state.strokes;
+
+  const d = Fog.maskDims(state.w, state.h);
+  const rows = [];
+  const line = (name, v, note) => rows.push(("  " + name).padEnd(34) + String(v).padStart(8) +
+    (note ? "   " + note : ""));
+
+  rows.push("map            " + state.w + "×" + state.h +
+            "   (" + (state.w * state.h / 1e6).toFixed(1) + " MP)");
+  rows.push("mask           " + d.w + "×" + d.h +
+            "   (" + (d.w * d.h / 1e6).toFixed(1) + " MP, cap " + Fog.maskDims(9e9, 1).w + ")");
+  rows.push("canvas         " + cv.width + "×" + cv.height + "   dpr " + (window.devicePixelRatio || 1));
+  rows.push("");
+
+  const v = state.view;
+  Fog.rasterise(state.strokes, state.w, state.h, mask);
+  line("clear", ms(() => { g.setTransform(1,0,0,1,0,0); g.fillStyle = "#0b0805";
+                           g.fillRect(0, 0, cv.width, cv.height); }, 20));
+  /* The same resampling qualities redraw() uses, or the two lines below
+     would not add up to the frame beneath them. */
+  line("draw the map", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
+       g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z); }, 20));
+  line("draw the fog", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "low";
+       g.globalAlpha = FOG_ALPHA;
+       g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
+       "this was the whole cost of a frame");
+  line("the fog at \"high\"", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
+       g.globalAlpha = FOG_ALPHA;
+       g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
+       "what resampling a mask well would cost");
+  const frame = ms(redraw, 20);
+  line("a whole frame", frame, frame < 16.7 ? "under one refresh at 60 Hz" : "OVER a 60 Hz refresh");
+  rows.push("");
+  line("rasterise 400 points", ms(() => Fog.rasterise(state.strokes, state.w, state.h, mask), 10),
+       "undo, reload, rotate");
+  const tail = Fog.path([100, 100, 140, 140], 40, true);
+  line("one drag tail", ms(() => Fog.applyStroke(tail, state.w, state.h, mask, 0), 20),
+       "per frame while painting");
+
+  const el = document.getElementById("tests");
+  el.style.display = "block";
+  el.textContent = "Map Table frame cost\n" + "=".repeat(60) + "\n" +
+    rows.join("\n") + "\n" + "=".repeat(60) +
+    "\nEvery figure is milliseconds, forced through with getImageData.\n" +
+    "A frame has 16.7 ms at 60 Hz, and the fog used to take 40–60 of them.\n";
+  document.title = frame.toFixed(1) + " ms/frame — Map Table";
+}
+
 (async function boot(){
   if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  if(/[?&]bench=1/.test(location.search)){
+    wire();
+    let id = null; try{ id = localStorage.getItem(LAST_KEY); }catch(e){}
+    if(id){ const rec = await Fog.getMap(id).catch(() => null); if(rec) await loadMapRecord(rec); }
+    await runBench();
+    return;
+  }
   sizeCanvas();
   wire();
   if(!ch) say("This browser cannot link the two windows — the players' screen will not follow.");

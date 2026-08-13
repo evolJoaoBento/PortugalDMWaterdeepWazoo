@@ -86,7 +86,8 @@ reveals.
 | Message | Sent when | Payload |
 |---|---|---|
 | `view` | pan or zoom, throttled to one per animation frame | `{rect}` — the image-space rectangle `{x0,y0,x1,y1}` the DM's canvas is showing |
-| `stroke` | a stroke completes | the stroke object |
+| `stroke` | a stroke starts, or a rectangle or fill completes | the stroke object |
+| `extend` | the drag in progress gained points, throttled to one per animation frame | `{pts}` — only the points added since the last frame, appended to the last stroke |
 | `undo` | undo or redo | `{strokes}` — the authoritative list, since replaying a pop is fiddlier than resending |
 | `hello` | a player screen loads | — |
 | `sync` | DM answers a `hello`, and whenever the geometry changes under the screen — a map loaded or restored, a rotate | `{mapId, rect, strokes, rotation}` |
@@ -117,10 +118,23 @@ to sync.
 Strokes, in image-space coordinates, always:
 
 ```js
+{k:"path", pts:[x0,y0,x1,y1,…], r, reveal}   a whole brush drag
 {k:"line", x0,y0,x1,y1, r, reveal}
 {k:"rect", x0,y0,x1,y1, reveal}
 {k:"fill", reveal}
 ```
+
+**A drag is one stroke, not one per pointer sample.** Sampling produced a stroke per
+`pointermove`: a minute's painting became thousands of entries, every autosave and every
+`sync` carried all of them, and Ctrl-Z undid three pixels instead of the stroke the DM had
+just drawn. A `path` grows as the pointer moves and is drawn a tail at a time.
+
+That tail is why a path is stroked segment by segment rather than as one polyline, and why
+the first point is drawn as a disc. `destination-out` is **not idempotent** — erasing a
+half-covered antialiased edge pixel twice leaves less than erasing it once — so a replay has
+to repeat the live sequence operation for operation. Otherwise the mask restored after an
+undo or a reload would differ, along every join, from the one that was on screen. The suite
+asserts that equality.
 
 Image space is what makes the two windows agree. The DM's canvas and the projector's are
 different sizes and probably different aspect ratios; rasterising from image coordinates means
@@ -141,6 +155,30 @@ Undo, redo, `sync`, rotate and map loading still replay from zero.
 Rendering follows `dnd_map.py` exactly: the DM draws fog at **0.78 alpha** (`EDITOR_FOG_ALPHA`
 in the original) so hidden ground is still visible to the DM; the player screen draws it fully
 opaque.
+
+### What a frame is allowed to cost
+
+The first build drew a mask at full map resolution over the map on every frame, from inside
+every wheel tick and every `pointermove`. Three things follow from that, and all three are
+load-bearing:
+
+- **The mask raster is capped at 2048 on its long side** (`Fog.maskDims`). It is drawn over
+  the map every frame, and at full resolution that one call cost 40–60 ms for a 6.5 megapixel
+  map against 4 ms for the map itself. The **strokes are not scaled — the raster is**: every
+  coordinate in storage, on the channel and in both pages stays image space, and the mask
+  context carries the scale. Reversing that would misplace the fog the moment a map was large
+  enough to be capped, and no small test map would ever show it.
+- **Nothing paints inside an input handler.** Handlers change state and ask for a paint;
+  `Fog.coalesce` runs it once per animation frame. A 125 Hz mouse asked for 125 full repaints
+  a second, and that backlog — not any single drawing — is what "not smooth" was. Both pages
+  do this, and the projector coalesces incoming channel messages the same way.
+- **The map is resampled at `imageSmoothingQuality:"high"` and the fog at `"low"`.** The map
+  is a picture and the DM reads it; the fog is a two-valued mask whose resampling shows only
+  along the couple of pixels at a reveal's edge, and asking for it well costs three to four
+  times as much every frame.
+
+`map-table.html?bench=1` reports what a frame actually costs on the machine it is run on, in
+the same shape as `?test=1` reports the suite.
 
 ## Error handling
 
