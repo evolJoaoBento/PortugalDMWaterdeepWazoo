@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814a">
+<meta name="wazoo-build" content="20260814b">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -29,6 +29,24 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .rule{width:1px;align-self:stretch;background:#2b2014;margin:0 5px}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#fx-panel{
+  position:fixed;top:52px;left:14px;z-index:6;width:320px;max-height:70vh;display:none;
+  flex-direction:column;gap:8px;padding:10px;
+  background:rgba(11,8,5,.96);border:1px solid #3a2c1a;border-radius:3px;
+  box-shadow:0 12px 34px #000c;
+}
+#fx-panel.on{display:flex}
+#fx-search{
+  font:400 15px/1.4 "EB Garamond",Georgia,serif;color:#e8d9b8;
+  background:rgba(20,15,9,.8);border:1px solid #3a2c1a;border-radius:2px;padding:7px 9px;
+}
+#fx-list{overflow:auto;display:flex;flex-direction:column;gap:2px}
+#fx-list button{
+  font-family:"EB Garamond",Georgia,serif;font-size:14px;letter-spacing:0;text-transform:none;
+  text-align:left;padding:6px 8px;
+}
+#fx-list button .far{color:#8d7a5b;font-size:11px}
+#fx-credit{font:400 11px/1.4 "EB Garamond",Georgia,serif;color:#6d5a3a}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
 <script src="assets/spellfx.js?v=20260814b"></script>
@@ -46,9 +64,17 @@ body{margin:0;background:#0b0805;overflow:hidden}
   <button id="undo" type="button">Undo</button>
   <button id="redo" type="button">Redo</button>
   <span class="rule"></span>
+  <button id="fx-open" type="button">Effects</button>
+  <span id="fx-armed" class="said"></span>
+  <span class="rule"></span>
   <button id="open-screen" type="button">Open the players&rsquo; screen</button>
   <span class="rule"></span>
   <span id="said" class="said"></span>
+</div>
+<div id="fx-panel">
+  <input id="fx-search" type="search" placeholder="fireball, cone, lightning&hellip;" autocomplete="off">
+  <div id="fx-list"></div>
+  <div id="fx-credit">Animations by Jack Kerouac &mdash; Animated Spell Effects, GPL-3.0</div>
 </div>
 <canvas id="table"></canvas>
 <input id="file" type="file" accept="image/*" hidden>
@@ -174,7 +200,11 @@ function redraw(){
       const dpr = window.devicePixelRatio || 1;
       g.save();
       g.beginPath(); g.rect(b.x, b.y, b.w, b.h); g.clip();
-      if(preview.reveal){
+      if(armed){
+        /* Nothing to show inside the box: the spell is not there yet,
+           and the fog is not about to change. The outline alone says
+           where it will land. */
+      }else if(preview.reveal){
         g.imageSmoothingQuality = "high";
         g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
       }else{
@@ -189,7 +219,9 @@ function redraw(){
       g.save();
       g.setLineDash([7 * dpr, 5 * dpr]);
       g.lineWidth = Math.max(1, Math.round(dpr));
-      g.strokeStyle = preview.reveal ? "#e8d9b8" : "#8d7a5b";
+      /* An armed table previews in the colour of a spell, not of fog:
+         that box is about to burn, not to be revealed. */
+      g.strokeStyle = armed ? "#d0632a" : preview.reveal ? "#e8d9b8" : "#8d7a5b";
       g.strokeRect(b.x, b.y, b.w, b.h);
       g.restore();
     }
@@ -225,6 +257,10 @@ function drawPointer(g, cv){
     const c = Fog.imageToCanvas(v, laser.x, laser.y);
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
+
+  /* Above the fog and above the dot: the DM points at a thing and then
+     sets fire to it. */
+  SpellFx.draw(g, v);
 }
 
 /* A ping has to be redrawn on frames nothing else asks for — it is an
@@ -235,11 +271,16 @@ function animatePings(){
   if(ringing) return;
   ringing = true;
   (function step(){
-    if(!pings.length){ ringing = false; requestPaint(); return; }
+    if(!pings.length && !SpellFx.playing()){ ringing = false; requestPaint(); return; }
     requestPaint();
     requestAnimationFrame(step);
   })();
 }
+
+/* A playing effect needs frames nothing else is asking for — exactly the
+   problem the ping already has. One loop serves both, so two rAF chains
+   cannot both believe they own the frame. */
+function animateFx(){ animatePings(); }
 
 /* Every handler asks for a paint; none of them paints. A wheel notch, a
    pan sample and a drag sample all arrive faster than the screen
@@ -365,6 +406,68 @@ function wireView(){
   });
 }
 
+/* ── the effects panel ─────────────────────────────────────────────
+   376 animations, and the DM has to find one mid-combat. Type a word,
+   pick a line, and the table is ARMED: the next left-drag is a cast
+   rather than a rectangle of fog. The armed effect is named in the bar
+   the whole time, because a mode you cannot see is a mode you forget
+   you are in — and forgetting this one means a fireball where you meant
+   to lift the fog off a corridor. */
+let armed = null;
+
+function armFx(effect){
+  armed = effect || null;
+  document.getElementById("fx-armed").textContent = armed ? "armed: " + armed.name : "";
+  document.getElementById("table").style.cursor = armed ? "copy" : "crosshair";
+  if(armed){
+    /* Both windows warm the file up, or the projector stutters through
+       the first cast of the evening while the table plays it smoothly. */
+    SpellFx.preload(armed);
+    send({t:"preload", path:armed.path});
+  }
+}
+
+/* A drag's two corners as the message the projector will receive.
+   Separate from the gesture so the shape of what crosses the channel can
+   be asserted without a pointer, a map or a video. */
+function castPayload(effect, a, b){
+  return { t:"cast", path:effect.path,
+           rect:{ x0:Math.min(a.x, b.x), y0:Math.min(a.y, b.y),
+                  x1:Math.max(a.x, b.x), y1:Math.max(a.y, b.y) } };
+}
+
+function fxList(query){
+  const box = document.getElementById("fx-list");
+  const idx = SpellFx.index();
+  box.textContent = "";
+  if(!idx){ box.textContent = "No catalogue — data/spell-effects.json did not load."; return; }
+  /* Sixty is what a panel this tall can show without becoming a scroll
+     race; the search is how you get past it. */
+  SpellFx.search(idx.effects, query).slice(0, 60).forEach(function(e){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = e.name + " ";
+    const tag = document.createElement("span");
+    tag.className = "far";
+    tag.textContent = e.category + (e.shape ? " · " + e.shape : "") +
+                      (e.bundled ? "" : " · fetches");
+    b.appendChild(tag);
+    b.addEventListener("click", function(){ armFx(e); });
+    box.appendChild(b);
+  });
+}
+
+function wireFx(){
+  const panel = document.getElementById("fx-panel");
+  const search = document.getElementById("fx-search");
+  document.getElementById("fx-open").addEventListener("click", function(){
+    panel.classList.toggle("on");
+    if(panel.classList.contains("on")){ fxList(search.value); search.focus(); }
+  });
+  search.addEventListener("input", function(){ fxList(this.value); });
+  SpellFx.loadIndex().then(function(){ if(panel.classList.contains("on")) fxList(search.value); });
+}
+
 function wire(){
   const file = document.getElementById("file");
   document.getElementById("open-map").addEventListener("click", () => file.click());
@@ -378,8 +481,10 @@ function wire(){
     const on = document.getElementById(onId), off = document.getElementById(offId);
     on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
   };
-  pick("a-reveal", "a-hide", () => reveal = true);
-  pick("a-hide", "a-reveal", () => reveal = false);
+  /* Reaching for a fog tool disarms: the DM has said what they want the
+     next drag to be, and it is not a fireball. */
+  pick("a-reveal", "a-hide", () => { reveal = true; armFx(null); });
+  pick("a-hide", "a-reveal", () => { reveal = false; armFx(null); });
   document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
   document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
   document.getElementById("rotate").addEventListener("click", rotate);
@@ -396,6 +501,12 @@ function wire(){
       if(!e.repeat) setLaser(true);
       return;
     }
+    /* Escape puts the fog tools back and shuts the panel. */
+    if(e.key === "Escape"){
+      armFx(null);
+      document.getElementById("fx-panel").classList.remove("on");
+      return;
+    }
     if(!(e.ctrlKey || e.metaKey)) return;
     if(e.key === "z"){ e.preventDefault(); undo(); }
     if(e.key === "y"){ e.preventDefault(); redo(); }
@@ -406,6 +517,7 @@ function wire(){
   /* Alt-tabbing away with Space down never delivers the keyup, and the
      dot would be left burning on the projector. */
   window.addEventListener("blur", function(){ setLaser(false); });
+  wireFx();
   wirePaint();
 
   document.getElementById("open-screen").addEventListener("click", function(){
@@ -623,7 +735,18 @@ function wirePaint(){
     const p = at(e.clientX, e.clientY);
     /* A click paints nothing, so it must not cost an undo, a save and a
        message. Only a box with both sides to it is committed. */
-    if(bigEnough(start, p)) pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+    if(bigEnough(start, p)){
+      if(armed){
+        /* A cast is not a stroke: no undo slot, no autosave, nothing in
+           a sync. It happens and it is over. */
+        const msg = castPayload(armed, start, p);
+        SpellFx.cast(armed, msg.rect);
+        send(msg);
+        animateFx();
+      }else{
+        pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+      }
+    }
     stop();
   });
 
@@ -928,6 +1051,21 @@ function runTests(){
        .map(c => c.path).join("") === "ac");
   ok("nothing playing is not an error", SpellFx.reap([]).length === 0 &&
      SpellFx.playing() === false);
+
+  /* What a cast puts on the channel. Image space, like every other
+     rectangle here — the projector's canvas is a different size, and a
+     box in this window's device pixels lands somewhere else on it. */
+  const castMsg = castPayload({path:"fire/fire_explosion_CIRCLE_01.webm"},
+                              {x:900, y:400}, {x:300, y:120});
+  ok("a cast names the effect", castMsg.t === "cast" &&
+     castMsg.path === "fire/fire_explosion_CIRCLE_01.webm");
+  ok("a cast carries a normalised image-space rectangle",
+     castMsg.rect.x0 === 300 && castMsg.rect.y0 === 120 &&
+     castMsg.rect.x1 === 900 && castMsg.rect.y1 === 400, JSON.stringify(castMsg.rect));
+  ok("a cast carries no device pixels", castMsg.view === undefined && castMsg.z === undefined,
+     "z/tx/ty belong to this canvas and mean something else on the projector");
+  ok("a cast survives the channel",
+     JSON.parse(JSON.stringify(castMsg)).rect.x1 === 900, "it must be structured-clonable");
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));
