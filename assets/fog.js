@@ -48,16 +48,44 @@
     return { x0:a.x, y0:a.y, x1:b.x, y1:b.y };
   }
 
-  /* How much tighter than a bare contain-fit the projector frames what the
-     table sent. A contain-fit is the safe thing to send — nothing the DM
-     has framed can fall off the edge — but it also means the slack axis is
-     always letterboxed, and across a room that reads as a small map with
-     black bars. A tenth over fills them. It is a real crop, not free: the
-     tight axis loses the whole tenth, and the slack axis loses whatever
-     the letterbox did not already cover. Both windows read this constant,
-     so what the table believes it is sending and what the screen shows
-     cannot drift. */
-  var SCREEN_ZOOM = 1.1;
+  /* How much tighter than a bare contain-fit the projector frames what
+     the table sent.
+
+     This was 1.1, and it was treating a symptom. The map looked small on
+     the projector because the table was sending the whole of its own
+     window — mostly empty table either side of a portrait map — and a
+     tenth of overscan hid a little of that. clampRect fixed the cause:
+     what crosses now is the map, so a plain fit already fills the
+     projector as far as the map's shape allows.
+
+     With the margins gone, a tenth of overscan no longer eats emptiness;
+     it eats the map's own edges, which is a poor trade for a table that
+     has just been shown the whole dungeon. So: 1, a faithful fit. The
+     mechanism stays because the choice is worth one number — put 1.1
+     back here and both windows agree about it again. */
+  var SCREEN_ZOOM = 1;
+
+  /* The part of that rectangle which is actually map.
+
+     A view is the whole canvas, and the canvas is rarely the shape of the
+     map: a 1912×940 window showing a 6800×8700 map fit to it is mostly
+     empty table either side. Sent as-is, the projector dutifully frames
+     that emptiness and the map lands small in the middle of it — worst
+     after a rotate, which is the one moment the table deliberately fits
+     the whole map and so carries the widest margins.
+
+     Empty space is not map. What crosses the channel is the intersection
+     with the picture, so the projector frames what there is to look at
+     and fills its own screen with it. A view that has left the map behind
+     entirely has no intersection to send, and is passed through
+     unchanged rather than turned into a rectangle of nothing. */
+  function clampRect(r, w, h){
+    if(!w || !h) return r;
+    var x0 = Math.max(0, Math.min(r.x0, r.x1)), x1 = Math.min(w, Math.max(r.x0, r.x1));
+    var y0 = Math.max(0, Math.min(r.y0, r.y1)), y1 = Math.min(h, Math.max(r.y0, r.y1));
+    if(!(x1 > x0) || !(y1 > y0)) return r;
+    return { x0:x0, y0:y0, x1:x1, y1:y1 };
+  }
 
   /* The view that shows that rectangle on a canvas of cw × ch, contain-
      fitted and centred. This is what lets two differently-sized,
@@ -73,6 +101,30 @@
     if(!(rw > 0) || !(rh > 0)) return { z:1, tx:0, ty:0 };
     var z = Math.min(cw / rw, ch / rh) * (zoom || 1);
     return { z: z, tx: (cw - rw * z) / 2 - r.x0 * z, ty: (ch - rh * z) / 2 - r.y0 * z };
+  }
+
+  /* ── the wheel ────────────────────────────────────────────────────
+     How much one wheel event should zoom.
+
+     A fixed factor per event is the bug this replaces. A notched mouse
+     sends one event per notch and looked fine; a trackpad or a precision
+     wheel sends a stream of small ones, and a fixed 1.15 applied twenty
+     times over is 16×, which slams into the clamp and repaints all the
+     way there. That is what "zooming is laggy" was — not the drawing.
+
+     So the factor comes from the distance actually scrolled. deltaMode
+     says what the number means: 0 pixels, 1 lines, 2 pages. A line is
+     about 16 px; a page is the viewport. The result is clamped per event
+     so one absurd delta cannot jump the whole map. */
+  var WHEEL_RATE = 0.0015;      /* a 100 px notch ≈ 1.16, the old feel */
+  var WHEEL_CLAMP = 1.5;
+
+  function wheelFactor(deltaY, deltaMode, viewportPx){
+    var px = deltaY;
+    if(deltaMode === 1) px = deltaY * 16;
+    else if(deltaMode === 2) px = deltaY * (viewportPx || 800);
+    var f = Math.exp(-px * WHEEL_RATE);
+    return Math.min(WHEEL_CLAMP, Math.max(1 / WHEEL_CLAMP, f));
   }
 
   /* Zoom about a canvas point, keeping whatever is under it still.
@@ -194,6 +246,109 @@
     var c = cap || MASK_CAP;
     var s = Math.min(1, c / Math.max(w || 1, h || 1));
     return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)), s: s };
+  }
+
+  /* ── the map, at the size the screen can actually show ────────────
+     The mask was capped for this reason and the map needs it too. A
+     6800×8700 map is a 59 megapixel texture, and resampling it well
+     costs about 6 ms every frame before anything else is drawn — which
+     is affordable at rest and is not affordable while the wheel is
+     turning and each frame is thrown away in 16 ms.
+
+     So a downscaled proxy is built once per map and drawn WHILE MOVING;
+     the real thing goes back up once the gesture settles. The proxy is
+     never stroked, never stored and never sent: it is a picture of the
+     map and nothing else depends on it. Below the cap there is nothing
+     to gain, and makeProxy says so by resolving to null. */
+  var PROXY_CAP = 2048;
+  var SETTLE_MS = 120;          /* how long after the last move to go sharp */
+
+  function proxyDims(w, h){ return maskDims(w, h, PROXY_CAP); }
+
+  function makeProxy(img, w, h){
+    var d = proxyDims(w, h);
+    if(d.s === 1 || typeof createImageBitmap !== "function") return Promise.resolve(null);
+    return createImageBitmap(img, {resizeWidth:d.w, resizeHeight:d.h, resizeQuality:"high"})
+      .catch(function(){ return null; });
+  }
+
+  /* Let go of a decoded picture.
+
+     A 6800×8700 ImageBitmap is about 236 MB of memory, and both pages
+     make one every time a map is loaded — the projector makes a fresh
+     one on every sync, so a few rotates in a row can leave half a dozen
+     of them alive. The garbage collector gets there eventually; the
+     renderer can wedge before it does. close() is immediate. Anything
+     that is not an ImageBitmap (a canvas from rotateImage, a null) is
+     left alone. */
+  function release(x){
+    if(x && typeof x.close === "function") x.close();
+    return null;
+  }
+
+  /* Which picture this frame draws, and how well to resample it. Pure,
+     so the rule is testable without a map, a canvas or a gesture: while
+     moving take the proxy if there is one and resample it cheaply,
+     otherwise the original at full quality. */
+  function sourceFor(moving, proxy, img){
+    if(moving && proxy) return { img: proxy, quality: "low" };
+    return { img: img, quality: moving ? "low" : "high" };
+  }
+
+  /* ── the pointer ──────────────────────────────────────────────────
+     A laser dot and the ring a click drops. Both are drawn by both
+     windows, so they live here: two hand-written copies of a fading
+     ring are two chances for the DM and the players to be looking at
+     different things.
+
+     Sizes are CANVAS pixels, not image pixels. A laser is a fixed dot
+     on the wall; one measured in map space would swell every time the
+     DM zoomed in, which is not what anybody means by pointing. */
+  var LASER_R = 9, PING_LIFE = 700, PING_R0 = 10, PING_R1 = 70;
+
+  /* Where a ping is at `age` milliseconds, or null once it is over.
+     The radius eases out — fast at first, slack at the end — because a
+     ring that expands linearly reads as a growing circle rather than as
+     something struck. */
+  function pingAt(age, life){
+    var L = life || PING_LIFE;
+    if(!(age >= 0) || age >= L) return null;
+    var t = age / L, e = 1 - Math.pow(1 - t, 3);
+    return { t: t, r: PING_R0 + (PING_R1 - PING_R0) * e, alpha: 1 - t };
+  }
+
+  function drawLaser(g, x, y, k){
+    var r = LASER_R * (k || 1);
+    g.save();
+    var glow = g.createRadialGradient(x, y, 0, x, y, r * 3);
+    glow.addColorStop(0,   "rgba(255,60,40,.55)");
+    glow.addColorStop(0.5, "rgba(255,40,30,.18)");
+    glow.addColorStop(1,   "rgba(255,30,20,0)");
+    g.fillStyle = glow;
+    g.beginPath(); g.arc(x, y, r * 3, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ff2a1a";
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    /* A white core is what makes it read as a laser rather than a red
+       sticker, and it survives being projected onto a lit table. */
+    g.fillStyle = "rgba(255,235,225,.95)";
+    g.beginPath(); g.arc(x, y, r * 0.42, 0, Math.PI * 2); g.fill();
+    g.restore();
+    return true;
+  }
+
+  /* Returns false once the ping has expired, which is how both pages
+     know to drop it from their list. */
+  function drawPing(g, x, y, age, k, life){
+    var p = pingAt(age, life);
+    if(!p) return false;
+    var s = k || 1;
+    g.save();
+    g.globalAlpha = p.alpha;
+    g.strokeStyle = "#ff3a26";
+    g.lineWidth = 3 * s;
+    g.beginPath(); g.arc(x, y, p.r * s, 0, Math.PI * 2); g.stroke();
+    g.restore();
+    return true;
   }
 
   /* Draw the strokes, in order, into an alpha mask of w×h.
@@ -375,9 +530,20 @@
     fitScale: fitScale,
     fitView: fitView,
     viewRect: viewRect,
+    clampRect: clampRect,
     viewFromRect: viewFromRect,
     SCREEN_ZOOM: SCREEN_ZOOM,
     zoomAt: zoomAt,
+    wheelFactor: wheelFactor,
+    proxyDims: proxyDims,
+    makeProxy: makeProxy,
+    sourceFor: sourceFor,
+    release: release,
+    SETTLE_MS: SETTLE_MS,
+    pingAt: pingAt,
+    drawLaser: drawLaser,
+    drawPing: drawPing,
+    PING_LIFE: PING_LIFE,
     line: line,
     rect: rect,
     fill: fill,

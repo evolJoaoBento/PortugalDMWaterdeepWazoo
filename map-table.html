@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813b">
+<meta name="wazoo-build" content="20260813d">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -30,7 +30,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
-<script src="assets/fog.js?v=20260813b"></script>
+<script src="assets/fog.js?v=20260813d"></script>
 </head>
 <body>
 <div id="bar">
@@ -66,10 +66,22 @@ body{margin:0;background:#0b0805;overflow:hidden}
 const FOG_ALPHA = 0.78;          /* EDITOR_FOG_ALPHA in dnd_map.py */
 const ZMIN = 0.02, ZMAX = 40;
 
-const state = { mapId:null, img:null, w:0, h:0, rotation:0, strokes:[], view:{z:1,tx:0,ty:0} };
+const state = { mapId:null, img:null, proxy:null, w:0, h:0, rotation:0, strokes:[],
+                view:{z:1,tx:0,ty:0} };
 let mask = document.createElement("canvas");
 
 function say(msg){ document.getElementById("said").textContent = msg || ""; }
+
+/* The context is asked for once, with alpha off. A canvas with an alpha
+   channel is blended against the page on every frame; this one covers
+   the window and never shows anything through it. The options are only
+   honoured on the FIRST getContext of a canvas, which is why every call
+   site goes through here rather than asking the canvas itself. */
+let ctx2d = null;
+function ctx(){
+  if(!ctx2d) ctx2d = document.getElementById("table").getContext("2d", {alpha:false});
+  return ctx2d;
+}
 
 function sizeCanvas(){
   const cv = document.getElementById("table");
@@ -77,6 +89,18 @@ function sizeCanvas(){
   cv.width  = Math.round(cv.clientWidth  * dpr);
   cv.height = Math.round(cv.clientHeight * dpr);
   return cv;
+}
+
+/* ── moving, or settled ────────────────────────────────────────────
+   While the wheel turns or a pan drags, the frame is thrown away in
+   16 ms and resampling 59 megapixels well is wasted on it. `moving`
+   picks the proxy; the timer puts the real map back a moment after the
+   gesture stops, so what the DM ends up looking at is always sharp. */
+let moving = false, settleT = null;
+function nudge(){
+  moving = true;
+  clearTimeout(settleT);
+  settleT = setTimeout(function(){ moving = false; requestPaint(); }, Fog.SETTLE_MS);
 }
 
 /* The drag in progress, or null: two image-space corners and what letting
@@ -105,7 +129,7 @@ function bigEnough(a, b){
 
 function redraw(){
   const cv = document.getElementById("table");
-  const g = cv.getContext("2d");
+  const g = ctx();
   g.setTransform(1,0,0,1,0,0);
   g.fillStyle = "#0b0805";
   g.fillRect(0,0,cv.width,cv.height);
@@ -115,12 +139,17 @@ function redraw(){
     g.font = '16px "EB Garamond", Georgia, serif';
     g.textAlign = "center";
     g.fillText(Fog.emptyMessage(), cv.width/2, cv.height/2);
+    drawPointer(g, cv);
     return;
   }
 
   const v = state.view;
-  g.imageSmoothingQuality = "high";
-  g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+  /* The proxy while the view is moving, the real map once it settles.
+     The destination is the same either way — a smaller source drawn to
+     the same rectangle is simply a coarser picture of it. */
+  const src = Fog.sourceFor(moving, state.proxy, state.img);
+  g.imageSmoothingQuality = src.quality;
+  g.drawImage(src.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
 
   /* The map is resampled at "high" because it is a picture and the DM
      reads it. The fog is not a picture — it is a two-valued mask, black
@@ -164,6 +193,51 @@ function redraw(){
       g.restore();
     }
   }
+
+  drawPointer(g, cv);
+}
+
+/* ── the laser ─────────────────────────────────────────────────────
+   Hold Space and the dot follows the pointer, here and on the
+   projector; click while holding and a ring is dropped where the
+   click landed. Neither is a stroke: nothing goes into the undo
+   stack, nothing is saved, nothing appears in a `sync`. The map is
+   not changed by pointing at it.
+
+   The position is kept in IMAGE space, like everything else that
+   crosses the channel — the two windows are different sizes, and a
+   dot in canvas pixels would land somewhere else on the projector.
+   The SIZE is canvas pixels, because a laser is a fixed dot on the
+   wall and one measured in map space would swell as the DM zoomed. */
+let laser = null;              /* {x,y} in image space, or null */
+const pings = [];              /* {x,y,t0} in image space */
+
+function drawPointer(g, cv){
+  const dpr = window.devicePixelRatio || 1;
+  const v = state.view;
+  const now = performance.now();
+  for(let i = pings.length - 1; i >= 0; i--){
+    const p = pings[i], c = Fog.imageToCanvas(v, p.x, p.y);
+    if(!Fog.drawPing(g, c.x, c.y, now - p.t0, dpr)) pings.splice(i, 1);
+  }
+  if(laser){
+    const c = Fog.imageToCanvas(v, laser.x, laser.y);
+    Fog.drawLaser(g, c.x, c.y, dpr);
+  }
+}
+
+/* A ping has to be redrawn on frames nothing else asks for — it is an
+   animation, not a response to an event. The loop runs only while one
+   is alive, and stops the moment the list empties. */
+let ringing = false;
+function animatePings(){
+  if(ringing) return;
+  ringing = true;
+  (function step(){
+    if(!pings.length){ ringing = false; requestPaint(); return; }
+    requestPaint();
+    requestAnimationFrame(step);
+  })();
 }
 
 /* Every handler asks for a paint; none of them paints. A wheel notch, a
@@ -178,6 +252,22 @@ function remask(){
   requestPaint();
 }
 
+/* Build the proxy for whatever the map currently is.
+
+   Generation-counted, exactly as the projector counts its decodes: two
+   rotates in quick succession leave two of these in flight, and if the
+   first finishes last the table ends up drawing a proxy that is a
+   quarter-turn out of step with the map every time the view moves. The
+   loser is released rather than dropped, or the counter would leak the
+   very bitmaps release() exists to reclaim. */
+let proxyGen = 0;
+async function setProxy(){
+  const gen = ++proxyGen;
+  const p = await Fog.makeProxy(state.img, state.w, state.h);
+  if(gen !== proxyGen){ Fog.release(p); return; }
+  state.proxy = p;
+}
+
 /* Swap in a stored map: decode it, fit it, and pick its fog back up. */
 async function loadMapRecord(rec){
   const raw = await createImageBitmap(rec.blob);
@@ -186,8 +276,21 @@ async function loadMapRecord(rec){
   state.rotation = (f && f.rotation) || 0;
   state.strokes = (f && f.strokes) || [];
   /* Bring the picture to the orientation the saved strokes assume. */
-  state.img = Fog.rotateImage(raw, state.rotation);
+  const turned = Fog.rotateImage(raw, state.rotation);
+  /* Whatever this map replaces is hundreds of megabytes; let go of it
+     here rather than waiting for a collector that may arrive after the
+     renderer has run out of room. `turned` is `raw` itself when there is
+     no rotation, which is why the two are compared before releasing. */
+  if(turned !== raw) Fog.release(raw);
+  /* Nulled, not merely released: drawing a closed bitmap throws, and a
+     frame can land between here and the new proxy arriving. */
+  Fog.release(state.img); state.proxy = Fog.release(state.proxy);
+  state.img = turned;
   state.w = state.img.width; state.h = state.img.height;
+  /* Built off the map that was just decoded. Awaited rather than left to
+     arrive later: the first thing the DM does with a new map is zoom it,
+     and a proxy that turns up afterwards helps nobody. */
+  await setProxy();
   const cv = sizeCanvas();
   state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
   stack.strokes = state.strokes; stack.undone.length = 0;
@@ -222,8 +325,13 @@ function wireView(){
     if(!state.img) return;
     e.preventDefault();
     const dpr = window.devicePixelRatio || 1;
-    const f = e.deltaY < 0 ? 1.15 : 1/1.15;
+    /* From the distance actually scrolled, not a fixed step per event.
+       A trackpad sends a stream of small deltas and a fixed step turned
+       a flick into sixteen-fold zoom and a repaint at every stop along
+       the way. */
+    const f = Fog.wheelFactor(e.deltaY, e.deltaMode, cv.height);
     state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
+    nudge();
     requestPaint();
     sendView();
   }, {passive:false});
@@ -241,6 +349,7 @@ function wireView(){
     state.view.tx += (e.clientX - lx) * dpr;
     state.view.ty += (e.clientY - ly) * dpr;
     lx = e.clientX; ly = e.clientY;
+    nudge();
     requestPaint();
     sendView();
   });
@@ -276,10 +385,26 @@ function wire(){
   document.getElementById("undo").addEventListener("click", undo);
   document.getElementById("redo").addEventListener("click", redo);
   document.addEventListener("keydown", function(e){
+    /* Space is the laser, held. A toggle would be a mode to forget you
+       are in, and forgetting it means a left-drag that pings the table
+       instead of lifting fog. Held, there is nothing to forget.
+       preventDefault because Space also re-presses whatever toolbar
+       button was last clicked. */
+    if(e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey){
+      e.preventDefault();
+      if(!e.repeat) setLaser(true);
+      return;
+    }
     if(!(e.ctrlKey || e.metaKey)) return;
     if(e.key === "z"){ e.preventDefault(); undo(); }
     if(e.key === "y"){ e.preventDefault(); redo(); }
   });
+  document.addEventListener("keyup", function(e){
+    if(e.code === "Space") setLaser(false);
+  });
+  /* Alt-tabbing away with Space down never delivers the keyup, and the
+     dot would be left burning on the projector. */
+  window.addEventListener("blur", function(){ setLaser(false); });
   wirePaint();
 
   document.getElementById("open-screen").addEventListener("click", function(){
@@ -336,10 +461,18 @@ function saveFog(){
    canvas is another size at another devicePixelRatio, so applied
    verbatim they crop the map and every pan carries the error along.
    The canvas is read at send time because it is the sender's dimensions
-   that turn a view into a rectangle. */
+   that turn a view into a rectangle.
+
+   And what is sent is the part of that rectangle which is MAP. This
+   window is wider than the map is, so fitting the map to it leaves
+   empty table either side; sent whole, the projector frames the
+   emptiness too and the map ends up small in the middle of it. Rotate
+   made it obvious because rotate is the one action that fits the whole
+   map, and so carries the widest margins. */
 function syncPayload(s, canvas){
   const cv = canvas || document.getElementById("table");
-  return { t:"sync", mapId:s.mapId, rect:Fog.viewRect(s.view, cv.width, cv.height),
+  return { t:"sync", mapId:s.mapId,
+           rect:Fog.clampRect(Fog.viewRect(s.view, cv.width, cv.height), s.w, s.h),
            strokes:s.strokes, rotation:s.rotation };
 }
 
@@ -359,8 +492,44 @@ function sendView(){
   requestAnimationFrame(function(){
     viewPending = false;
     const cv = document.getElementById("table");
-    send({t:"view", rect:Fog.viewRect(state.view, cv.width, cv.height)});
+    send({t:"view", rect:Fog.clampRect(Fog.viewRect(state.view, cv.width, cv.height),
+                                       state.w, state.h)});
   });
+}
+
+/* The dot moves with the pointer, so it is sent at most once per frame,
+   for the same reason the view is: a 125 Hz mouse would otherwise post
+   125 messages a second at the projector. */
+let laserPending = false;
+function sendLaser(){
+  if(!ch || laserPending || !laser) return;
+  laserPending = true;
+  requestAnimationFrame(function(){
+    laserPending = false;
+    if(laser) send({t:"laser", x:laser.x, y:laser.y});
+  });
+}
+
+/* Space down and Space up, and anything else that has to end the dot —
+   the window losing focus, most of all, since alt-tabbing with Space
+   held never delivers a keyup and would leave it burning on the
+   projector. `held` is separate from `laser` because the key can be
+   held before the pointer has ever been over the map, and there is
+   nowhere to draw a dot until it has. */
+let held = false, pointerAt = null;
+function setLaser(on){
+  if(on === held) return;
+  held = on;
+  const cv = document.getElementById("table");
+  cv.style.cursor = on ? "none" : "crosshair";
+  if(on){
+    laser = pointerAt;
+    if(laser) send({t:"laser", x:laser.x, y:laser.y});
+  }else{
+    laser = null;
+    send({t:"laser", off:true});
+  }
+  requestPaint();
 }
 
 function pushStroke(s){
@@ -413,12 +582,32 @@ function wirePaint(){
 
   cv.addEventListener("pointerdown", function(e){
     if(e.button !== 0 || !state.img) return;
+    /* Space held means the pointer is a laser, and a laser does not lift
+       fog. The click drops a ring instead — on both windows, from one
+       message, so the players see the ring the DM is looking at. */
+    if(held){
+      const p = at(e.clientX, e.clientY);
+      pings.push({x:p.x, y:p.y, t0:performance.now()});
+      send({t:"ping", x:p.x, y:p.y});
+      animatePings();
+      return;
+    }
     drawing = true; cv.setPointerCapture(e.pointerId);
     start = at(e.clientX, e.clientY);
     preview = { a:start, b:start, reveal:reveal };
   });
 
   cv.addEventListener("pointermove", function(e){
+    /* Tracked whether or not a button is down: Space can be pressed
+       while the pointer is simply resting over the map, and the dot has
+       to appear where it already is rather than on the next twitch. */
+    if(state.img) pointerAt = at(e.clientX, e.clientY);
+    if(held){
+      laser = pointerAt;
+      sendLaser();
+      requestPaint();
+      return;
+    }
     if(!drawing || !start) return;
     /* Only the corner the pointer is at — the samples the browser
        buffered between frames say nothing a rectangle needs. One repaint
@@ -444,20 +633,44 @@ function wirePaint(){
     if(!drawing) return;
     stop();
   });
+
+  /* The pointer leaving the map would otherwise strand the dot against
+     whichever edge it left by — on the projector as well, where it would
+     sit there while the DM is reading a book. */
+  cv.addEventListener("pointerleave", function(){
+    pointerAt = null;
+    if(!held || !laser) return;
+    laser = null;
+    send({t:"laser", off:true});
+    requestPaint();
+  });
 }
 
-function rotate(){
+async function rotate(){
   if(!state.img) return;
-  const oldH = state.h;
+  const oldH = state.h, was = state.img;
   state.img = Fog.rotateImage(state.img, 1);
+  Fog.release(was);
   state.w = state.img.width; state.h = state.img.height;
+  /* The proxy is a picture of the map and the map has just turned. Drop
+     it first so a frame between here and the new one cannot draw the
+     old orientation, then build the replacement. */
+  state.proxy = Fog.release(state.proxy);
   state.rotation = (state.rotation + 1) % 4;
+  /* The dot and any rings are in the coordinates the map had a moment
+     ago, and there is no sensible way to carry a laser through a
+     quarter-turn — the DM's hand has not moved. Drop them; the next
+     twitch of the pointer puts the dot back where it belongs. */
+  pings.length = 0;
+  if(laser){ laser = null; send({t:"laser", off:true}); }
   state.strokes = Fog.rotateStrokes(state.strokes, oldH);
   stack.strokes = state.strokes; stack.undone.length = 0;
   const c = sizeCanvas();
   state.view = Fog.fitView(state.w, state.h, c.width, c.height);
   remask(); saveFog();
   send(syncPayload(state));
+  await setProxy();
+  requestPaint();
 }
 
 /* =========================================================================
@@ -522,19 +735,48 @@ function runTests(){
      shown.y0 <= vr.y0 + 0.001 && shown.y1 >= vr.y1 - 0.001 &&
      near((shown.y0 + shown.y1) / 2, (vr.y0 + vr.y1) / 2),
      "sent " + JSON.stringify(vr) + " but the screen would show " + JSON.stringify(shown));
-  /* That contain-fit is the framing maths. What the projector then does
-     with it is a deliberate crop: a bare fit letterboxes the slack axis,
-     and black bars across a room read as a small map. The overscan keeps
-     the same centre and shows a tenth less. */
-  ok("the projector overscans by a tenth", Fog.SCREEN_ZOOM === 1.1, String(Fog.SCREEN_ZOOM));
+  /* ── only the map is sent, never the table around it ──────────────
+     A view is the whole canvas. This window is far wider than a portrait
+     map fitted into it, so most of that view is empty table — and the
+     projector, told to frame it, put the map small in the middle. It
+     showed worst after a rotate, which fits the whole map and so carries
+     the widest margins. */
+  const wide = Fog.viewRect(Fog.fitView(6800, 8700, 1912, 940), 1912, 940);
+  const trimmed = Fog.clampRect(wide, 6800, 8700);
+  ok("the margins either side of the map are not sent",
+     wide.x0 < -1000 && near(trimmed.x0, 0) && near(trimmed.x1, 6800),
+     "sent " + JSON.stringify(wide) + " and should send " + JSON.stringify(trimmed));
+  ok("the axis that already fits is left alone",
+     near(trimmed.y0, 0) && near(trimmed.y1, 8700), JSON.stringify(trimmed));
+  ok("a framing inside the map is untouched",
+     JSON.stringify(Fog.clampRect({x0:100,y0:200,x1:900,y1:1200}, 6800, 8700)) ===
+     JSON.stringify({x0:100,y0:200,x1:900,y1:1200}));
+  ok("a view that has left the map behind is sent as it is",
+     Fog.clampRect({x0:-900,y0:-900,x1:-100,y1:-100}, 6800, 8700).x0 === -900,
+     "an empty intersection is not a rectangle anyone can frame");
+  ok("with no map loaded there is nothing to clamp to",
+     Fog.clampRect({x0:-50,y0:-50,x1:50,y1:50}, 0, 0).x0 === -50);
 
-  const over = Fog.viewFromRect(vr, 800, 600, Fog.SCREEN_ZOOM);
+  const clamped = syncPayload({mapId:"m1", view:Fog.fitView(6800, 8700, 1912, 940),
+                               w:6800, h:8700, strokes:[], rotation:0},
+                              {width:1912, height:940});
+  ok("a sync carries the trimmed framing, not the window's",
+     near(clamped.rect.x0, 0) && near(clamped.rect.x1, 6800), JSON.stringify(clamped.rect));
+
+  /* The projector shows the framing faithfully. Overscan exists as a
+     mechanism — one constant, read by both windows — but it is 1: with
+     the margins trimmed out of the rectangle, a tenth of overscan would
+     crop the map's own edges rather than empty table. */
+  ok("the projector crops nothing the table framed", Fog.SCREEN_ZOOM === 1,
+     "SCREEN_ZOOM is " + Fog.SCREEN_ZOOM + " — anything above 1 loses the map's edges");
+
+  const over = Fog.viewFromRect(vr, 800, 600, 1.1);
   const oShown = Fog.viewRect(over, 800, 600);
-  ok("an overscanned fit is a tenth tighter",
-     near((oShown.x1 - oShown.x0) * Fog.SCREEN_ZOOM, vr.x1 - vr.x0) &&
-     near((oShown.y1 - oShown.y0) * Fog.SCREEN_ZOOM, vr.y1 - vr.y0),
+  ok("the mechanism still tightens when it is asked to",
+     near((oShown.x1 - oShown.x0) * 1.1, vr.x1 - vr.x0) &&
+     near((oShown.y1 - oShown.y0) * 1.1, vr.y1 - vr.y0),
      JSON.stringify(oShown));
-  ok("an overscanned fit keeps the same ground centred",
+  ok("a tightened fit keeps the same ground centred",
      near((oShown.x0 + oShown.x1) / 2, (vr.x0 + vr.x1) / 2) &&
      near((oShown.y0 + oShown.y1) / 2, (vr.y0 + vr.y1) / 2),
      "zooming about a corner would drift the map off the projector");
@@ -688,6 +930,83 @@ function runTests(){
      rotP.k === "path" && rotP.pts[0] === 80 && rotP.pts[1] === 10 &&
      rotP.pts[2] === 60 && rotP.pts[3] === 30, JSON.stringify(rotP));
 
+  /* ── the wheel ────────────────────────────────────────────────────
+     A fixed factor per event was the whole of "zooming is laggy". One
+     notch of a wheel mouse is one event and looked fine; a trackpad
+     sends twenty small ones for the same flick, and 1.15 twenty times
+     over is sixteen-fold — into the clamp, repainting all the way. The
+     factor has to come from the distance scrolled. */
+  ok("a wheel notch zooms about as much as it used to",
+     Fog.wheelFactor(-100, 0, 800) > 1.14 && Fog.wheelFactor(-100, 0, 800) < 1.18,
+     String(Fog.wheelFactor(-100, 0, 800)));
+  ok("scrolling the other way zooms out by the same amount",
+     near(Fog.wheelFactor(100, 0, 800) * Fog.wheelFactor(-100, 0, 800), 1),
+     "in and straight back out must land where it started");
+  ok("no movement is no zoom", Fog.wheelFactor(0, 0, 800) === 1);
+  ok("twenty small deltas equal one big one",
+     near(Math.pow(Fog.wheelFactor(-5, 0, 800), 20), Fog.wheelFactor(-100, 0, 800)),
+     "a trackpad and a wheel must reach the same place for the same flick");
+  ok("a line is about sixteen pixels",
+     near(Fog.wheelFactor(-3, 1, 800), Fog.wheelFactor(-48, 0, 800)));
+  ok("a page is the viewport",
+     near(Fog.wheelFactor(-1, 2, 640), Fog.wheelFactor(-640, 0, 800)));
+  ok("one absurd delta cannot swallow the map",
+     Fog.wheelFactor(-100000, 0, 800) <= 1.5 && Fog.wheelFactor(100000, 0, 800) >= 1/1.5,
+     String(Fog.wheelFactor(-100000, 0, 800)));
+
+  /* ── the proxy ────────────────────────────────────────────────────
+     Resampling 59 megapixels well costs about 6 ms a frame, which is
+     affordable at rest and is not affordable while the wheel turns. */
+  const pd = Fog.proxyDims(6800, 8700);
+  ok("a big map is capped for moving", pd.w === 1601 && pd.h === 2048, JSON.stringify(pd));
+  ok("a small map needs no proxy at all", Fog.proxyDims(300, 200).s === 1);
+
+  /* A decoded map is hundreds of megabytes and both pages replace one
+     every time a map is loaded or turned. Waiting for a collector is
+     how a renderer runs out of room mid-session. */
+  let closed = 0;
+  ok("releasing a decoded picture closes it", (function(){
+     const fake = { close(){ closed++; } };
+     return Fog.release(fake) === null && closed === 1;
+  })());
+  ok("releasing a canvas, or nothing at all, is not a crash",
+     Fog.release(document.createElement("canvas")) === null &&
+     Fog.release(null) === null && Fog.release(undefined) === null,
+     "rotateImage hands back a canvas, which has no close()");
+
+  ok("while moving, the proxy and the cheap resampling",
+     Fog.sourceFor(true, "proxy", "map").img === "proxy" &&
+     Fog.sourceFor(true, "proxy", "map").quality === "low");
+  ok("at rest, the map itself at full quality",
+     Fog.sourceFor(false, "proxy", "map").img === "map" &&
+     Fog.sourceFor(false, "proxy", "map").quality === "high");
+  ok("a map too small to have a proxy still moves cheaply",
+     Fog.sourceFor(true, null, "map").img === "map" &&
+     Fog.sourceFor(true, null, "map").quality === "low",
+     "there is nothing to swap in, but the resampling can still be dropped");
+
+  /* ── the ping ─────────────────────────────────────────────────────
+     The ring a click drops under the laser. It expands and fades, and
+     then it is gone — both windows draw it from this one function so
+     the DM and the players are watching the same ring. */
+  const p0 = Fog.pingAt(0), pMid = Fog.pingAt(Fog.PING_LIFE / 2);
+  ok("a ring starts small and opaque", p0.alpha === 1 && p0.r > 0, JSON.stringify(p0));
+  ok("it grows and fades", pMid.r > p0.r && pMid.alpha < p0.alpha, JSON.stringify(pMid));
+  ok("it eases out rather than growing evenly", pMid.r > (p0.r + Fog.pingAt(Fog.PING_LIFE - 1).r) / 2,
+     "a ring that expands linearly reads as a circle, not as something struck");
+  ok("it is over when it is over", Fog.pingAt(Fog.PING_LIFE) === null &&
+     Fog.pingAt(Fog.PING_LIFE + 50) === null);
+  ok("a ring from the future is not drawn", Fog.pingAt(-1) === null);
+
+  const pc = document.createElement("canvas"); pc.width = pc.height = 40;
+  const pg = pc.getContext("2d");
+  ok("drawing a live ring reports it alive", Fog.drawPing(pg, 20, 20, 10, 1) === true);
+  ok("drawing a dead ring reports it dead, which is how it is dropped",
+     Fog.drawPing(pg, 20, 20, Fog.PING_LIFE + 1, 1) === false);
+  ok("the laser leaves the context as it found it", (function(){
+     pg.globalAlpha = 0.5; Fog.drawLaser(pg, 20, 20, 1); return pg.globalAlpha === 0.5;
+  })(), "save/restore, or the next thing drawn inherits the dot's fill");
+
   /* ── the rectangle's preview ──────────────────────────────────────
      A rectangle used to be invisible until it was committed: the DM let
      go and then found out what had been revealed. The box is drawn while
@@ -745,16 +1064,20 @@ function runTests(){
 
    Canvas 2D queues work for the GPU, so timing a loop of draws measures
    almost nothing unless something forces it through. A one-pixel
-   getImageData does; it is why the numbers here are honest and also why
-   they are a shade pessimistic.
+   getImageData does — but ONE PER BATCH, not one per draw. Per draw it
+   charges every row a full pipeline stall, and it charged them so
+   heavily that this page reported the fog as the cost of a frame and
+   the map as cheap. Measured properly it is the other way round, which
+   is why the proxy exists and why the mask does not need to shrink.
    ========================================================================= */
 async function runBench(){
   const cv = sizeCanvas();
-  const g = cv.getContext("2d");
+  const g = ctx();
   const flush = () => g.getImageData(0, 0, 1, 1);
   const ms = (fn, n) => { fn(); flush();
     const t = performance.now();
-    for(let i = 0; i < n; i++){ fn(); flush(); }
+    for(let i = 0; i < n; i++) fn();
+    flush();
     return +((performance.now() - t) / n).toFixed(2); };
 
   if(!state.img){
@@ -764,6 +1087,7 @@ async function runBench(){
     cg.fillStyle = "#4a3b28"; cg.fillRect(0, 0, c.width, c.height);
     state.img = await createImageBitmap(c);
     state.w = c.width; state.h = c.height;
+    await setProxy();
     state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
     state.strokes = []; stack.strokes = state.strokes;
   }
@@ -782,6 +1106,9 @@ async function runBench(){
             "   (" + (state.w * state.h / 1e6).toFixed(1) + " MP)");
   rows.push("mask           " + d.w + "×" + d.h +
             "   (" + (d.w * d.h / 1e6).toFixed(1) + " MP, cap " + Fog.maskDims(9e9, 1).w + ")");
+  rows.push("proxy          " + (state.proxy ? state.proxy.width + "×" + state.proxy.height +
+            "   (" + (state.proxy.width * state.proxy.height / 1e6).toFixed(1) + " MP)"
+            : "none — the map is already under the cap"));
   rows.push("canvas         " + cv.width + "×" + cv.height + "   dpr " + (window.devicePixelRatio || 1));
   rows.push("");
 
@@ -792,17 +1119,28 @@ async function runBench(){
   /* The same resampling qualities redraw() uses, or the two lines below
      would not add up to the frame beneath them. */
   line("draw the map", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
-       g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z); }, 20));
+       g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z); }, 20),
+       "the expensive half, and the reason for the proxy");
+  line("draw the proxy", state.proxy
+       ? ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "low";
+           g.drawImage(state.proxy, v.tx, v.ty, state.w * v.z, state.h * v.z); }, 20)
+       : "n/a", state.proxy ? "what a frame draws while the wheel turns" : "map is under the cap");
   line("draw the fog", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "low";
        g.globalAlpha = FOG_ALPHA;
        g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
-       "this was the whole cost of a frame");
+       "cheap — the old figure was a measurement artefact");
   line("the fog at \"high\"", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
        g.globalAlpha = FOG_ALPHA;
        g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
        "what resampling a mask well would cost");
+  moving = false;
   const frame = ms(redraw, 20);
-  line("a whole frame", frame, frame < 16.7 ? "under one refresh at 60 Hz" : "OVER a 60 Hz refresh");
+  line("a whole frame, at rest", frame, frame < 16.7 ? "under one refresh at 60 Hz" : "OVER a 60 Hz refresh");
+  moving = true;
+  const mframe = ms(redraw, 20);
+  moving = false;
+  line("a whole frame, moving", mframe,
+       mframe < 16.7 ? "under one refresh at 60 Hz" : "OVER a 60 Hz refresh");
   rows.push("");
   line("rasterise 400 points", ms(() => Fog.rasterise(state.strokes, state.w, state.h, mask), 10),
        "undo, reload, rotate");
