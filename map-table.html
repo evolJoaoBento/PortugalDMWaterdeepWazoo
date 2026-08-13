@@ -31,7 +31,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
-<script src="assets/spellfx.js?v=20260814a"></script>
+<script src="assets/spellfx.js?v=20260814b"></script>
 </head>
 <body>
 <div id="bar">
@@ -902,6 +902,32 @@ function runTests(){
        "https://cdn.jsdelivr.net/gh/jackkerouac/animated-spell-effects@" +
        SpellFx.PACK_COMMIT + "/spell-effects/fire/fire_ball_RAY_02.webm",
      SpellFx.urlFor(FX[0]));
+
+  /* ── placing and reaping a cast ───────────────────────────────────
+     The video itself cannot be tested here — the suite is synchronous
+     and a decode is not — so the parts that decide WHERE and FOR HOW
+     LONG are pure, and those are the parts that can be wrong.
+
+     What is deliberately not covered: blobFor's cache-before-network
+     order is asynchronous, and the only honest check for it is casting
+     an unbundled effect, pulling the network out, and casting it again. */
+  const fxView = {z:2, tx:30, ty:-10};
+  const fxBox = SpellFx.boxOf(fxView, {x0:10, y0:20, x1:60, y1:70});
+  ok("a cast is placed through the view, like everything else",
+     near(fxBox.x, 50) && near(fxBox.y, 30) && near(fxBox.w, 100) && near(fxBox.h, 100),
+     JSON.stringify(fxBox));
+  const fxBack = SpellFx.boxOf(fxView, {x0:60, y0:70, x1:10, y1:20});
+  ok("a box dragged up and to the left is the same box",
+     near(fxBack.x, fxBox.x) && near(fxBack.w, fxBox.w),
+     "a negative width draws nothing");
+
+  const casts = [{done:false}, {done:true}, {done:false}];
+  ok("a finished cast is dropped", SpellFx.reap(casts).length === 2);
+  ok("reaping keeps the order of what is left",
+     SpellFx.reap([{done:false, path:"a"}, {done:true, path:"b"}, {done:false, path:"c"}])
+       .map(c => c.path).join("") === "ac");
+  ok("nothing playing is not an error", SpellFx.reap([]).length === 0 &&
+     SpellFx.playing() === false);
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));
