@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814f">
+<meta name="wazoo-build" content="20260814g">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -121,6 +121,12 @@ function redraw(){
   const src = Fog.sourceFor(moving, st.proxy, st.img);
   g.imageSmoothingQuality = src.quality;
   g.drawImage(src.img, v.tx, v.ty, st.w * v.z, st.h * v.z);
+
+  /* Effects go on before the fog and the fog covers them. Here the fog
+     is fully opaque, so a spell cast into ground the players have not
+     revealed is simply not shown to them — which is the whole reason
+     the fog is opaque on this page and a wash on the table's. */
+  SpellFx.draw(g, v);
   /* The map gets "high" at rest; the fog is a two-valued mask and
      resampling it well costs three to four times as much for an edge
      nobody can see across a room. The table does the same, so the two
@@ -140,9 +146,6 @@ function redraw(){
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
 
-  /* Last, over the fog: an effect happens on top of the world, and the
-     players should see it whether or not that ground is revealed. */
-  SpellFx.draw(g, v);
 }
 
 /* One paint per frame however many messages arrive. A pan sends one

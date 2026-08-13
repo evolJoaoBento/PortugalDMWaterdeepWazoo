@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814f">
+<meta name="wazoo-build" content="20260814g">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -182,6 +182,12 @@ function redraw(){
   g.imageSmoothingQuality = src.quality;
   g.drawImage(src.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
 
+  /* Effects belong to the world, so they go on before the fog does and
+     the fog covers them. A fireball in a room the players have not
+     reached must not light that room up for them; on this page the wash
+     is only 0.78, so the DM still sees it happen through the fog. */
+  SpellFx.draw(g, v);
+
   /* The map is resampled at "high" because it is a picture and the DM
      reads it. The fog is not a picture — it is a two-valued mask, black
      or nothing, and the only place resampling shows at all is the couple
@@ -262,11 +268,10 @@ function drawPointer(g, cv){
     Fog.drawLaser(g, c.x, c.y, dpr);
   }
 
-  /* Above the fog and above the dot: the DM points at a thing and then
-     sets fire to it. The staged box sits above even that, since it is
-     the thing being aimed and has to be readable over whatever is
-     already burning. */
-  SpellFx.draw(g, v);
+  /* The staged box stays above the fog, unlike the cast it will become.
+     It is a tool, not a thing in the world, and a DM aiming a fireball
+     into a room the players have not reached still has to see where it
+     is going. */
   drawStaged(g);
 }
 
