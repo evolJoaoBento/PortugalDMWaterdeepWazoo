@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814g">
+<meta name="wazoo-build" content="20260814h">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -314,7 +314,15 @@ const ch = Fog.open(async function(m){
   if(m.t === "undo"){ st.strokes = m.strokes || []; remask(); return; }
 });
 
-function hello(){ if(ch) ch.postMessage({t:"hello"}); }
+/* Which build of the page this window is actually running. A projector
+   is opened once and left alone for hours, and its HTML cannot be
+   cache-busted by a query token the way the shared scripts are — so a
+   window that has been open since before an update keeps running the
+   old code, silently, while the table runs the new. Saying so is the
+   difference between "that fix did not work" and "reload the projector". */
+const BUILD = (document.querySelector('meta[name="wazoo-build"]') || {}).content || "";
+
+function hello(){ if(ch) ch.postMessage({t:"hello", build:BUILD}); }
 
 /* The cursor, while it is moving and for a moment after.
 

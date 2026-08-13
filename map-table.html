@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814g">
+<meta name="wazoo-build" content="20260814h">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -696,9 +696,23 @@ function syncPayload(s, canvas){
            strokes:s.strokes, rotation:s.rotation };
 }
 
+/* This page's build, for comparing against the projector's. */
+const BUILD = (document.querySelector('meta[name="wazoo-build"]') || {}).content || "";
+
 const ch = Fog.open(function(m){
   /* The only thing the table listens for is a screen announcing itself. */
-  if(m.t === "hello") ch.postMessage(syncPayload(state));
+  if(m.t === "hello"){
+    ch.postMessage(syncPayload(state));
+    /* A projector window is opened once and left for hours, and an HTML
+       page cannot be cache-busted by a query token the way the shared
+       scripts can. So a screen that has been open since before an update
+       goes on running the old code without a word, and every fix after
+       that looks like it did not work. */
+    if(m.build && BUILD && m.build !== BUILD){
+      say("The players' screen is running an older build (" + m.build + ", this is " +
+          BUILD + ") — focus that window and hard-reload it, Ctrl-Shift-R.");
+    }
+  }
 });
 
 let send = function(m){ if(ch) ch.postMessage(m); };
