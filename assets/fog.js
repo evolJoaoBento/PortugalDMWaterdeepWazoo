@@ -48,15 +48,30 @@
     return { x0:a.x, y0:a.y, x1:b.x, y1:b.y };
   }
 
+  /* How much tighter than a bare contain-fit the projector frames what the
+     table sent. A contain-fit is the safe thing to send — nothing the DM
+     has framed can fall off the edge — but it also means the slack axis is
+     always letterboxed, and across a room that reads as a small map with
+     black bars. A tenth over fills them. It is a real crop, not free: the
+     tight axis loses the whole tenth, and the slack axis loses whatever
+     the letterbox did not already cover. Both windows read this constant,
+     so what the table believes it is sending and what the screen shows
+     cannot drift. */
+  var SCREEN_ZOOM = 1.1;
+
   /* The view that shows that rectangle on a canvas of cw × ch, contain-
      fitted and centred. This is what lets two differently-sized,
      differently-scaled displays frame the same part of the map: whichever
      axis is tighter decides the scale, and the slack on the other axis
-     falls equally either side. */
-  function viewFromRect(r, cw, ch){
+     falls equally either side.
+
+     `zoom` scales that fit about the rectangle's centre — 1.1 keeps the
+     same ground centred and shows a tenth less of it. Left out it is 1,
+     which is the plain contain-fit the framing maths is tested against. */
+  function viewFromRect(r, cw, ch, zoom){
     var rw = r.x1 - r.x0, rh = r.y1 - r.y0;
     if(!(rw > 0) || !(rh > 0)) return { z:1, tx:0, ty:0 };
-    var z = Math.min(cw / rw, ch / rh);
+    var z = Math.min(cw / rw, ch / rh) * (zoom || 1);
     return { z: z, tx: (cw - rw * z) / 2 - r.x0 * z, ty: (ch - rh * z) / 2 - r.y0 * z };
   }
 
@@ -361,6 +376,7 @@
     fitView: fitView,
     viewRect: viewRect,
     viewFromRect: viewFromRect,
+    SCREEN_ZOOM: SCREEN_ZOOM,
     zoomAt: zoomAt,
     line: line,
     rect: rect,

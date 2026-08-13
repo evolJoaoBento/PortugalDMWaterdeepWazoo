@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813a">
+<meta name="wazoo-build" content="20260813b">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -30,15 +30,11 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
-<script src="assets/fog.js?v=20260813a"></script>
+<script src="assets/fog.js?v=20260813b"></script>
 </head>
 <body>
 <div id="bar">
   <button id="open-map" type="button">Load a map&hellip;</button>
-  <span class="rule"></span>
-  <button id="t-brush" type="button" class="on">Brush</button>
-  <button id="t-rect" type="button">Rectangle</button>
-  <input id="brush" type="range" min="4" max="240" value="40" title="Brush size">
   <span class="rule"></span>
   <button id="a-reveal" type="button" class="on">Reveal</button>
   <button id="a-hide" type="button">Hide</button>
@@ -83,6 +79,30 @@ function sizeCanvas(){
   return cv;
 }
 
+/* The drag in progress, or null: two image-space corners and what letting
+   go would do. It is the table's own business — the projector is told
+   nothing until the stroke is committed, because a box swimming about the
+   players' screen would give away where the DM is thinking of looking. */
+let preview = null;
+
+/* Those two corners as a canvas-space box, normalised so a drag up or to
+   the left is still positive: a negative width strokes and fills nothing.
+   It goes through the same view the map is drawn with, so the outline
+   promises exactly the ground the stroke will take. */
+function previewBox(v, a, b){
+  const p = Fog.imageToCanvas(v, Math.min(a.x, b.x), Math.min(a.y, b.y));
+  const q = Fog.imageToCanvas(v, Math.max(a.x, b.x), Math.max(a.y, b.y));
+  return { x:p.x, y:p.y, w:q.x - p.x, h:q.y - p.y };
+}
+
+/* Worth committing? A bare click is a zero-area rectangle: it paints
+   nothing, but it would still take an undo slot, an autosave and a
+   channel message. Both sides have to have moved — a rectangle with no
+   height is as empty as one with no width. */
+function bigEnough(a, b){
+  return Math.abs(b.x - a.x) >= 1 && Math.abs(b.y - a.y) >= 1;
+}
+
 function redraw(){
   const cv = document.getElementById("table");
   const g = cv.getContext("2d");
@@ -111,10 +131,43 @@ function redraw(){
   g.globalAlpha = FOG_ALPHA;
   g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z);
   g.globalAlpha = 1;
+
+  /* The rectangle as it is being dragged, shown as the result rather than
+     as an outline around it: a reveal redraws the map inside the box with
+     no fog over it, a hide lays another coat on. The DM sees the finished
+     stroke before letting go, which is the whole point — a rectangle used
+     to be committed sight unseen. The outline stays as well, because a
+     reveal over already-clear ground would otherwise be invisible. */
+  if(preview){
+    const b = previewBox(v, preview.a, preview.b);
+    if(b.w >= 1 && b.h >= 1){
+      const dpr = window.devicePixelRatio || 1;
+      g.save();
+      g.beginPath(); g.rect(b.x, b.y, b.w, b.h); g.clip();
+      if(preview.reveal){
+        g.imageSmoothingQuality = "high";
+        g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+      }else{
+        /* The same black at the same alpha the mask is drawn with, so a
+           hide previews as the fog it will actually become. */
+        g.globalAlpha = FOG_ALPHA;
+        g.fillStyle = "#000";
+        g.fillRect(b.x, b.y, b.w, b.h);
+      }
+      g.restore();
+
+      g.save();
+      g.setLineDash([7 * dpr, 5 * dpr]);
+      g.lineWidth = Math.max(1, Math.round(dpr));
+      g.strokeStyle = preview.reveal ? "#e8d9b8" : "#8d7a5b";
+      g.strokeRect(b.x, b.y, b.w, b.h);
+      g.restore();
+    }
+  }
 }
 
 /* Every handler asks for a paint; none of them paints. A wheel notch, a
-   pan sample and a brush sample all arrive faster than the screen
+   pan sample and a drag sample all arrive faster than the screen
    refreshes, and painting inside each of them queued work the frame
    could never drain — which is what the table being unsmooth actually
    was, rather than any one drawing being slow. */
@@ -215,11 +268,8 @@ function wire(){
     const on = document.getElementById(onId), off = document.getElementById(offId);
     on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
   };
-  pick("t-brush", "t-rect", () => tool = "brush");
-  pick("t-rect", "t-brush", () => tool = "rect");
   pick("a-reveal", "a-hide", () => reveal = true);
   pick("a-hide", "a-reveal", () => reveal = false);
-  document.getElementById("brush").addEventListener("input", function(){ brush = +this.value; });
   document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
   document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
   document.getElementById("rotate").addEventListener("click", rotate);
@@ -256,7 +306,13 @@ function applyRedo(st){
 
 const LAST_KEY = "waterdeep-table.last";
 const stack = { strokes: state.strokes, undone: [] };
-let tool = "brush", reveal = true, brush = 40;
+/* Left-drag is always a rectangle. The brush was here too, and it was
+   the wrong instrument for the job: fog is lifted street by street and a
+   freehand smear neither follows a street nor lands the same twice.
+   Reveal/Hide is the only choice left, which is why there is no longer a
+   tool button to press. Fog painted by the old brush is still `path`
+   strokes in IndexedDB, and Fog.rasterise still draws them. */
+let reveal = true;
 
 let saveT = null;
 function saveFog(){
@@ -310,11 +366,11 @@ function sendView(){
 function pushStroke(s){
   applyPush(stack, s);
   state.strokes = stack.strokes;
-  /* Just this stroke onto the mask as it stands. A brush drag pushes one
-     stroke per pointermove, so replaying the whole list each time is
-     O(n²) over a full-resolution mask. Undo, redo, sync, rotate and map
+  /* Just this stroke onto the mask as it stands, rather than replaying
+     the list, which is O(n²) over a session's worth of strokes on a mask
+     that may be twenty-four megapixels. Undo, redo, sync, rotate and map
      loading still replay from zero — that is what the spec's O(n)
-     rasterise is for, and none of them happen per pointer event. */
+     rasterise is for, and none of them happen mid-drag. */
   if(state.w && state.h) Fog.applyStroke(s, state.w, state.h, mask);
   requestPaint(); saveFog();
   send({t:"stroke", stroke:s});
@@ -332,18 +388,15 @@ function redo(){
 }
 
 /* ── painting ──────────────────────────────────────────────────────
-   A drag is ONE stroke. It used to be one per pointermove, which cost on
-   three counts at once: a minute's painting became a list thousands of
-   entries long, every autosave and every `sync` carried all of it, and
-   Ctrl-Z removed three pixels rather than the stroke just drawn.
-
-   The path grows as the pointer moves and is drawn a tail at a time,
-   once per frame. `drawn` is the index of the last point already on the
-   mask; the projector is sent exactly the same new points and appends
-   them to its own copy, so both draw the identical segments. */
+   A drag is ONE stroke, decided on pointerup: two corners and an action.
+   Nothing goes on the mask, into the undo stack or across the channel
+   while the pointer is down — the drag is drawn as a preview on this
+   canvas only, and the projector hears about the rectangle once, when
+   the DM lets go. That keeps a drag out of the players' sight and keeps
+   an undo meaning one rectangle. */
 function wirePaint(){
   const cv = document.getElementById("table");
-  let drawing = false, live = null, drawn = -1, start = null;
+  let drawing = false, start = null;
 
   const at = (x, y) => {
     const dpr = window.devicePixelRatio || 1;
@@ -351,88 +404,45 @@ function wirePaint(){
     return Fog.canvasToImage(state.view, (x - r.left) * dpr, (y - r.top) * dpr);
   };
 
-  /* Draw and broadcast whatever the pointer has added since the last
-     frame — never per event. A 125 Hz mouse would otherwise post 125
-     channel messages a second and ask for 125 repaints. */
-  function flushNow(){
-    if(!live) return;
-    /* Ctrl-Z or a rotate can land between two frames of a drag, and both
-       take the stroke being drawn out from under it — undo pops it, rotate
-       replaces every stroke with a turned copy. Carrying on would paint
-       onto this mask and send tails for a stroke the list no longer holds,
-       and the projector would append them to somebody else's. */
-    if(stack.strokes[stack.strokes.length - 1] !== live){ live = null; drawn = -1; return; }
-    const n = (live.pts.length >> 1) - 1;
-    if(n <= drawn) return;
-    Fog.applyStroke(live, state.w, state.h, mask, drawn);
-    send({t:"extend", pts:live.pts.slice((drawn + 1) * 2)});
-    drawn = n;
+  /* Ending a drag from anywhere: the preview goes, and the canvas is
+     asked for the frame that no longer has it. */
+  function stop(){
+    drawing = false; start = null; preview = null;
     requestPaint();
-    saveFog();
   }
-  /* Lifting the pointer flushes immediately rather than asking for a
-     frame: the frame would arrive after `live` had been let go, and the
-     last few points of every stroke would be lost. */
-  const flush = Fog.coalesce(requestAnimationFrame, flushNow);
 
   cv.addEventListener("pointerdown", function(e){
     if(e.button !== 0 || !state.img) return;
     drawing = true; cv.setPointerCapture(e.pointerId);
-    const p = at(e.clientX, e.clientY);
-    if(tool === "brush"){
-      live = Fog.path([p.x, p.y], brush, reveal);
-      drawn = 0;
-      /* The stroke enters the list at once, so an undo mid-drag and a
-         `sync` mid-drag both see the stroke that is being drawn. */
-      applyPush(stack, live);
-      state.strokes = stack.strokes;
-      Fog.applyStroke(live, state.w, state.h, mask);
-      requestPaint(); saveFog();
-      send({t:"stroke", stroke:live});
-    }
-    else start = p;
+    start = at(e.clientX, e.clientY);
+    preview = { a:start, b:start, reveal:reveal };
   });
 
   cv.addEventListener("pointermove", function(e){
-    if(!drawing || tool !== "brush" || !live) return;
-    /* Every sample the browser buffered between frames, not just the last
-       one: dropping them corners off a fast stroke. */
-    const es = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-    for(const s of (es.length ? es : [e])){
-      const p = at(s.clientX, s.clientY);
-      live.pts.push(p.x, p.y);
-    }
-    flush();
+    if(!drawing || !start) return;
+    /* Only the corner the pointer is at — the samples the browser
+       buffered between frames say nothing a rectangle needs. One repaint
+       per frame, not one per event, or a 125 Hz mouse queues 125 full
+       redraws a second and the drag stutters. */
+    preview = { a:start, b:at(e.clientX, e.clientY), reveal:reveal };
+    requestPaint();
   });
 
   cv.addEventListener("pointerup", function(e){
-    if(!drawing) return;
-    drawing = false;
-    if(tool === "brush"){
-      if(live){
-        const p = at(e.clientX, e.clientY);
-        live.pts.push(p.x, p.y);
-        flushNow();
-      }
-      live = null; drawn = -1;
-      return;
-    }
-    if(start){
-      const p = at(e.clientX, e.clientY);
-      pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
-      start = null;
-    }
+    if(!drawing || !start) return;
+    const p = at(e.clientX, e.clientY);
+    /* A click paints nothing, so it must not cost an undo, a save and a
+       message. Only a box with both sides to it is committed. */
+    if(bigEnough(start, p)) pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+    stop();
   });
 
   /* A lost pointer capture (e.g. the OS steals the gesture) must not
-     strand a half-drawn stroke — end it without committing a rectangle.
-     A brush path stays: it is already in the list and already on both
-     masks, so dropping it here would only make the two disagree. */
+     strand a preview on the canvas or commit a rectangle the DM never
+     finished drawing. */
   cv.addEventListener("pointercancel", function(){
     if(!drawing) return;
-    drawing = false;
-    live = null; drawn = -1;
-    start = null;
+    stop();
   });
 }
 
@@ -512,6 +522,24 @@ function runTests(){
      shown.y0 <= vr.y0 + 0.001 && shown.y1 >= vr.y1 - 0.001 &&
      near((shown.y0 + shown.y1) / 2, (vr.y0 + vr.y1) / 2),
      "sent " + JSON.stringify(vr) + " but the screen would show " + JSON.stringify(shown));
+  /* That contain-fit is the framing maths. What the projector then does
+     with it is a deliberate crop: a bare fit letterboxes the slack axis,
+     and black bars across a room read as a small map. The overscan keeps
+     the same centre and shows a tenth less. */
+  ok("the projector overscans by a tenth", Fog.SCREEN_ZOOM === 1.1, String(Fog.SCREEN_ZOOM));
+
+  const over = Fog.viewFromRect(vr, 800, 600, Fog.SCREEN_ZOOM);
+  const oShown = Fog.viewRect(over, 800, 600);
+  ok("an overscanned fit is a tenth tighter",
+     near((oShown.x1 - oShown.x0) * Fog.SCREEN_ZOOM, vr.x1 - vr.x0) &&
+     near((oShown.y1 - oShown.y0) * Fog.SCREEN_ZOOM, vr.y1 - vr.y0),
+     JSON.stringify(oShown));
+  ok("an overscanned fit keeps the same ground centred",
+     near((oShown.x0 + oShown.x1) / 2, (vr.x0 + vr.x1) / 2) &&
+     near((oShown.y0 + oShown.y1) / 2, (vr.y0 + vr.y1) / 2),
+     "zooming about a corner would drift the map off the projector");
+  ok("no zoom means the plain contain-fit",
+     near(Fog.viewFromRect(vr, 800, 600).z, Fog.viewFromRect(vr, 800, 600, 1).z));
 
   const z = Fog.zoomAt({z:1,tx:0,ty:0}, 200, 100, 2, 0.05, 40);
   ok("zoom holds the cursor still",
@@ -625,10 +653,11 @@ function runTests(){
      alphaAt(capped, Math.round(1400 * dims.s), Math.round(1400 * dims.s)) === 255,
      "the cap must scale the drawing, not the coordinates");
 
-  /* ── a drag is one stroke ─────────────────────────────────────────
-     One stroke per pointermove meant a thousand-entry list per drag, a
-     thousand-entry write every save, and a Ctrl-Z that removed three
-     pixels. A drag is a path, and a path is one undo. */
+  /* ── paths, which the table no longer draws ───────────────────────
+     The brush is gone from the toolbar, but every fog saved while it was
+     there is a list of `path` strokes sitting in IndexedDB, and they are
+     replayed on every load, sync and rotate. These cases are what keeps
+     those maps opening as they were left. */
   const dotP = Fog.rasterise([Fog.path([20, 20], 6, true)], 40, 40);
   ok("a path of one point leaves a dot", alphaAt(dotP, 20, 20) === 0,
      "a click is a path that never grew");
@@ -658,6 +687,33 @@ function runTests(){
   ok("rotate maps every point of a path",
      rotP.k === "path" && rotP.pts[0] === 80 && rotP.pts[1] === 10 &&
      rotP.pts[2] === 60 && rotP.pts[3] === 30, JSON.stringify(rotP));
+
+  /* ── the rectangle's preview ──────────────────────────────────────
+     A rectangle used to be invisible until it was committed: the DM let
+     go and then found out what had been revealed. The box is drawn while
+     the drag is live, which means turning two image-space points into a
+     canvas-space box — through the same view the map is drawn with, or
+     the outline sits somewhere other than the ground it promises. */
+  const pv = {z:2, tx:30, ty:-10};
+  const pb = previewBox(pv, {x:10, y:20}, {x:60, y:70});
+  ok("the preview box follows the view",
+     near(pb.x, 50) && near(pb.y, 30) && near(pb.w, 100) && near(pb.h, 100),
+     JSON.stringify(pb));
+
+  const back2 = previewBox(pv, {x:60, y:70}, {x:10, y:20});
+  ok("a drag up and to the left previews the same box",
+     near(back2.x, pb.x) && near(back2.y, pb.y) &&
+     near(back2.w, pb.w) && near(back2.h, pb.h),
+     "a negative width draws nothing, so the corners are normalised first");
+
+  /* With the brush gone, a bare click is no longer a dot — it is a
+     zero-area rectangle. Committing one would spend an undo slot, an
+     autosave and a channel message on a stroke that paints nothing. */
+  ok("a click is not a rectangle", bigEnough({x:10,y:10}, {x:10.5,y:10.5}) === false);
+  ok("a real drag is", bigEnough({x:10,y:10}, {x:40,y:12}) === true);
+  ok("a drag along one axis only is not a rectangle",
+     bigEnough({x:10,y:10}, {x:40,y:10}) === false,
+     "no height means fillRect paints nothing");
 
   /* ── one paint per frame ──────────────────────────────────────────
      redraw() used to run inside every wheel tick and every pointermove.
