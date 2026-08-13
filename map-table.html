@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260813d">
+<meta name="wazoo-build" content="20260814a">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -30,7 +30,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
-<script src="assets/fog.js?v=20260813d"></script>
+<script src="assets/fog.js?v=20260814a"></script>
 </head>
 <body>
 <div id="bar">
@@ -843,6 +843,17 @@ function runTests(){
   ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
 
   ok("an empty table says so", Fog.emptyMessage() === "No map on the table", Fog.emptyMessage());
+
+  /* ── where a fetched effect is kept ───────────────────────────────
+     The spell effects pack is 1.09 GB and the repository carries 35 of
+     it. Anything else is fetched once and kept, so the second cast
+     works with the router unplugged. It goes in the same database as
+     the maps, because both pages open that one and a second database
+     is a second schema to keep in step. */
+  ok("the store has somewhere to put a fetched effect",
+     typeof Fog.putFx === "function" && typeof Fog.getFx === "function");
+  ok("the database version leaves room for it", Fog.DB_VERSION === 2,
+     "adding a store needs a version, or the upgrade never runs");
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));
