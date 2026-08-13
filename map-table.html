@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814c">
+<meta name="wazoo-build" content="20260814d">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -491,12 +491,20 @@ function wire(){
   document.getElementById("undo").addEventListener("click", undo);
   document.getElementById("redo").addEventListener("click", redo);
   document.addEventListener("keydown", function(e){
+    /* Typing in the effects search box is typing, not shortcuts. Without
+       this, a space in "fire cone" is swallowed by the laser — the word
+       never lands and a red dot flashes on the projector while the DM
+       looks for a spell — and Ctrl-Z undoes a stroke instead of the
+       search term. Escape stays global on purpose: shutting the panel
+       from inside its own search box is what anyone would expect. */
+    const typing = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+
     /* Space is the laser, held. A toggle would be a mode to forget you
        are in, and forgetting it means a left-drag that pings the table
        instead of lifting fog. Held, there is nothing to forget.
        preventDefault because Space also re-presses whatever toolbar
        button was last clicked. */
-    if(e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey){
+    if(!typing && e.code === "Space" && !e.ctrlKey && !e.metaKey && !e.altKey){
       e.preventDefault();
       if(!e.repeat) setLaser(true);
       return;
@@ -507,7 +515,7 @@ function wire(){
       document.getElementById("fx-panel").classList.remove("on");
       return;
     }
-    if(!(e.ctrlKey || e.metaKey)) return;
+    if(typing || !(e.ctrlKey || e.metaKey)) return;
     if(e.key === "z"){ e.preventDefault(); undo(); }
     if(e.key === "y"){ e.preventDefault(); redo(); }
   });

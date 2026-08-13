@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814c">
+<meta name="wazoo-build" content="20260814d">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -288,6 +288,12 @@ const ch = Fog.open(async function(m){
   if(m.t === "cast"){
     const e = fxByPath(m.path);
     if(e){ SpellFx.cast(e, m.rect); animatePings(); }
+    /* A screen opened moments ago may not have the catalogue yet, and a
+       dropped fireball is worse than a late one. */
+    else SpellFx.loadIndex().then(function(){
+      const late = fxByPath(m.path);
+      if(late){ SpellFx.cast(late, m.rect); animatePings(); }
+    });
     return;
   }
   if(m.t === "stroke"){
