@@ -1,0 +1,3015 @@
+{
+ "commit": "436fa96d7e9e97f8e6116c19c65f495d269f8093",
+ "generated": "2026-08-13",
+ "count": 376,
+ "effects": [
+  {
+   "path": "air/air_gust_CIRCLE_01.webm",
+   "name": "air gust 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 3204,
+   "bundled": false
+  },
+  {
+   "path": "air/air_whisps_CIRCLE_01.webm",
+   "name": "air whisps 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 5036,
+   "bundled": false
+  },
+  {
+   "path": "air/black_smoke_RAY_01.webm",
+   "name": "black smoke 01",
+   "category": "air",
+   "shape": "ray",
+   "kb": 1012,
+   "bundled": false
+  },
+  {
+   "path": "air/clouds_lightning_CIRCLE_01.webm",
+   "name": "clouds lightning 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 78,
+   "bundled": false
+  },
+  {
+   "path": "air/clouds_lightning_SQUARE_02.webm",
+   "name": "clouds lightning 02",
+   "category": "air",
+   "shape": "square",
+   "kb": 805,
+   "bundled": false
+  },
+  {
+   "path": "air/dust_blast_CONE_01.webm",
+   "name": "dust blast 01",
+   "category": "air",
+   "shape": "cone",
+   "kb": 529,
+   "bundled": false
+  },
+  {
+   "path": "air/dust_blast_CONE_02.webm",
+   "name": "dust blast 02",
+   "category": "air",
+   "shape": "cone",
+   "kb": 519,
+   "bundled": false
+  },
+  {
+   "path": "air/dust_explosions_CIRCLE.webm",
+   "name": "dust explosions",
+   "category": "air",
+   "shape": "circle",
+   "kb": 4779,
+   "bundled": false
+  },
+  {
+   "path": "air/magical_smoke_column_CIRCLE.webm",
+   "name": "magical smoke column",
+   "category": "air",
+   "shape": "circle",
+   "kb": 957,
+   "bundled": false
+  },
+  {
+   "path": "air/rotating_smoke_eye_CIRCLE.webm",
+   "name": "rotating smoke eye",
+   "category": "air",
+   "shape": "circle",
+   "kb": 1876,
+   "bundled": false
+  },
+  {
+   "path": "air/shockwave_01_transcentre.webm",
+   "name": "shockwave 01 transcentre",
+   "category": "air",
+   "shape": "",
+   "kb": 1399,
+   "bundled": false
+  },
+  {
+   "path": "air/shockwave_CIRCLE_01.webm",
+   "name": "shockwave 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 3424,
+   "bundled": false
+  },
+  {
+   "path": "air/shockwave_CIRCLE_02.webm",
+   "name": "shockwave 02",
+   "category": "air",
+   "shape": "circle",
+   "kb": 5139,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_CONE.webm",
+   "name": "smoke",
+   "category": "air",
+   "shape": "cone",
+   "kb": 1239,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_blast_RAY_01.webm",
+   "name": "smoke blast 01",
+   "category": "air",
+   "shape": "ray",
+   "kb": 415,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_explosion_CIRCLE_01.webm",
+   "name": "smoke explosion 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 1360,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_explosion_CIRCLE_02.webm",
+   "name": "smoke explosion 02",
+   "category": "air",
+   "shape": "circle",
+   "kb": 553,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_explosion_CIRCLE_03.webm",
+   "name": "smoke explosion 03",
+   "category": "air",
+   "shape": "circle",
+   "kb": 553,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_explosion_CIRCLE_04.webm",
+   "name": "smoke explosion 04",
+   "category": "air",
+   "shape": "circle",
+   "kb": 552,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_explosion_CIRCLE_05.webm",
+   "name": "smoke explosion 05",
+   "category": "air",
+   "shape": "circle",
+   "kb": 548,
+   "bundled": false
+  },
+  {
+   "path": "air/smoke_pillar_SQUARE_01.webm",
+   "name": "smoke pillar 01",
+   "category": "air",
+   "shape": "square",
+   "kb": 390,
+   "bundled": false
+  },
+  {
+   "path": "air/storm_ball_CIRCLE_01.webm",
+   "name": "storm ball 01",
+   "category": "air",
+   "shape": "circle",
+   "kb": 3372,
+   "bundled": false
+  },
+  {
+   "path": "air/storm_ball_CIRCLE_02.webm",
+   "name": "storm ball 02",
+   "category": "air",
+   "shape": "circle",
+   "kb": 1772,
+   "bundled": false
+  },
+  {
+   "path": "air/storm_ball_CIRCLE_03.webm",
+   "name": "storm ball 03",
+   "category": "air",
+   "shape": "circle",
+   "kb": 1582,
+   "bundled": false
+  },
+  {
+   "path": "air/storm_ball_CIRCLE_04.webm",
+   "name": "storm ball 04",
+   "category": "air",
+   "shape": "circle",
+   "kb": 1693,
+   "bundled": false
+  },
+  {
+   "path": "air/storm_ball_CIRCLE_05.webm",
+   "name": "storm ball 05",
+   "category": "air",
+   "shape": "circle",
+   "kb": 2839,
+   "bundled": false
+  },
+  {
+   "path": "air/wind_blast_RAY_01.webm",
+   "name": "wind blast 01",
+   "category": "air",
+   "shape": "ray",
+   "kb": 496,
+   "bundled": false
+  },
+  {
+   "path": "earth/earth-cracks_SQUARE_01.webm",
+   "name": "earth cracks 01",
+   "category": "earth",
+   "shape": "square",
+   "kb": 78,
+   "bundled": false
+  },
+  {
+   "path": "earth/earth-hole_RECTANGLE_01.webm",
+   "name": "earth hole 01",
+   "category": "earth",
+   "shape": "rectangle",
+   "kb": 1416,
+   "bundled": false
+  },
+  {
+   "path": "earth/earth-ploughed_SQUARE_01.webm",
+   "name": "earth ploughed 01",
+   "category": "earth",
+   "shape": "square",
+   "kb": 1250,
+   "bundled": false
+  },
+  {
+   "path": "energy/disintegration_beam_RAY_01.webm",
+   "name": "disintegration beam 01",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 13911,
+   "bundled": false
+  },
+  {
+   "path": "energy/disintegration_beam_RAY_02.webm",
+   "name": "disintegration beam 02",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 672,
+   "bundled": false
+  },
+  {
+   "path": "energy/disintegration_bomb_CIRCLE_01.webm",
+   "name": "disintegration bomb 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 802,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_ball_CIRCLE_02.webm",
+   "name": "energy ball 02",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 8737,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_ball_CIRCLE_03.webm",
+   "name": "energy ball 03",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 21475,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_ball_CIRCLE_04.webm",
+   "name": "energy ball 04",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 2889,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_ball_CIRCLE_05.webm",
+   "name": "energy ball 05",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 3611,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_01.webm",
+   "name": "energy beam 01",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 296,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_02.webm",
+   "name": "energy beam 02",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1837,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_03.webm",
+   "name": "energy beam 03",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1739,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_04.webm",
+   "name": "energy beam 04",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1587,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_05.webm",
+   "name": "energy beam 05",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1599,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_06.webm",
+   "name": "energy beam 06",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1579,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_07.webm",
+   "name": "energy beam 07",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1582,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_08.webm",
+   "name": "energy beam 08",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1575,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_09.webm",
+   "name": "energy beam 09",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1585,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_10.webm",
+   "name": "energy beam 10",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1549,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_RAY_11.webm",
+   "name": "energy beam 11",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1920,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_beam_purple_03.webm",
+   "name": "energy beam purple 03",
+   "category": "energy",
+   "shape": "",
+   "kb": 1145,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_01.webm",
+   "name": "energy blast 01",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 862,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_02.webm",
+   "name": "energy blast 02",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1336,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_03.webm",
+   "name": "energy blast 03",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 972,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_04.webm",
+   "name": "energy blast 04",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 821,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_05.webm",
+   "name": "energy blast 05",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 3136,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_06.webm",
+   "name": "energy blast 06",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 3089,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_07.webm",
+   "name": "energy blast 07",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 3080,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_08.webm",
+   "name": "energy blast 08",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 3189,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_blast_RAY_09.webm",
+   "name": "energy blast 09",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 2681,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_circle_CIRCLE_01.webm",
+   "name": "energy 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 5944,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_circle_CIRCLE_02.webm",
+   "name": "energy 02",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 6181,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_circle_CIRCLE_03.webm",
+   "name": "energy 03",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 5868,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_circle_CIRCLE_04.webm",
+   "name": "energy 04",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 6109,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_circle_CIRCLE_05.webm",
+   "name": "energy 05",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 5163,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_02.webm",
+   "name": "energy explosion 02",
+   "category": "energy",
+   "shape": "",
+   "kb": 334,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_CIRCLE_01.webm",
+   "name": "energy explosion 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 194,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_CIRCLE_03.webm",
+   "name": "energy explosion 03",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 515,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_CIRCLE_04.webm",
+   "name": "energy explosion 04",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 208,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_CIRCLE_05.webm",
+   "name": "energy explosion 05",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 689,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_explosion_CIRCLE_06.webm",
+   "name": "energy explosion 06",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 538,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_impact_01.webm",
+   "name": "energy impact 01",
+   "category": "energy",
+   "shape": "",
+   "kb": 1263,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_lightning_RAY_01.webm",
+   "name": "energy lightning 01",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 4024,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_portal_CIRCLE_01.webm",
+   "name": "energy portal 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 16641,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_portal_strange_CIRCLE.webm",
+   "name": "energy portal strange",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 14947,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_03.webm",
+   "name": "energy quickburst 03",
+   "category": "energy",
+   "shape": "",
+   "kb": 917,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_05.webm",
+   "name": "energy quickburst 05",
+   "category": "energy",
+   "shape": "",
+   "kb": 906,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_CIRCLE_01.webm",
+   "name": "energy quickburst 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 938,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_CIRCLE_04.webm",
+   "name": "energy quickburst 04",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 884,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_CIRCLE_06.webm",
+   "name": "energy quickburst 06",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 584,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_quickburst_CIRCLE_07.webm",
+   "name": "energy quickburst 07",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 3641,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_shield_CIRCLE_01.webm",
+   "name": "energy shield 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 1839,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_shield_CIRCLE_02.webm",
+   "name": "energy shield 02",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 716,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_shield_CIRCLE_03.webm",
+   "name": "energy shield 03",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 1903,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_shield_CIRCLE_04.webm",
+   "name": "energy shield 04",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 3423,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_01.webm",
+   "name": "energy throw 01",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 264,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_02.webm",
+   "name": "energy throw 02",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 259,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_03.webm",
+   "name": "energy throw 03",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 264,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_04.webm",
+   "name": "energy throw 04",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 260,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_05.webm",
+   "name": "energy throw 05",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 262,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_06.webm",
+   "name": "energy throw 06",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 478,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_07.webm",
+   "name": "energy throw 07",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 490,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_08.webm",
+   "name": "energy throw 08",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1008,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_09.webm",
+   "name": "energy throw 09",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1318,
+   "bundled": false
+  },
+  {
+   "path": "energy/energy_throw_RAY_10.webm",
+   "name": "energy throw 10",
+   "category": "energy",
+   "shape": "ray",
+   "kb": 1282,
+   "bundled": false
+  },
+  {
+   "path": "energy/flash_CIRCLE_01.webm",
+   "name": "flash 01",
+   "category": "energy",
+   "shape": "circle",
+   "kb": 859,
+   "bundled": false
+  },
+  {
+   "path": "fire/embers_CIRCLE_01.webm",
+   "name": "embers 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 4023,
+   "bundled": false
+  },
+  {
+   "path": "fire/embers_CIRCLE_02.webm",
+   "name": "embers 02",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 9333,
+   "bundled": false
+  },
+  {
+   "path": "fire/embers_CIRCLE_03.webm",
+   "name": "embers 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 503,
+   "bundled": false
+  },
+  {
+   "path": "fire/explosion_CIRCLE_01.webm",
+   "name": "explosion 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 557,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire-ball_CIRCLE_03.webm",
+   "name": "fire ball 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 429,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_02.webm",
+   "name": "fire ball 02",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 682,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_03.webm",
+   "name": "fire ball 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 816,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_04.webm",
+   "name": "fire ball 04",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 529,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_05.webm",
+   "name": "fire ball 05",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 640,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_07.webm",
+   "name": "fire ball 07",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 1241,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_CIRCLE_08.webm",
+   "name": "fire ball 08",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 684,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_RAY_01.webm",
+   "name": "fire ball 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 653,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_RAY_02.webm",
+   "name": "fire ball 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 206,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_RAY_03.webm",
+   "name": "fire ball 03",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1580,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_RAY_04.webm",
+   "name": "fire ball 04",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 426,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_SQUARE_02.webm",
+   "name": "fire ball 02",
+   "category": "fire",
+   "shape": "square",
+   "kb": 8548,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_rotating_CIRCLE_01.webm",
+   "name": "fire ball rotating 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 1170,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_rotating_CIRCLE_02.webm",
+   "name": "fire ball rotating 02",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 1484,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_rotating_CIRCLE_03.webm",
+   "name": "fire ball rotating 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 1270,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_rotating_CIRCLE_04.webm",
+   "name": "fire ball rotating 04",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 1291,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_ball_yellow.webm",
+   "name": "fire ball yellow",
+   "category": "fire",
+   "shape": "",
+   "kb": 1319,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_beam_RAY_01.webm",
+   "name": "fire beam 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 3362,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_beam_RAY_02.webm",
+   "name": "fire beam 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1588,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_beam_RAY_03.webm",
+   "name": "fire beam 03",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 2069,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_bird_CIRCLE_01.webm",
+   "name": "fire bird 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 12518,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_RAY_01.webm",
+   "name": "fire blast 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1141,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_real_RAY_01.webm",
+   "name": "fire blast real 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1144,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_real_RAY_02.webm",
+   "name": "fire blast real 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1929,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_zigzag_RAY_01.webm",
+   "name": "fire blast zigzag 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1117,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_zigzag_RAY_02.webm",
+   "name": "fire blast zigzag 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1214,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_zigzag_RAY_03.webm",
+   "name": "fire blast zigzag 03",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1137,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_zigzag_RAY_04.webm",
+   "name": "fire blast zigzag 04",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1186,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_blast_zigzag_RAY_05.webm",
+   "name": "fire blast zigzag 05",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1232,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_bolt_RAY_01.webm",
+   "name": "fire bolt 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1447,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_bolt_RAY_02.webm",
+   "name": "fire bolt 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 957,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_bolt_RAY_03.webm",
+   "name": "fire bolt 03",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 622,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_bolt_RAY_04.webm",
+   "name": "fire bolt 04",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 527,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_breath_CONE_01.webm",
+   "name": "fire breath 01",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 577,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_circle_CIRCLE_01.webm",
+   "name": "fire 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 614,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_circle_CIRCLE_02.webm",
+   "name": "fire 02",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 2681,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_circle_CIRCLE_03.webm",
+   "name": "fire 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 2787,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_circle_CIRCLE_04.webm",
+   "name": "fire 04",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 2899,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_circle_CIRCLE_05.webm",
+   "name": "fire 05",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 2534,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_cone_CONE_01.webm",
+   "name": "fire 01",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 3512,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_cone_CONE_02.webm",
+   "name": "fire 02",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 4402,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_cone_CONE_03.webm",
+   "name": "fire 03",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 3725,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_cone_CONE_04.webm",
+   "name": "fire 04",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 4016,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_cone_CONE_05.webm",
+   "name": "fire 05",
+   "category": "fire",
+   "shape": "cone",
+   "kb": 4261,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_dragon_SQUARE_01.webm",
+   "name": "fire dragon 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 10382,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_01.webm",
+   "name": "fire explosion 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 533,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_02.webm",
+   "name": "fire explosion 02",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 528,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_03.webm",
+   "name": "fire explosion 03",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 524,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_04.webm",
+   "name": "fire explosion 04",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 536,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_05.webm",
+   "name": "fire explosion 05",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 527,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_CIRCLE_06.webm",
+   "name": "fire explosion 06",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 529,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_SQUARE_01.webm",
+   "name": "fire explosion 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 444,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_explosion_SQUARE_02.webm",
+   "name": "fire explosion 02",
+   "category": "fire",
+   "shape": "square",
+   "kb": 445,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_pheonix_SQUARE_01.webm",
+   "name": "fire pheonix 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2070,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_skull_SQUARE_01.webm",
+   "name": "fire skull 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 3578,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_square_SQUARE_01.webm",
+   "name": "fire 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2411,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_square_SQUARE_02.webm",
+   "name": "fire 02",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2183,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_square_SQUARE_03.webm",
+   "name": "fire 03",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2344,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_square_SQUARE_04.webm",
+   "name": "fire 04",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2505,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_sword_SQUARE_01.webm",
+   "name": "fire sword 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 5233,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RAY_01.webm",
+   "name": "fire wall 01",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1956,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RAY_02.webm",
+   "name": "fire wall 02",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 2117,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RAY_03.webm",
+   "name": "fire wall 03",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 2028,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RAY_04.webm",
+   "name": "fire wall 04",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 2113,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RAY_05.webm",
+   "name": "fire wall 05",
+   "category": "fire",
+   "shape": "ray",
+   "kb": 1677,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RECTANGLE_06.webm",
+   "name": "fire wall 06",
+   "category": "fire",
+   "shape": "rectangle",
+   "kb": 5714,
+   "bundled": false
+  },
+  {
+   "path": "fire/fire_wall_RECTANGLE_07.webm",
+   "name": "fire wall 07",
+   "category": "fire",
+   "shape": "rectangle",
+   "kb": 4456,
+   "bundled": false
+  },
+  {
+   "path": "fire/solar_ball_CIRCLE_01.webm",
+   "name": "solar ball 01",
+   "category": "fire",
+   "shape": "circle",
+   "kb": 2023,
+   "bundled": false
+  },
+  {
+   "path": "fire/sparks_impact_SQUARE_01.webm",
+   "name": "sparks impact 01",
+   "category": "fire",
+   "shape": "square",
+   "kb": 2113,
+   "bundled": false
+  },
+  {
+   "path": "fire/sparks_impact_SQUARE_02.webm",
+   "name": "sparks impact 02",
+   "category": "fire",
+   "shape": "square",
+   "kb": 766,
+   "bundled": false
+  },
+  {
+   "path": "gunshots/gunshot_15ft_1000x400.webm",
+   "name": "gunshot 15ft 1000x400",
+   "category": "gunshots",
+   "shape": "",
+   "kb": 429,
+   "bundled": false
+  },
+  {
+   "path": "gunshots/gunshot_45ft_2200x400.webm",
+   "name": "gunshot 45ft 2200x400",
+   "category": "gunshots",
+   "shape": "",
+   "kb": 402,
+   "bundled": false
+  },
+  {
+   "path": "gunshots/gunshot_60ft_2800x400.webm",
+   "name": "gunshot 60ft 2800x400",
+   "category": "gunshots",
+   "shape": "",
+   "kb": 375,
+   "bundled": false
+  },
+  {
+   "path": "gunshots/gunshot_90ft_4000x400.webm",
+   "name": "gunshot 90ft 4000x400",
+   "category": "gunshots",
+   "shape": "",
+   "kb": 400,
+   "bundled": false
+  },
+  {
+   "path": "gunshots/pistol_30ft_1600x400.webm",
+   "name": "pistol 30ft 1600x400",
+   "category": "gunshots",
+   "shape": "",
+   "kb": 408,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost-RECTANGLE_01.webm",
+   "name": "frost 01",
+   "category": "ice",
+   "shape": "rectangle",
+   "kb": 6503,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost-SQUARE_01.webm",
+   "name": "frost 01",
+   "category": "ice",
+   "shape": "square",
+   "kb": 4612,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_01.webm",
+   "name": "frost 01",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 685,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_02.webm",
+   "name": "frost 02",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 749,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_03.webm",
+   "name": "frost 03",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 728,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_04.webm",
+   "name": "frost 04",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 982,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_05.webm",
+   "name": "frost 05",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 703,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_06.webm",
+   "name": "frost 06",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 474,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_CONE_07.webm",
+   "name": "frost 07",
+   "category": "ice",
+   "shape": "cone",
+   "kb": 684,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_beam_RAY_01.webm",
+   "name": "frost beam 01",
+   "category": "ice",
+   "shape": "ray",
+   "kb": 2761,
+   "bundled": false
+  },
+  {
+   "path": "ice/frost_beam_RAY_02.webm",
+   "name": "frost beam 02",
+   "category": "ice",
+   "shape": "ray",
+   "kb": 951,
+   "bundled": false
+  },
+  {
+   "path": "ice/ice_ball_RAY_01.webm",
+   "name": "ice ball 01",
+   "category": "ice",
+   "shape": "ray",
+   "kb": 403,
+   "bundled": false
+  },
+  {
+   "path": "ice/ice_shield_rotating_SQUARE_01.webm",
+   "name": "ice shield rotating 01",
+   "category": "ice",
+   "shape": "square",
+   "kb": 10457,
+   "bundled": false
+  },
+  {
+   "path": "lightning/electricity_RAY_01.webm",
+   "name": "electricity 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 8923,
+   "bundled": false
+  },
+  {
+   "path": "lightning/electricity_RAY_02.webm",
+   "name": "electricity 02",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 8604,
+   "bundled": false
+  },
+  {
+   "path": "lightning/electricity_portal_CIRCLE_01.webm",
+   "name": "electricity portal 01",
+   "category": "lightning",
+   "shape": "circle",
+   "kb": 4195,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_blast_RAY_01.webm",
+   "name": "lightning blast 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 2252,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_blast_RAY_02.webm",
+   "name": "lightning blast 02",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 388,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_blast_multicolour_RAY_01.webm",
+   "name": "lightning blast multicolour 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 1049,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_blue_RAY_01.webm",
+   "name": "lightning blue 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 4970,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_blue_RECTANGLE_01.webm",
+   "name": "lightning blue 01",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 11461,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_explosion_CIRCLE_01.webm",
+   "name": "lightning explosion 01",
+   "category": "lightning",
+   "shape": "circle",
+   "kb": 1150,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_flash_RECTANGLE_01.webm",
+   "name": "lightning flash 01",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 1469,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_flash_SQUARE_03.webm",
+   "name": "lightning flash 03",
+   "category": "lightning",
+   "shape": "square",
+   "kb": 1494,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_green_RAY_01.webm",
+   "name": "lightning green 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 4720,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_green_RECTANGLE_02.webm",
+   "name": "lightning green 02",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 11432,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_multicolour_RAY_01.webm",
+   "name": "lightning multicolour 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 5842,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_purple_RAY_01.webm",
+   "name": "lightning purple 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 4688,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_purple_RECTANGLE_01.webm",
+   "name": "lightning purple 01",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 14831,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_rainbowRAY_01.webm",
+   "name": "lightning rainbowRAY 01",
+   "category": "lightning",
+   "shape": "",
+   "kb": 8619,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_red_RAY_01.webm",
+   "name": "lightning red 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 4550,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_red_RECTANGLE_01.webm",
+   "name": "lightning red 01",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 11549,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_slam_RAY_01.webm",
+   "name": "lightning slam 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 1038,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_yellow_RAY_01.webm",
+   "name": "lightning yellow 01",
+   "category": "lightning",
+   "shape": "ray",
+   "kb": 4017,
+   "bundled": false
+  },
+  {
+   "path": "lightning/lightning_yellow_RECTANGLE_01.webm",
+   "name": "lightning yellow 01",
+   "category": "lightning",
+   "shape": "rectangle",
+   "kb": 10486,
+   "bundled": false
+  },
+  {
+   "path": "magic/explosion_CIRCLE_01.webm",
+   "name": "explosion 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 499,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_01.webm",
+   "name": "magic arrow 01",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1194,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_02.webm",
+   "name": "magic arrow 02",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1212,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_03.webm",
+   "name": "magic arrow 03",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1225,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_04.webm",
+   "name": "magic arrow 04",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1236,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_05.webm",
+   "name": "magic arrow 05",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1188,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_arrow_RAY_06.webm",
+   "name": "magic arrow 06",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 794,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_01.webm",
+   "name": "magic ball 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 12725,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_02.webm",
+   "name": "magic ball 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 4819,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_03.webm",
+   "name": "magic ball 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 3313,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_04.webm",
+   "name": "magic ball 04",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2039,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_05.webm",
+   "name": "magic ball 05",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2146,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_06.webm",
+   "name": "magic ball 06",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1770,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_07.webm",
+   "name": "magic ball 07",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1784,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_08.webm",
+   "name": "magic ball 08",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1704,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_09.webm",
+   "name": "magic ball 09",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1742,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_ball_CIRCLE_10.webm",
+   "name": "magic ball 10",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 636,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_01.webm",
+   "name": "magic beam 01",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 4906,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_02.webm",
+   "name": "magic beam 02",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 727,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_03.webm",
+   "name": "magic beam 03",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1537,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_04.webm",
+   "name": "magic beam 04",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 3107,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_05.webm",
+   "name": "magic beam 05",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 7315,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_beam_RAY_06.webm",
+   "name": "magic beam 06",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 2129,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_blast_RAY_01.webm",
+   "name": "magic blast 01",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 616,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_blast_RAY_02.webm",
+   "name": "magic blast 02",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 771,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_circle_CIRCLE_01.webm",
+   "name": "magic 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 4091,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_dust_SQUARE_01.webm",
+   "name": "magic dust 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1043,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_dust_SQUARE_02.webm",
+   "name": "magic dust 02",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1706,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_dust_SQUARE_03.webm",
+   "name": "magic dust 03",
+   "category": "magic",
+   "shape": "square",
+   "kb": 404,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_dust_SQUARE_04.webm",
+   "name": "magic dust 04",
+   "category": "magic",
+   "shape": "square",
+   "kb": 420,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_dust_SQUARE_05.webm",
+   "name": "magic dust 05",
+   "category": "magic",
+   "shape": "square",
+   "kb": 5937,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_01.webm",
+   "name": "magic explosion 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 400,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_02.webm",
+   "name": "magic explosion 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 180,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_03.webm",
+   "name": "magic explosion 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 207,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_04.webm",
+   "name": "magic explosion 04",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 321,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_05.webm",
+   "name": "magic explosion 05",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 147,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_06.webm",
+   "name": "magic explosion 06",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 200,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_explosion_CIRCLE_08.webm",
+   "name": "magic explosion 08",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2767,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_fire_01.webm",
+   "name": "magic fire 01",
+   "category": "magic",
+   "shape": "",
+   "kb": 1163,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_fire_02.webm",
+   "name": "magic fire 02",
+   "category": "magic",
+   "shape": "",
+   "kb": 6067,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_forcefield_SQUARE_01.webm",
+   "name": "magic forcefield 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 856,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_forcefield_SQUARE_02.webm",
+   "name": "magic forcefield 02",
+   "category": "magic",
+   "shape": "square",
+   "kb": 877,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_impact_CIRCLE_01.webm",
+   "name": "magic impact 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 942,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_01.webm",
+   "name": "magic missle 01",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 16605,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_02.webm",
+   "name": "magic missle 02",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 4411,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_03.webm",
+   "name": "magic missle 03",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 11037,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_04.webm",
+   "name": "magic missle 04",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 9853,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_05.webm",
+   "name": "magic missle 05",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 783,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_06.webm",
+   "name": "magic missle 06",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 483,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_07.webm",
+   "name": "magic missle 07",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 5069,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_08.webm",
+   "name": "magic missle 08",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 4988,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_RAY_09.webm",
+   "name": "magic missle 09",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 5070,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_red_RAY_10.webm",
+   "name": "magic missle red 10",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 5227,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_missle_red_RAY_11.webm",
+   "name": "magic missle red 11",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 4956,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_portal_CIRCLE_01.webm",
+   "name": "magic portal 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 4686,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_portal_CIRCLE_02.webm",
+   "name": "magic portal 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 3463,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_portal_CIRCLE_03.webm",
+   "name": "magic portal 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 4043,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_CIRCLE_01.webm",
+   "name": "magic shield 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1762,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_CIRCLE_02.webm",
+   "name": "magic shield 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1366,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_CIRCLE_03.webm",
+   "name": "magic shield 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1887,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_CIRCLE_04.webm",
+   "name": "magic shield 04",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1034,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_CIRCLE_05.webm",
+   "name": "magic shield 05",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1839,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_SQUARE_01.webm",
+   "name": "magic shield 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 646,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_SQUARE_02.webm",
+   "name": "magic shield 02",
+   "category": "magic",
+   "shape": "square",
+   "kb": 656,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_SQUARE_03.webm",
+   "name": "magic shield 03",
+   "category": "magic",
+   "shape": "square",
+   "kb": 727,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_SQUARE_04.webm",
+   "name": "magic shield 04",
+   "category": "magic",
+   "shape": "square",
+   "kb": 717,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_equip_SQUARE_01.webm",
+   "name": "magic shield equip 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1749,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_equip_SQUARE_02.webm",
+   "name": "magic shield equip 02",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1733,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_equip_SQUARE_03.webm",
+   "name": "magic shield equip 03",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1740,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_equip_SQUARE_04.webm",
+   "name": "magic shield equip 04",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1786,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shield_equip_SQUARE_05.webm",
+   "name": "magic shield equip 05",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1536,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_01.webm",
+   "name": "magic shockwave 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 551,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_02.webm",
+   "name": "magic shockwave 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 532,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_03.webm",
+   "name": "magic shockwave 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2173,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_04.webm",
+   "name": "magic shockwave 04",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1335,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_05.webm",
+   "name": "magic shockwave 05",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1466,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_06.webm",
+   "name": "magic shockwave 06",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 4526,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_07.webm",
+   "name": "magic shockwave 07",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2147,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_08.webm",
+   "name": "magic shockwave 08",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 3086,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_09.webm",
+   "name": "magic shockwave 09",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2636,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_10.webm",
+   "name": "magic shockwave 10",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2191,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_11.webm",
+   "name": "magic shockwave 11",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2780,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_shockwave_CIRCLE_12.webm",
+   "name": "magic shockwave 12",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2814,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_sparks_SQUARE_01.webm",
+   "name": "magic sparks 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 1639,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_sparks_SQUARE_02.webm",
+   "name": "magic sparks 02",
+   "category": "magic",
+   "shape": "square",
+   "kb": 622,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_sparks_SQUARE_03.webm",
+   "name": "magic sparks 03",
+   "category": "magic",
+   "shape": "square",
+   "kb": 704,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_spiral_RAY_01.webm",
+   "name": "magic spiral 01",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 1772,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_01.webm",
+   "name": "magic wild 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 1422,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_02.webm",
+   "name": "magic wild 02",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 6691,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_03.webm",
+   "name": "magic wild 03",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2066,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_04.webm",
+   "name": "magic wild 04",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2059,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_05.webm",
+   "name": "magic wild 05",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2054,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_CIRCLE_06.webm",
+   "name": "magic wild 06",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 2016,
+   "bundled": false
+  },
+  {
+   "path": "magic/magic_wild_RAY_02.webm",
+   "name": "magic wild 02",
+   "category": "magic",
+   "shape": "ray",
+   "kb": 401,
+   "bundled": false
+  },
+  {
+   "path": "magic/shield_strange_SQUARE_01.webm",
+   "name": "shield strange 01",
+   "category": "magic",
+   "shape": "square",
+   "kb": 6799,
+   "bundled": false
+  },
+  {
+   "path": "magic/triple_CIRCLE_01.webm",
+   "name": "triple 01",
+   "category": "magic",
+   "shape": "circle",
+   "kb": 11348,
+   "bundled": false
+  },
+  {
+   "path": "misc/bat_loop_SQUARE_01.webm",
+   "name": "bat loop 01",
+   "category": "misc",
+   "shape": "square",
+   "kb": 1030,
+   "bundled": false
+  },
+  {
+   "path": "misc/colour_spray_CONE_01.webm",
+   "name": "colour spray 01",
+   "category": "misc",
+   "shape": "cone",
+   "kb": 2735,
+   "bundled": false
+  },
+  {
+   "path": "misc/hand_blue_SQUARE_01.webm",
+   "name": "hand blue 01",
+   "category": "misc",
+   "shape": "square",
+   "kb": 2165,
+   "bundled": false
+  },
+  {
+   "path": "misc/hand_green_SQUARE_02.webm",
+   "name": "hand green 02",
+   "category": "misc",
+   "shape": "square",
+   "kb": 2265,
+   "bundled": false
+  },
+  {
+   "path": "misc/hand_purple_SQUARE_03.webm",
+   "name": "hand purple 03",
+   "category": "misc",
+   "shape": "square",
+   "kb": 2087,
+   "bundled": false
+  },
+  {
+   "path": "misc/hand_red_SQUARE_04.webm",
+   "name": "hand red 04",
+   "category": "misc",
+   "shape": "square",
+   "kb": 2122,
+   "bundled": false
+  },
+  {
+   "path": "misc/hand_yellow_SQUARE_05.webm",
+   "name": "hand yellow 05",
+   "category": "misc",
+   "shape": "square",
+   "kb": 2199,
+   "bundled": false
+  },
+  {
+   "path": "misc/healing_SQUARE_01.webm",
+   "name": "healing 01",
+   "category": "misc",
+   "shape": "square",
+   "kb": 3168,
+   "bundled": false
+  },
+  {
+   "path": "misc/lathander_symbol_CIRCLE_01.webm",
+   "name": "lathander symbol 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 414,
+   "bundled": false
+  },
+  {
+   "path": "misc/middlefinger_SQUARE_01.webm",
+   "name": "middlefinger 01",
+   "category": "misc",
+   "shape": "square",
+   "kb": 1778,
+   "bundled": false
+  },
+  {
+   "path": "misc/pentagram_blue_CIRCLE_01.webm",
+   "name": "pentagram blue 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 3497,
+   "bundled": false
+  },
+  {
+   "path": "misc/pentagram_green_CIRCLE_01.webm",
+   "name": "pentagram green 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 4035,
+   "bundled": false
+  },
+  {
+   "path": "misc/pentagram_purple_CIRCLE_01.webm",
+   "name": "pentagram purple 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 3663,
+   "bundled": false
+  },
+  {
+   "path": "misc/pentagram_red_CIRCLE_01.webm",
+   "name": "pentagram red 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 4182,
+   "bundled": false
+  },
+  {
+   "path": "misc/pentagram_yellow_CIRCLE_01.webm",
+   "name": "pentagram yellow 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 4235,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_01.webm",
+   "name": "runes 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 21167,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_02.webm",
+   "name": "runes 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1428,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_03.webm",
+   "name": "runes 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1606,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_04.webm",
+   "name": "runes 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1571,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_05.webm",
+   "name": "runes 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1283,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_CIRCLE_06.webm",
+   "name": "runes 06",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 14472,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_four_CIRCLE_01.webm",
+   "name": "runes four 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 744,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_four_CIRCLE_02.webm",
+   "name": "runes four 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 707,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_wild_blue_CIRCLE_01.webm",
+   "name": "runes wild blue 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 561,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_wild_green_CIRCLE_02.webm",
+   "name": "runes wild green 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 510,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_wild_purple_CIRCLE_03.webm",
+   "name": "runes wild purple 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 592,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_wild_red_CIRCLE_04.webm",
+   "name": "runes wild red 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 590,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_wild_yellow_CIRCLE_05.webm",
+   "name": "runes wild yellow 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 484,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_zap_blue_CIRCLE_01.webm",
+   "name": "runes zap blue 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1131,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_zap_green_CIRCLE_02.webm",
+   "name": "runes zap green 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1178,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_zap_purple_CIRCLE_03.webm",
+   "name": "runes zap purple 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1045,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_zap_red_CIRCLE_04.webm",
+   "name": "runes zap red 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1082,
+   "bundled": false
+  },
+  {
+   "path": "misc/runes_zap_yellow_CIRCLE_05.webm",
+   "name": "runes zap yellow 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 1085,
+   "bundled": false
+  },
+  {
+   "path": "misc/skull_blast_CIRCLE_01.webm",
+   "name": "skull blast 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 273,
+   "bundled": false
+  },
+  {
+   "path": "misc/skull_blast_CIRCLE_02.webm",
+   "name": "skull blast 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 259,
+   "bundled": false
+  },
+  {
+   "path": "misc/skull_blast_CIRCLE_03.webm",
+   "name": "skull blast 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 252,
+   "bundled": false
+  },
+  {
+   "path": "misc/skull_blast_CIRCLE_04.webm",
+   "name": "skull blast 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 348,
+   "bundled": false
+  },
+  {
+   "path": "misc/skull_blast_CIRCLE_05.webm",
+   "name": "skull blast 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 252,
+   "bundled": false
+  },
+  {
+   "path": "misc/smoke_vortex_CIRCLE_01.webm",
+   "name": "smoke vortex 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 893,
+   "bundled": false
+  },
+  {
+   "path": "misc/sprig_SQUARE_01.webm",
+   "name": "sprig 01",
+   "category": "misc",
+   "shape": "square",
+   "kb": 12290,
+   "bundled": false
+  },
+  {
+   "path": "misc/tentacles_CIRCLE_01.webm",
+   "name": "tentacles 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 10573,
+   "bundled": false
+  },
+  {
+   "path": "misc/tentacles_RAY_01.webm",
+   "name": "tentacles 01",
+   "category": "misc",
+   "shape": "ray",
+   "kb": 3440,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_blue_CIRCLE_01.webm",
+   "name": "trident blue 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 2937,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_green_CIRCLE_02.webm",
+   "name": "trident green 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 2820,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_purple_CIRCLE_03.webm",
+   "name": "trident purple 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 3339,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_red_CIRCLE_04.webm",
+   "name": "trident red 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 3024,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_white_CIRCLE_05.webm",
+   "name": "trident white 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 2687,
+   "bundled": false
+  },
+  {
+   "path": "misc/trident_yellow_CIRCLE_06.webm",
+   "name": "trident yellow 06",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 2708,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_blue_CIRCLE_01.webm",
+   "name": "web spider blue 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 5794,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_green_CIRCLE_02.webm",
+   "name": "web spider green 02",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 6382,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_purple_CIRCLE_03.webm",
+   "name": "web spider purple 03",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 6055,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_realistic_CIRCLE_01.webm",
+   "name": "web spider realistic 01",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 2883,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_red_CIRCLE_04.webm",
+   "name": "web spider red 04",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 6174,
+   "bundled": false
+  },
+  {
+   "path": "misc/web_spider_yellow_CIRCLE_05.webm",
+   "name": "web spider yellow 05",
+   "category": "misc",
+   "shape": "circle",
+   "kb": 5160,
+   "bundled": false
+  },
+  {
+   "path": "misc/wings_RECTANGLE_01.webm",
+   "name": "wings 01",
+   "category": "misc",
+   "shape": "rectangle",
+   "kb": 703,
+   "bundled": false
+  },
+  {
+   "path": "scifi/antimatter_beam_01.webm",
+   "name": "antimatter beam 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 495,
+   "bundled": false
+  },
+  {
+   "path": "scifi/arrow_straight_01.webm",
+   "name": "arrow straight 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 8,
+   "bundled": false
+  },
+  {
+   "path": "scifi/bullet_barrage_01.webm",
+   "name": "bullet barrage 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 293,
+   "bundled": false
+  },
+  {
+   "path": "scifi/laser_barrage_01.webm",
+   "name": "laser barrage 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 217,
+   "bundled": false
+  },
+  {
+   "path": "scifi/projector_rays_01.webm",
+   "name": "projector rays 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 3812,
+   "bundled": false
+  },
+  {
+   "path": "scifi/shotgun_blast_01.webm",
+   "name": "shotgun blast 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 134,
+   "bundled": false
+  },
+  {
+   "path": "scifi/slash_01.webm",
+   "name": "slash 01",
+   "category": "scifi",
+   "shape": "",
+   "kb": 30,
+   "bundled": false
+  },
+  {
+   "path": "water/water_blast_RAY_01.webm",
+   "name": "water blast 01",
+   "category": "water",
+   "shape": "ray",
+   "kb": 2792,
+   "bundled": false
+  },
+  {
+   "path": "water/water_blast_RAY_02.webm",
+   "name": "water blast 02",
+   "category": "water",
+   "shape": "ray",
+   "kb": 6894,
+   "bundled": false
+  },
+  {
+   "path": "water/water_blast_RAY_03.webm",
+   "name": "water blast 03",
+   "category": "water",
+   "shape": "ray",
+   "kb": 2856,
+   "bundled": false
+  },
+  {
+   "path": "water/water_fall_SQUARE_01.webm",
+   "name": "water fall 01",
+   "category": "water",
+   "shape": "square",
+   "kb": 14094,
+   "bundled": false
+  },
+  {
+   "path": "water/water_fountain_SQUARE_01.webm",
+   "name": "water fountain 01",
+   "category": "water",
+   "shape": "square",
+   "kb": 13869,
+   "bundled": false
+  },
+  {
+   "path": "water/water_portal_CIRCLE_01.webm",
+   "name": "water portal 01",
+   "category": "water",
+   "shape": "circle",
+   "kb": 4306,
+   "bundled": false
+  },
+  {
+   "path": "water/water_splash_SQUARE_01.webm",
+   "name": "water splash 01",
+   "category": "water",
+   "shape": "square",
+   "kb": 13028,
+   "bundled": false
+  },
+  {
+   "path": "water/water_splash_SQUARE_02.webm",
+   "name": "water splash 02",
+   "category": "water",
+   "shape": "square",
+   "kb": 4232,
+   "bundled": false
+  },
+  {
+   "path": "water/water_swirl_SQUARE_01.webm",
+   "name": "water swirl 01",
+   "category": "water",
+   "shape": "square",
+   "kb": 14283,
+   "bundled": false
+  },
+  {
+   "path": "water/water_wave_SQUARE_01.webm",
+   "name": "water wave 01",
+   "category": "water",
+   "shape": "square",
+   "kb": 4281,
+   "bundled": false
+  }
+ ]
+}
