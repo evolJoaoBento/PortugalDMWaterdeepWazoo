@@ -49,7 +49,7 @@
    "category": "air",
    "shape": "cone",
    "kb": 529,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "air/dust_blast_CONE_02.webm",
@@ -129,7 +129,7 @@
    "category": "air",
    "shape": "circle",
    "kb": 1360,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "air/smoke_explosion_CIRCLE_02.webm",
@@ -217,7 +217,7 @@
    "category": "air",
    "shape": "ray",
    "kb": 496,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "earth/earth-cracks_SQUARE_01.webm",
@@ -225,7 +225,7 @@
    "category": "earth",
    "shape": "square",
    "kb": 78,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "earth/earth-hole_RECTANGLE_01.webm",
@@ -233,7 +233,7 @@
    "category": "earth",
    "shape": "rectangle",
    "kb": 1416,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "earth/earth-ploughed_SQUARE_01.webm",
@@ -257,7 +257,7 @@
    "category": "energy",
    "shape": "ray",
    "kb": 672,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "energy/disintegration_bomb_CIRCLE_01.webm",
@@ -305,7 +305,7 @@
    "category": "energy",
    "shape": "ray",
    "kb": 296,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "energy/energy_beam_RAY_02.webm",
@@ -521,7 +521,7 @@
    "category": "energy",
    "shape": "circle",
    "kb": 194,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "energy/energy_explosion_CIRCLE_03.webm",
@@ -649,7 +649,7 @@
    "category": "energy",
    "shape": "circle",
    "kb": 716,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "energy/energy_shield_CIRCLE_03.webm",
@@ -673,7 +673,7 @@
    "category": "energy",
    "shape": "ray",
    "kb": 264,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "energy/energy_throw_RAY_02.webm",
@@ -889,7 +889,7 @@
    "category": "fire",
    "shape": "circle",
    "kb": 1170,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_ball_rotating_CIRCLE_02.webm",
@@ -1033,7 +1033,7 @@
    "category": "fire",
    "shape": "ray",
    "kb": 957,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_bolt_RAY_03.webm",
@@ -1057,7 +1057,7 @@
    "category": "fire",
    "shape": "cone",
    "kb": 577,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_circle_CIRCLE_01.webm",
@@ -1065,7 +1065,7 @@
    "category": "fire",
    "shape": "circle",
    "kb": 614,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_circle_CIRCLE_02.webm",
@@ -1153,7 +1153,7 @@
    "category": "fire",
    "shape": "circle",
    "kb": 533,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_explosion_CIRCLE_02.webm",
@@ -1201,7 +1201,7 @@
    "category": "fire",
    "shape": "square",
    "kb": 444,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_explosion_SQUARE_02.webm",
@@ -1273,7 +1273,7 @@
    "category": "fire",
    "shape": "ray",
    "kb": 1956,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "fire/fire_wall_RAY_02.webm",
@@ -1409,7 +1409,7 @@
    "category": "ice",
    "shape": "cone",
    "kb": 685,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "ice/frost_CONE_02.webm",
@@ -1473,7 +1473,7 @@
    "category": "ice",
    "shape": "ray",
    "kb": 951,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "ice/ice_ball_RAY_01.webm",
@@ -1481,7 +1481,7 @@
    "category": "ice",
    "shape": "ray",
    "kb": 403,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "ice/ice_shield_rotating_SQUARE_01.webm",
@@ -1529,7 +1529,7 @@
    "category": "lightning",
    "shape": "ray",
    "kb": 388,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "lightning/lightning_blast_multicolour_RAY_01.webm",
@@ -1537,7 +1537,7 @@
    "category": "lightning",
    "shape": "ray",
    "kb": 1049,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "lightning/lightning_blue_RAY_01.webm",
@@ -1561,7 +1561,7 @@
    "category": "lightning",
    "shape": "circle",
    "kb": 1150,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "lightning/lightning_flash_RECTANGLE_01.webm",
@@ -1577,7 +1577,7 @@
    "category": "lightning",
    "shape": "square",
    "kb": 1494,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "lightning/lightning_green_RAY_01.webm",
@@ -1649,7 +1649,7 @@
    "category": "lightning",
    "shape": "ray",
    "kb": 1038,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "lightning/lightning_yellow_RAY_01.webm",
@@ -1897,7 +1897,7 @@
    "category": "magic",
    "shape": "square",
    "kb": 404,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "magic/magic_dust_SQUARE_04.webm",
@@ -1993,7 +1993,7 @@
    "category": "magic",
    "shape": "square",
    "kb": 856,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "magic/magic_forcefield_SQUARE_02.webm",
@@ -2057,7 +2057,7 @@
    "category": "magic",
    "shape": "ray",
    "kb": 483,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "magic/magic_missle_RAY_07.webm",
@@ -2241,7 +2241,7 @@
    "category": "magic",
    "shape": "circle",
    "kb": 551,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "magic/magic_shockwave_CIRCLE_02.webm",
@@ -2369,7 +2369,7 @@
    "category": "magic",
    "shape": "circle",
    "kb": 1422,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "magic/magic_wild_CIRCLE_02.webm",
@@ -2505,7 +2505,7 @@
    "category": "misc",
    "shape": "circle",
    "kb": 414,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "misc/middlefinger_SQUARE_01.webm",
@@ -2569,7 +2569,7 @@
    "category": "misc",
    "shape": "circle",
    "kb": 1428,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "misc/runes_CIRCLE_03.webm",
@@ -2609,7 +2609,7 @@
    "category": "misc",
    "shape": "circle",
    "kb": 744,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "misc/runes_four_CIRCLE_02.webm",
@@ -2705,7 +2705,7 @@
    "category": "misc",
    "shape": "circle",
    "kb": 273,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "misc/skull_blast_CIRCLE_02.webm",
@@ -2937,7 +2937,7 @@
    "category": "water",
    "shape": "ray",
    "kb": 2792,
-   "bundled": false
+   "bundled": true
   },
   {
    "path": "water/water_blast_RAY_02.webm",
