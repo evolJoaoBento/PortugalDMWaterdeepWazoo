@@ -137,12 +137,138 @@
     return { x:a.x, y:a.y, w:b.x - a.x, h:b.y - a.y };
   }
 
+  /* ── aiming a staged effect ───────────────────────────────────────
+     A cast is not fired the moment the box is drawn. It is STAGED: a
+     rectangle and an angle the DM can push around until the bolt points
+     down the corridor rather than across it. Everything here is pure —
+     the angle, the hit test, the resize — because aiming is exactly the
+     kind of geometry that is wrong by a sign and nobody notices until a
+     fireball lands in the wrong room.
+
+     The rectangle stays axis-aligned in image space and the angle is
+     kept beside it, applied about the rectangle's centre when drawing.
+     That way the message on the channel is the rectangle it always was,
+     plus one number, and the projector turns it the same way. */
+  var SNAP = Math.PI / 12;                 /* 15°, so a corridor lines up */
+
+  function snapAngle(a, free){ return free ? a : Math.round(a / SNAP) * SNAP; }
+
+  function centreOf(rect){
+    return { x:(rect.x0 + rect.x1) / 2, y:(rect.y0 + rect.y1) / 2 };
+  }
+
+  /* A point in the box's own frame: undo the rotation about the centre.
+     Every hit test happens here, because a rotated box's corners are not
+     where an axis-aligned test would look for them. */
+  function localPoint(px, py, cx, cy, rot){
+    var dx = px - cx, dy = py - cy, c = Math.cos(-rot), s = Math.sin(-rot);
+    return { x: dx * c - dy * s, y: dx * s + dy * c };
+  }
+
+  /* What the pointer is on: the turning handle, a named corner, the body
+     of the box, or nothing at all. `grab` is how close counts as a hit
+     and `lift` is how far the handle floats above the top edge — both in
+     the same units as the box, so a caller can scale them for a hidpi
+     screen. */
+  function handleAt(box, rot, px, py, grab, lift){
+    var cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    var p = localPoint(px, py, cx, cy, rot || 0);
+    var hw = box.w / 2, hh = box.h / 2;
+    var g = grab || 10, l = (lift === undefined ? 28 : lift);
+    if(Math.abs(p.x) <= g && Math.abs(p.y + hh + l) <= g) return "rotate";
+    var corners = [["nw", -hw, -hh], ["ne", hw, -hh], ["se", hw, hh], ["sw", -hw, hh]];
+    for(var i = 0; i < corners.length; i++){
+      if(Math.abs(p.x - corners[i][1]) <= g && Math.abs(p.y - corners[i][2]) <= g){
+        return corners[i][0];
+      }
+    }
+    if(Math.abs(p.x) <= hw && Math.abs(p.y) <= hh) return "move";
+    return null;
+  }
+
+  function opposite(corner){
+    return {nw:"se", ne:"sw", se:"nw", sw:"ne"}[corner] || "se";
+  }
+
+  /* Where a named corner actually is, once the box has been turned. */
+  function cornerAt(rect, corner, rot){
+    var c = centreOf(rect);
+    var hw = Math.abs(rect.x1 - rect.x0) / 2, hh = Math.abs(rect.y1 - rect.y0) / 2;
+    var lx = (corner === "nw" || corner === "sw") ? -hw : hw;
+    var ly = (corner === "nw" || corner === "ne") ? -hh : hh;
+    var cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    return { x: c.x + lx * cs - ly * sn, y: c.y + lx * sn + ly * cs };
+  }
+
+  function moveRect(rect, dx, dy){
+    return { x0:rect.x0 + dx, y0:rect.y0 + dy, x1:rect.x1 + dx, y1:rect.y1 + dy };
+  }
+
+  /* Drag a corner and the opposite one stays nailed down — which is what
+     resizing looks like to anyone who has used any other tool, and is
+     the reason this cannot be done by moving x0 and y0 directly once the
+     box is turned. The pointer is measured in the box's own frame; the
+     new centre is half that vector back from the fixed corner, turned
+     into image space again. */
+  function resizeFrom(fixed, rot, px, py){
+    var c = Math.cos(-(rot || 0)), s = Math.sin(-(rot || 0));
+    var dx = px - fixed.x, dy = py - fixed.y;
+    var vx = dx * c - dy * s, vy = dx * s + dy * c;
+    var w = Math.abs(vx), h = Math.abs(vy);
+    var cs = Math.cos(rot || 0), sn = Math.sin(rot || 0);
+    var hx = vx / 2, hy = vy / 2;
+    var cx = fixed.x + hx * cs - hy * sn, cy = fixed.y + hx * sn + hy * cs;
+    return { x0:cx - w / 2, y0:cy - h / 2, x1:cx + w / 2, y1:cy + h / 2 };
+  }
+
+  /* The angle that points the box's top edge at a pointer. The handle
+     sits above the box, so straight up is zero rotation, not the
+     quarter-turn atan2 would report. */
+  function aimAt(centre, px, py, free){
+    return snapAngle(Math.atan2(py - centre.y, px - centre.x) + Math.PI / 2, free);
+  }
+
+  /* A quietly looping copy, for aiming against. It is the same file the
+     cast will use, so what the DM lines up is what the players get. Null
+     until it has loaded — the caller simply draws nothing that frame. */
+  var ghosts = {};
+  function ghost(effect){
+    if(!effect) return null;
+    var g = ghosts[effect.path];
+    if(g) return g.video;
+    ghosts[effect.path] = { video: null };
+    preload(effect).then(function(){
+      var have = ready[effect.path];
+      if(!have) return;
+      var v = document.createElement("video");
+      v.muted = true; v.playsInline = true; v.loop = true; v.src = have.url;
+      v.play().catch(function(){});
+      ghosts[effect.path].video = v;
+    });
+    return null;
+  }
+
+  /* One frame of a video into a canvas box, turned about its centre.
+     Both the staged ghost and a live cast go through here, so an effect
+     cannot line up one way while aiming and land another way when cast. */
+  function drawFrame(g, video, box, rot, alpha){
+    if(!video || video.readyState < 2) return false;
+    if(box.w < 1 || box.h < 1) return false;
+    g.save();
+    if(alpha !== undefined) g.globalAlpha = alpha;
+    g.translate(box.x + box.w / 2, box.y + box.h / 2);
+    if(rot) g.rotate(rot);
+    g.drawImage(video, -box.w / 2, -box.h / 2, box.w, box.h);
+    g.restore();
+    return true;
+  }
+
   /* Start one. Muted because a browser will not autoplay anything else,
      and the pack is silent anyway; playsInline because the alternative on
      some browsers is taking the video full screen, which on a projector
      would be a surprise nobody wants mid-combat. */
-  function cast(effect, rect){
-    var entry = { path: effect.path, rect: rect, video: null, done: false };
+  function cast(effect, rect, rot){
+    var entry = { path: effect.path, rect: rect, rot: rot || 0, video: null, done: false };
     live.push(entry);
     preload(effect).then(function(){
       var have = ready[effect.path];
@@ -175,10 +301,7 @@
     live = reap(live);
     for(var i = 0; i < live.length; i++){
       var c = live[i];
-      if(!c.video || c.video.readyState < 2) continue;
-      var b = boxOf(view, c.rect);
-      if(b.w < 1 || b.h < 1) continue;
-      g.drawImage(c.video, b.x, b.y, b.w, b.h);
+      drawFrame(g, c.video, boxOf(view, c.rect), c.rot);
     }
   }
 
@@ -197,6 +320,17 @@
     cast: cast,
     reap: reap,
     boxOf: boxOf,
+    snapAngle: snapAngle,
+    centreOf: centreOf,
+    localPoint: localPoint,
+    handleAt: handleAt,
+    opposite: opposite,
+    cornerAt: cornerAt,
+    moveRect: moveRect,
+    resizeFrom: resizeFrom,
+    aimAt: aimAt,
+    ghost: ghost,
+    drawFrame: drawFrame,
     draw: draw,
     playing: playing,
     live: liveList,

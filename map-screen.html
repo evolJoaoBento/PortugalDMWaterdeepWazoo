@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814d">
+<meta name="wazoo-build" content="20260814e">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map &mdash; Waterdeep</title>
@@ -18,7 +18,7 @@ body.pointing{cursor:default}
 #screen{position:fixed;inset:0;width:100%;height:100%;display:block}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
-<script src="assets/spellfx.js?v=20260814c"></script>
+<script src="assets/spellfx.js?v=20260814d"></script>
 </head>
 <body>
 <canvas id="screen"></canvas>
@@ -287,12 +287,12 @@ const ch = Fog.open(async function(m){
   }
   if(m.t === "cast"){
     const e = fxByPath(m.path);
-    if(e){ SpellFx.cast(e, m.rect); animatePings(); }
+    if(e){ SpellFx.cast(e, m.rect, m.rot); animatePings(); }
     /* A screen opened moments ago may not have the catalogue yet, and a
        dropped fireball is worse than a late one. */
     else SpellFx.loadIndex().then(function(){
       const late = fxByPath(m.path);
-      if(late){ SpellFx.cast(late, m.rect); animatePings(); }
+      if(late){ SpellFx.cast(late, m.rect, m.rot); animatePings(); }
     });
     return;
   }
