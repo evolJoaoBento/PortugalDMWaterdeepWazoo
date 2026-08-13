@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="wazoo-build" content="20260808n">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>The Map Table &mdash; Waterdeep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260808n">
+<style>
+html,body{height:100%}
+body{margin:0;background:#0b0805;overflow:hidden}
+#tests{display:none;white-space:pre-wrap;font:12.5px/1.7 ui-monospace,Menlo,Consolas,monospace;color:#a89070;background:#0b0805;padding:16px;overflow:auto;height:100%}
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:5;
+  display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+  padding:10px 14px;background:rgba(11,8,5,.92);border-bottom:1px solid #2b2014;
+}
+#bar button{
+  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:#c8a86a;background:rgba(20,15,9,.6);border:1px solid #3a2c1a;border-radius:2px;
+  padding:8px 14px;cursor:pointer;
+}
+#bar button:hover{background:rgba(58,44,26,.5);color:#e8d9b8}
+#bar button.on{background:linear-gradient(180deg,#6d4a2b,#4a2e18);border-color:#c8a86a;color:#f2e4c6}
+#bar .rule{width:1px;align-self:stretch;background:#2b2014;margin:0 5px}
+#bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
+#table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+</style>
+<script src="assets/fog.js?v=20260808n"></script>
+</head>
+<body>
+<div id="bar">
+  <button id="open-map" type="button">Load a map&hellip;</button>
+  <span class="rule"></span>
+  <button id="t-brush" type="button" class="on">Brush</button>
+  <button id="t-rect" type="button">Rectangle</button>
+  <input id="brush" type="range" min="4" max="240" value="40" title="Brush size">
+  <span class="rule"></span>
+  <button id="a-reveal" type="button" class="on">Reveal</button>
+  <button id="a-hide" type="button">Hide</button>
+  <span class="rule"></span>
+  <button id="all-reveal" type="button">Reveal all</button>
+  <button id="all-fog" type="button">Fog all</button>
+  <button id="rotate" type="button">Rotate</button>
+  <button id="undo" type="button">Undo</button>
+  <button id="redo" type="button">Redo</button>
+  <span class="rule"></span>
+  <button id="open-screen" type="button">Open the players&rsquo; screen</button>
+  <span class="rule"></span>
+  <span id="said" class="said"></span>
+</div>
+<canvas id="table"></canvas>
+<input id="file" type="file" accept="image/*" hidden>
+<pre id="tests"></pre>
+<script>
+/* =========================================================================
+   The table.
+
+   Both this page and the projector are the same origin, so they share
+   IndexedDB. The map is stored once, here; the projector is told only
+   its id and fetches the blob itself. A 15 MB image never crosses the
+   channel.
+   ========================================================================= */
+/* Storage lives in assets/fog.js, because the projector page opens the
+   same database and one definition of the schema is the point. */
+const FOG_ALPHA = 0.78;          /* EDITOR_FOG_ALPHA in dnd_map.py */
+const ZMIN = 0.02, ZMAX = 40;
+
+const state = { mapId:null, img:null, w:0, h:0, rotation:0, strokes:[], view:{z:1,tx:0,ty:0} };
+let mask = document.createElement("canvas");
+
+function say(msg){ document.getElementById("said").textContent = msg || ""; }
+
+function sizeCanvas(){
+  const cv = document.getElementById("table");
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = Math.round(cv.clientWidth  * dpr);
+  cv.height = Math.round(cv.clientHeight * dpr);
+  return cv;
+}
+
+function redraw(){
+  const cv = document.getElementById("table");
+  const g = cv.getContext("2d");
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle = "#0b0805";
+  g.fillRect(0,0,cv.width,cv.height);
+
+  if(!state.img){
+    g.fillStyle = "#6d5a3a";
+    g.font = '16px "EB Garamond", Georgia, serif';
+    g.textAlign = "center";
+    g.fillText(Fog.emptyMessage(), cv.width/2, cv.height/2);
+    return;
+  }
+
+  const v = state.view;
+  g.imageSmoothingQuality = "high";
+  g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+  g.globalAlpha = FOG_ALPHA;
+  g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z);
+  g.globalAlpha = 1;
+}
+
+function remask(){
+  if(state.w && state.h) Fog.rasterise(state.strokes, state.w, state.h, mask);
+  redraw();
+}
+
+/* Swap in a stored map: decode it, fit it, and pick its fog back up. */
+async function loadMapRecord(rec){
+  const raw = await createImageBitmap(rec.blob);
+  const f = await Fog.getFog(rec.id);
+  state.mapId = rec.id;
+  state.rotation = (f && f.rotation) || 0;
+  state.strokes = (f && f.strokes) || [];
+  /* Bring the picture to the orientation the saved strokes assume. */
+  state.img = Fog.rotateImage(raw, state.rotation);
+  state.w = state.img.width; state.h = state.img.height;
+  const cv = sizeCanvas();
+  state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
+  stack.strokes = state.strokes; stack.undone.length = 0;
+  try{ localStorage.setItem(LAST_KEY, rec.id); }catch(e){}
+  remask();
+  say(rec.name);
+  /* syncPayload, not a bare map id: this also runs when the table reloads
+     and restores the last map from localStorage, and a screen that is
+     already open must pick up the restored fog and rotation, not be
+     wiped back to a blank slate. */
+  send(syncPayload(state));
+}
+
+/* No decode here: nothing ever read a stored width or height back, and
+   loadMapRecord decodes anyway. A file that will not decode still rejects
+   in there, inside this same try. */
+async function chooseMap(file){
+  try{
+    const id = "m" + Date.now().toString(36);
+    await Fog.putMap(id, file.name, file);
+    await loadMapRecord({id:id, name:file.name, blob:file});
+  }catch(e){
+    say("Could not read " + file.name + " — " + e.message);
+  }
+}
+
+/* ── pan and zoom ──────────────────────────────────────────────────── */
+function wireView(){
+  const cv = document.getElementById("table");
+
+  cv.addEventListener("wheel", function(e){
+    if(!state.img) return;
+    e.preventDefault();
+    const dpr = window.devicePixelRatio || 1;
+    const f = e.deltaY < 0 ? 1.15 : 1/1.15;
+    state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
+    redraw();
+    sendView();
+  }, {passive:false});
+
+  /* Right-drag pans, as dnd_map.py does, leaving the left button for paint. */
+  let panning = false, lx = 0, ly = 0;
+  cv.addEventListener("contextmenu", e => e.preventDefault());
+  cv.addEventListener("pointerdown", function(e){
+    if(e.button !== 2) return;
+    panning = true; lx = e.clientX; ly = e.clientY; cv.setPointerCapture(e.pointerId);
+  });
+  cv.addEventListener("pointermove", function(e){
+    if(!panning) return;
+    const dpr = window.devicePixelRatio || 1;
+    state.view.tx += (e.clientX - lx) * dpr;
+    state.view.ty += (e.clientY - ly) * dpr;
+    lx = e.clientX; ly = e.clientY;
+    redraw();
+    sendView();
+  });
+  cv.addEventListener("pointerup", function(){ panning = false; });
+  /* A lost pointer capture must not leave panning stuck true. */
+  cv.addEventListener("pointercancel", function(){ panning = false; });
+
+  window.addEventListener("resize", function(){
+    sizeCanvas();
+    redraw();
+    sendView();
+  });
+}
+
+function wire(){
+  const file = document.getElementById("file");
+  document.getElementById("open-map").addEventListener("click", () => file.click());
+  file.addEventListener("change", function(){
+    if(file.files && file.files[0]) chooseMap(file.files[0]);
+    file.value = "";
+  });
+  wireView();
+
+  const pick = (onId, offId, set) => {
+    const on = document.getElementById(onId), off = document.getElementById(offId);
+    on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
+  };
+  pick("t-brush", "t-rect", () => tool = "brush");
+  pick("t-rect", "t-brush", () => tool = "rect");
+  pick("a-reveal", "a-hide", () => reveal = true);
+  pick("a-hide", "a-reveal", () => reveal = false);
+  document.getElementById("brush").addEventListener("input", function(){ brush = +this.value; });
+  document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
+  document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
+  document.getElementById("rotate").addEventListener("click", rotate);
+  document.getElementById("undo").addEventListener("click", undo);
+  document.getElementById("redo").addEventListener("click", redo);
+  document.addEventListener("keydown", function(e){
+    if(!(e.ctrlKey || e.metaKey)) return;
+    if(e.key === "z"){ e.preventDefault(); undo(); }
+    if(e.key === "y"){ e.preventDefault(); redo(); }
+  });
+  wirePaint();
+
+  document.getElementById("open-screen").addEventListener("click", function(){
+    const w = window.open("map-screen.html", "waterdeep-map-screen",
+      "popup=yes,width=1280,height=800,left=" + (screen.availWidth) + ",top=0");
+    /* A blocked popup returns null and says nothing else. */
+    say(w ? "Players' screen opened — drag it to the projector."
+          : "The players' screen was blocked — allow pop-ups for this site.");
+  });
+}
+
+/* ── the stroke stack ──────────────────────────────────────────────
+   Kept as three tiny pure functions so the suite can exercise the
+   ordering rules without a canvas or a map. */
+function applyPush(st, stroke){ st.strokes.push(stroke); st.undone.length = 0; return true; }
+function applyUndo(st){
+  if(!st.strokes.length) return false;
+  st.undone.push(st.strokes.pop()); return true;
+}
+function applyRedo(st){
+  if(!st.undone.length) return false;
+  st.strokes.push(st.undone.pop()); return true;
+}
+
+const LAST_KEY = "waterdeep-table.last";
+const stack = { strokes: state.strokes, undone: [] };
+let tool = "brush", reveal = true, brush = 40;
+
+let saveT = null;
+function saveFog(){
+  if(!state.mapId) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(() => { Fog.putFog(state.mapId, state.strokes, state.rotation).catch(()=>{}); }, 400);
+}
+
+/* ── the channel ───────────────────────────────────────────────────
+   Only small things travel: a view, a stroke, a map id. The map blob
+   stays in IndexedDB, which the projector reads directly. */
+
+/* Everything a screen needs to draw the table as it currently stands.
+   The map is an id, not an image — that is what keeps this small.
+   Rotation must be here: the stored blob is always the original, and
+   the strokes travel already rotated, so a screen that decodes the
+   blob unturned lands the fog crooked.
+
+   The framing travels as an image-space RECTANGLE, never as {z,tx,ty}.
+   Those numbers are in this canvas's device pixels; the projector's
+   canvas is another size at another devicePixelRatio, so applied
+   verbatim they crop the map and every pan carries the error along.
+   The canvas is read at send time because it is the sender's dimensions
+   that turn a view into a rectangle. */
+function syncPayload(s, canvas){
+  const cv = canvas || document.getElementById("table");
+  return { t:"sync", mapId:s.mapId, rect:Fog.viewRect(s.view, cv.width, cv.height),
+           strokes:s.strokes, rotation:s.rotation };
+}
+
+const ch = Fog.open(function(m){
+  /* The only thing the table listens for is a screen announcing itself. */
+  if(m.t === "hello") ch.postMessage(syncPayload(state));
+});
+
+let send = function(m){ if(ch) ch.postMessage(m); };
+
+/* The view changes on every wheel tick and every pan frame, so it is
+   sent at most once per frame rather than per event. */
+let viewPending = false;
+function sendView(){
+  if(!ch || viewPending) return;
+  viewPending = true;
+  requestAnimationFrame(function(){
+    viewPending = false;
+    const cv = document.getElementById("table");
+    send({t:"view", rect:Fog.viewRect(state.view, cv.width, cv.height)});
+  });
+}
+
+function pushStroke(s){
+  applyPush(stack, s);
+  state.strokes = stack.strokes;
+  /* Just this stroke onto the mask as it stands. A brush drag pushes one
+     stroke per pointermove, so replaying the whole list each time is
+     O(n²) over a full-resolution mask. Undo, redo, sync, rotate and map
+     loading still replay from zero — that is what the spec's O(n)
+     rasterise is for, and none of them happen per pointer event. */
+  if(state.w && state.h) Fog.applyStroke(s, state.w, state.h, mask);
+  redraw(); saveFog();
+  send({t:"stroke", stroke:s});
+}
+
+function undo(){
+  if(!applyUndo(stack)) return;
+  state.strokes = stack.strokes; remask(); saveFog();
+  send({t:"undo", strokes:state.strokes});
+}
+function redo(){
+  if(!applyRedo(stack)) return;
+  state.strokes = stack.strokes; remask(); saveFog();
+  send({t:"undo", strokes:state.strokes});
+}
+
+/* ── painting ──────────────────────────────────────────────────────── */
+function wirePaint(){
+  const cv = document.getElementById("table");
+  let drawing = false, prev = null, start = null;
+
+  const at = e => {
+    const dpr = window.devicePixelRatio || 1;
+    return Fog.canvasToImage(state.view, e.offsetX*dpr, e.offsetY*dpr);
+  };
+
+  cv.addEventListener("pointerdown", function(e){
+    if(e.button !== 0 || !state.img) return;
+    drawing = true; cv.setPointerCapture(e.pointerId);
+    const p = at(e);
+    if(tool === "brush"){ prev = p; pushStroke(Fog.line(p.x,p.y,p.x,p.y,brush,reveal)); }
+    else start = p;
+  });
+
+  cv.addEventListener("pointermove", function(e){
+    if(!drawing) return;
+    const p = at(e);
+    if(tool === "brush"){
+      pushStroke(Fog.line(prev.x, prev.y, p.x, p.y, brush, reveal));
+      prev = p;
+    }
+  });
+
+  cv.addEventListener("pointerup", function(e){
+    if(!drawing) return;
+    drawing = false;
+    if(tool === "rect" && start){
+      const p = at(e);
+      pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+      start = null;
+    }
+  });
+
+  /* A lost pointer capture (e.g. the OS steals the gesture) must not
+     strand a half-drawn stroke — end it without committing a rectangle. */
+  cv.addEventListener("pointercancel", function(){
+    if(!drawing) return;
+    drawing = false;
+    start = null;
+  });
+}
+
+function rotate(){
+  if(!state.img) return;
+  const oldH = state.h;
+  state.img = Fog.rotateImage(state.img, 1);
+  state.w = state.img.width; state.h = state.img.height;
+  state.rotation = (state.rotation + 1) % 4;
+  state.strokes = Fog.rotateStrokes(state.strokes, oldH);
+  stack.strokes = state.strokes; stack.undone.length = 0;
+  const c = sizeCanvas();
+  state.view = Fog.fitView(state.w, state.h, c.width, c.height);
+  remask(); saveFog();
+  send(syncPayload(state));
+}
+
+/* =========================================================================
+   Self-tests:  map-table.html?test=1
+   ========================================================================= */
+function runTests(){
+  /* #bar is fixed and opaque over the first lines of the report, and
+     #table is fixed over all of it and swallows the wheel so the report
+     cannot even be scrolled. Neither is any use while the suite runs.
+     The canvas keeps its width/height attributes while hidden, which is
+     what the payload tests measure against. */
+  document.getElementById("bar").style.display = "none";
+  document.getElementById("table").style.display = "none";
+
+  const out=[]; let pass=0, fail=0;
+  const ok=(name,cond,extra)=>{ if(cond){pass++; out.push("PASS  "+name);} else {fail++; out.push("FAIL  "+name+(extra?"\n      "+extra:""));} };
+  const near=(a,b)=>Math.abs(a-b)<0.001;
+
+  /* alpha of the mask at a pixel: 255 = fogged, 0 = revealed */
+  const alphaAt=(cv,x,y)=>cv.getContext("2d").getImageData(x,y,1,1).data[3];
+
+  /* ── view maths ────────────────────────────────────────────────── */
+  const v = {z:2, tx:30, ty:-10};
+  const c = Fog.imageToCanvas(v, 100, 50);
+  ok("image to canvas", near(c.x, 230) && near(c.y, 90), JSON.stringify(c));
+  const i = Fog.canvasToImage(v, c.x, c.y);
+  ok("round trip", near(i.x, 100) && near(i.y, 50), JSON.stringify(i));
+
+  ok("fit scale takes the tighter axis", near(Fog.fitScale(1000, 500, 500, 500), 0.5),
+     String(Fog.fitScale(1000,500,500,500)));
+  ok("fit scale of nothing is 1", Fog.fitScale(0, 0, 500, 500) === 1);
+
+  const fv = Fog.fitView(1000, 500, 500, 500);
+  ok("fit view centres the image", near(fv.tx, 0) && near(fv.ty, 125), JSON.stringify(fv));
+
+  /* ── the framing crosses the channel as an image rectangle ────────
+     A view is in the sender's DEVICE pixels. The projector's canvas is
+     another size at another devicePixelRatio — a laptop at 150% beside a
+     projector at 100% is the ordinary case — so a view applied verbatim
+     shows the players a cropped, off-centre map. A rectangle of the map
+     means the same thing on any canvas. */
+  const vr = Fog.viewRect({z:2, tx:-100, ty:-40}, 800, 600);
+  ok("a view names the image rectangle its canvas shows",
+     near(vr.x0, 50) && near(vr.y0, 20) && near(vr.x1, 450) && near(vr.y1, 320),
+     JSON.stringify(vr));
+
+  const rt = Fog.viewFromRect(vr, 800, 600);
+  ok("rect round-trips to the same view on the same canvas",
+     near(rt.z, 2) && near(rt.tx, -100) && near(rt.ty, -40), JSON.stringify(rt));
+
+  ok("an empty rectangle is refused rather than dividing by zero",
+     Fog.viewFromRect({x0:5,y0:5,x1:5,y1:5}, 800, 600).z === 1);
+
+  /* THE test for the projector bug: the same rectangle, fitted to a
+     canvas of a different size and aspect, must still show the same
+     ground. Contain-fitting means the tight axis matches exactly and the
+     slack axis becomes a centred superset — never a crop. */
+  const other = Fog.viewFromRect(vr, 700, 900);
+  const shown = Fog.viewRect(other, 700, 900);
+  ok("the same rect on a differently-sized canvas frames the same map",
+     near(shown.x0, vr.x0) && near(shown.x1, vr.x1) &&
+     shown.y0 <= vr.y0 + 0.001 && shown.y1 >= vr.y1 - 0.001 &&
+     near((shown.y0 + shown.y1) / 2, (vr.y0 + vr.y1) / 2),
+     "sent " + JSON.stringify(vr) + " but the screen would show " + JSON.stringify(shown));
+
+  const z = Fog.zoomAt({z:1,tx:0,ty:0}, 200, 100, 2, 0.05, 40);
+  ok("zoom holds the cursor still",
+     near(Fog.canvasToImage(z,200,100).x, 200) && near(Fog.canvasToImage(z,200,100).y, 100),
+     JSON.stringify(z));
+  ok("zoom clamps to max", Fog.zoomAt({z:30,tx:0,ty:0}, 0, 0, 4, 0.05, 40).z === 40);
+  ok("zoom clamps to min", Fog.zoomAt({z:0.1,tx:0,ty:0}, 0, 0, 0.1, 0.05, 40).z === 0.05);
+
+  /* ── the mask ──────────────────────────────────────────────────── */
+  const blank = Fog.rasterise([], 40, 40);
+  ok("no strokes means all fog", alphaAt(blank, 20, 20) === 255, String(alphaAt(blank,20,20)));
+
+  const revealed = Fog.rasterise([Fog.fill(true)], 40, 40);
+  ok("fill reveals everything", alphaAt(revealed, 20, 20) === 0);
+
+  const box = Fog.rasterise([Fog.rect(10,10,30,30,true)], 40, 40);
+  ok("rect reveals inside", alphaAt(box, 20, 20) === 0);
+  ok("rect leaves outside fogged", alphaAt(box, 2, 2) === 255);
+
+  const back = Fog.rasterise([Fog.fill(true), Fog.rect(10,10,30,30,false)], 40, 40);
+  ok("a later stroke wins", alphaAt(back, 20, 20) === 255 && alphaAt(back, 2, 2) === 0);
+
+  const dot = Fog.rasterise([Fog.line(20,20,20,20,6,true)], 40, 40);
+  ok("a click leaves a dot", alphaAt(dot, 20, 20) === 0, "zero-length line must still paint");
+
+  const drag = Fog.rasterise([Fog.line(5,20,35,20,4,true)], 40, 40);
+  ok("a drag reveals along its path", alphaAt(drag, 20, 20) === 0 && alphaAt(drag, 20, 2) === 255);
+
+  const undone = Fog.rasterise([Fog.fill(true), Fog.rect(10,10,30,30,false)].slice(0,-1), 40, 40);
+  ok("dropping the last stroke undoes it", alphaAt(undone, 20, 20) === 0);
+
+  /* Appending one stroke to the mask must equal replaying the lot. That
+     equality is the whole licence for the brush to stop being O(n²). */
+  const many = [Fog.fill(true), Fog.rect(5,5,25,25,false),
+                Fog.line(10,30,30,30,4,true), Fog.line(20,20,20,20,7,false)];
+  const together = Fog.rasterise(many, 40, 40);
+  const oneAtATime = Fog.rasterise([], 40, 40);
+  many.forEach(s => Fog.applyStroke(s, 40, 40, oneAtATime));
+  const pixels = cv => cv.getContext("2d").getImageData(0, 0, 40, 40).data;
+  const a = pixels(together), b = pixels(oneAtATime);
+  let same = a.length === b.length;
+  for(let k = 0; same && k < a.length; k++) if(a[k] !== b[k]) same = false;
+  ok("applying strokes one at a time matches rasterising them together", same,
+     "an appended mask and a replayed mask must be identical, pixel for pixel");
+
+  /* ── rotation ──────────────────────────────────────────────────── */
+  /* 90° clockwise on an image 100 tall: (x,y) -> (oldH - y, x) */
+  const rot = Fog.rotateStrokes([Fog.line(10, 20, 30, 40, 5, true)], 100);
+  ok("rotate maps a line's ends", rot[0].x0 === 80 && rot[0].y0 === 10 && rot[0].x1 === 60 && rot[0].y1 === 30,
+     JSON.stringify(rot[0]));
+  ok("rotate keeps the radius and the action", rot[0].r === 5 && rot[0].reveal === true);
+  ok("rotate leaves a fill alone", Fog.rotateStrokes([Fog.fill(true)], 100)[0].k === "fill");
+
+  const small = document.createElement("canvas"); small.width = 20; small.height = 60;
+  ok("rotating an image swaps its sides",
+     Fog.rotateImage(small, 1).width === 60 && Fog.rotateImage(small, 1).height === 20);
+  ok("two turns keep the shape",
+     Fog.rotateImage(small, 2).width === 20 && Fog.rotateImage(small, 2).height === 60);
+  ok("no turns returns the original", Fog.rotateImage(small, 0) === small);
+
+  ok("an empty table says so", Fog.emptyMessage() === "No map on the table", Fog.emptyMessage());
+
+  const stack = {strokes:[], undone:[]};
+  applyPush(stack, Fog.fill(true));
+  applyPush(stack, Fog.rect(0,0,5,5,false));
+  ok("pushing keeps order", stack.strokes.length === 2 && stack.strokes[1].k === "rect");
+  applyUndo(stack);
+  ok("undo pops the last", stack.strokes.length === 1 && stack.undone.length === 1);
+  applyRedo(stack);
+  ok("redo puts it back", stack.strokes.length === 2 && stack.undone.length === 0);
+  applyUndo(stack); applyPush(stack, Fog.fill(false));
+  ok("a new stroke drops the redo trail", stack.undone.length === 0 && stack.strokes.length === 2);
+  ok("undo on an empty stack is not a crash", applyUndo({strokes:[],undone:[]}) === false);
+
+  /* ── the channel payload ──────────────────────────────────────────── */
+  const tcv = document.getElementById("table");
+  const fake = {mapId:"m1", view:{z:2,tx:3,ty:4}, strokes:[Fog.fill(true)], rotation:3};
+  const payload = syncPayload(fake, tcv);
+  const want = Fog.viewRect(fake.view, tcv.width, tcv.height);
+  ok("sync carries the map", payload.mapId === "m1", JSON.stringify(payload));
+  ok("sync carries the framing as an image rectangle",
+     payload.rect && near(payload.rect.x0, want.x0) && near(payload.rect.y0, want.y0) &&
+     near(payload.rect.x1, want.x1) && near(payload.rect.y1, want.y1),
+     JSON.stringify(payload.rect));
+  ok("sync sends no device-pixel view", payload.view === undefined,
+     "z/tx/ty belong to the sender's canvas; the screen must fit the rect to its own");
+  ok("sync carries every stroke", payload.strokes.length === 1 && payload.strokes[0].k === "fill");
+  ok("sync carries the rotation", payload.rotation === 3,
+     "without it the screen decodes the blob unturned and the fog lands crooked");
+  ok("sync survives the channel", JSON.parse(JSON.stringify(payload)).strokes[0].reveal === true,
+     "the payload must be structured-clonable");
+
+  const el=document.getElementById("tests");
+  el.style.display="block";
+  el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
+    "\n"+"=".repeat(46)+"\n"+pass+" passed, "+fail+" failed\n";
+  document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Map Table tests";
+}
+
+(async function boot(){
+  if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  sizeCanvas();
+  wire();
+  if(!ch) say("This browser cannot link the two windows — the players' screen will not follow.");
+  try{ await Fog.openDb(); }
+  catch(e){
+    say("This browser will not open its map store here — serve the site over http, not file://");
+  }
+  let last = null; try{ last = localStorage.getItem(LAST_KEY); }catch(e){}
+  if(last){
+    const rec = await Fog.getMap(last).catch(() => null);
+    /* loadMapRecord decodes and reads the fog store, and either can
+       reject. This path runs at the start of every session, so an
+       unguarded throw aborts boot before redraw() and leaves the DM a
+       blank page with no toolbar feedback. The spec asks for the failure
+       to be named, with the file name. */
+    if(rec){
+      try{ await loadMapRecord(rec); }
+      catch(e){ say("Could not read " + rec.name + " — " + e.message); }
+    }
+  }
+  redraw();
+})();
+</script>
+</body>
+</html>
