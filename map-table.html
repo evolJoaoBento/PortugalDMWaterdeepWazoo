@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260814e">
+<meta name="wazoo-build" content="20260814f">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -52,7 +52,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #fx-credit{font:400 11px/1.4 "EB Garamond",Georgia,serif;color:#6d5a3a}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
-<script src="assets/spellfx.js?v=20260814d"></script>
+<script src="assets/spellfx.js?v=20260814e"></script>
 </head>
 <body>
 <div id="bar">
@@ -472,7 +472,7 @@ function playStaged(){
   const msg = castPayload(staged.effect,
                           {x:staged.rect.x0, y:staged.rect.y0},
                           {x:staged.rect.x1, y:staged.rect.y1}, staged.rot);
-  SpellFx.cast(staged.effect, msg.rect, msg.rot);
+  SpellFx.cast(staged.effect, msg.rect, msg.rot, say);
   send(msg);
   animateFx();
 }
@@ -486,8 +486,16 @@ function drawStaged(g){
   const dpr = window.devicePixelRatio || 1;
   const box = SpellFx.boxOf(state.view, staged.rect);
   /* Dimmed, so a staged effect is never mistaken for one that has been
-     cast — the players are not seeing this. */
-  SpellFx.drawFrame(g, SpellFx.ghost(staged.effect), box, staged.rot, 0.7);
+     cast — the players are not seeing this.
+
+     And gone entirely while a cast is playing. The ghost loops in the
+     same box at the same angle, so leaving it up meant pressing Play
+     changed nothing anyone could see: the box was already animating,
+     and the real cast drew underneath it. Now the loop stops, the spell
+     goes off once at full strength, and the ghost comes back. */
+  if(!SpellFx.playing()){
+    SpellFx.drawFrame(g, SpellFx.ghost(staged.effect), box, staged.rot, 0.55);
+  }
 
   g.save();
   g.translate(box.x + box.w / 2, box.y + box.h / 2);

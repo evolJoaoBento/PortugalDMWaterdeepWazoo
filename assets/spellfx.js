@@ -267,19 +267,26 @@
      and the pack is silent anyway; playsInline because the alternative on
      some browsers is taking the video full screen, which on a projector
      would be a surprise nobody wants mid-combat. */
-  function cast(effect, rect, rot){
+  /* `onProblem` is how a cast that cannot play says so. Silence here
+     reads as "the button is broken" at the table, which is the worst
+     possible thing for the DM to be wondering about mid-combat. */
+  function cast(effect, rect, rot, onProblem){
     var entry = { path: effect.path, rect: rect, rot: rot || 0, video: null, done: false };
+    var fail = function(why){
+      entry.done = true;
+      if(onProblem) onProblem(why + " — " + effect.name);
+    };
     live.push(entry);
     preload(effect).then(function(){
       var have = ready[effect.path];
-      if(!have){ entry.done = true; return; }
+      if(!have){ fail("could not load"); return; }
       var v = document.createElement("video");
       v.muted = true; v.playsInline = true; v.autoplay = false; v.preload = "auto";
       v.src = have.url;
       v.addEventListener("ended", function(){ entry.done = true; });
-      v.addEventListener("error", function(){ entry.done = true; });
+      v.addEventListener("error", function(){ fail("would not decode"); });
       entry.video = v;
-      v.play().catch(function(){ entry.done = true; });
+      v.play().catch(function(){ fail("would not play"); });
     });
     return entry;
   }
