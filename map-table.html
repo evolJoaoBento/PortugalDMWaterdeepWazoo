@@ -31,6 +31,7 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
 <script src="assets/fog.js?v=20260814a"></script>
+<script src="assets/spellfx.js?v=20260814a"></script>
 </head>
 <body>
 <div id="bar">
@@ -854,6 +855,53 @@ function runTests(){
      typeof Fog.putFx === "function" && typeof Fog.getFx === "function");
   ok("the database version leaves room for it", Fog.DB_VERSION === 2,
      "adding a store needs a version, or the upgrade never runs");
+
+  /* ── the catalogue ────────────────────────────────────────────────
+     376 effects the DM has to find one of, mid-combat, without
+     scrolling. The index is a few kilobytes of paths; these are the
+     rules that turn it into an answer. */
+  ok("the pack is pinned to a commit, not to a moving branch",
+     /^[0-9a-f]{40}$/.test(SpellFx.PACK_COMMIT), SpellFx.PACK_COMMIT);
+
+  ok("a shape is read from the pack's own naming",
+     SpellFx.shapeOf("fire_ball_RAY_02.webm") === "ray" &&
+     SpellFx.shapeOf("frost_CONE_01.webm") === "cone" &&
+     SpellFx.shapeOf("fire_explosion_CIRCLE_01.webm") === "circle" &&
+     SpellFx.shapeOf("earth-hole_RECTANGLE_01.webm") === "rectangle" &&
+     SpellFx.shapeOf("smoke_pillar_SQUARE_01.webm") === "square");
+  ok("a file with no marker claims no shape",
+     SpellFx.shapeOf("shockwave_01_transcentre.webm") === "" &&
+     SpellFx.shapeOf("arrow_straight_01.webm") === "",
+     "guessing a footprint the animator did not draw for is worse than admitting none");
+  ok("CIRCLE inside a word is not a shape",
+     SpellFx.shapeOf("semicircleish_01.webm") === "");
+
+  const FX = [
+    {path:"fire/fire_ball_RAY_02.webm", name:"fire ball 02", category:"fire", shape:"ray", bundled:false},
+    {path:"fire/fire_explosion_CIRCLE_01.webm", name:"fire explosion 01", category:"fire", shape:"circle", bundled:true},
+    {path:"ice/frost_CONE_01.webm", name:"frost 01", category:"ice", shape:"cone", bundled:true}
+  ];
+  ok("an empty search is the whole catalogue", SpellFx.search(FX, "").length === 3);
+  ok("a search matches the name", SpellFx.search(FX, "explosion").length === 1);
+  ok("a search matches the category",
+     SpellFx.search(FX, "fire").length === 2 && SpellFx.search(FX, "ice").length === 1);
+  ok("a search matches the shape", SpellFx.search(FX, "cone")[0].path === "ice/frost_CONE_01.webm");
+  ok("search ignores case and stray spaces", SpellFx.search(FX, "  FROST ").length === 1);
+  ok("every word has to match",
+     SpellFx.search(FX, "fire cone").length === 0 && SpellFx.search(FX, "fire circle").length === 1,
+     "two words narrow the list; they do not widen it");
+  ok("what is in the repo is offered first",
+     SpellFx.search(FX, "")[0].bundled === true &&
+     SpellFx.search(FX, "").filter(e => !e.bundled).length === 1,
+     "an effect that needs the network should not be the first thing under the cursor");
+
+  ok("a bundled effect is read from this site",
+     SpellFx.urlFor(FX[1]) === "assets/spell-effects/fire/fire_explosion_CIRCLE_01.webm");
+  ok("anything else comes from the pinned commit",
+     SpellFx.urlFor(FX[0]) ===
+       "https://cdn.jsdelivr.net/gh/jackkerouac/animated-spell-effects@" +
+       SpellFx.PACK_COMMIT + "/spell-effects/fire/fire_ball_RAY_02.webm",
+     SpellFx.urlFor(FX[0]));
 
   const stack = {strokes:[], undone:[]};
   applyPush(stack, Fog.fill(true));
