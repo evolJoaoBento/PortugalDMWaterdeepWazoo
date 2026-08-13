@@ -48,15 +48,30 @@
     return { x0:a.x, y0:a.y, x1:b.x, y1:b.y };
   }
 
+  /* How much tighter than a bare contain-fit the projector frames what the
+     table sent. A contain-fit is the safe thing to send — nothing the DM
+     has framed can fall off the edge — but it also means the slack axis is
+     always letterboxed, and across a room that reads as a small map with
+     black bars. A tenth over fills them. It is a real crop, not free: the
+     tight axis loses the whole tenth, and the slack axis loses whatever
+     the letterbox did not already cover. Both windows read this constant,
+     so what the table believes it is sending and what the screen shows
+     cannot drift. */
+  var SCREEN_ZOOM = 1.1;
+
   /* The view that shows that rectangle on a canvas of cw × ch, contain-
      fitted and centred. This is what lets two differently-sized,
      differently-scaled displays frame the same part of the map: whichever
      axis is tighter decides the scale, and the slack on the other axis
-     falls equally either side. */
-  function viewFromRect(r, cw, ch){
+     falls equally either side.
+
+     `zoom` scales that fit about the rectangle's centre — 1.1 keeps the
+     same ground centred and shows a tenth less of it. Left out it is 1,
+     which is the plain contain-fit the framing maths is tested against. */
+  function viewFromRect(r, cw, ch, zoom){
     var rw = r.x1 - r.x0, rh = r.y1 - r.y0;
     if(!(rw > 0) || !(rh > 0)) return { z:1, tx:0, ty:0 };
-    var z = Math.min(cw / rw, ch / rh);
+    var z = Math.min(cw / rw, ch / rh) * (zoom || 1);
     return { z: z, tx: (cw - rw * z) / 2 - r.x0 * z, ty: (ch - rh * z) / 2 - r.y0 * z };
   }
 
@@ -78,10 +93,57 @@
   }
   function fill(reveal){ return {k:"fill", reveal:!!reveal}; }
 
+  /* A whole brush drag: every point it passed through, in image space,
+     as a flat [x,y,x,y,…] array because that is what a channel message
+     and an IndexedDB record have to carry.
+
+     One stroke per pointermove was the alternative, and it cost on three
+     counts: a drag became a thousand-entry list, every autosave rewrote
+     all of it, and Ctrl-Z undid three pixels instead of the stroke the
+     DM had just drawn. */
+  function path(pts, r, reveal){
+    return {k:"path", pts:(pts || []).slice(), r:r, reveal:!!reveal};
+  }
+
+  /* Stroke a path, or just the tail of one.
+
+     `from` is the index of the last point ALREADY on the mask; leave it
+     out to draw the path from nothing. The tail starts AT that point
+     rather than after it, or a live drag gaps at every frame boundary.
+
+     Each segment is stroked on its own, and the first point is a disc,
+     which looks like more canvas calls than a single polyline needs. It
+     is deliberate. `destination-out` is not idempotent: erasing a
+     half-covered antialiased edge pixel twice leaves less than erasing it
+     once. A live drag can only ever draw the tail it has just gained, so
+     a replay has to repeat that sequence operation for operation —
+     otherwise the mask restored after an undo or a reload would differ,
+     along every join, from the one that was on screen. */
+  function strokePath(g, pts, from, r){
+    if(!pts || pts.length < 2) return;
+    var n = pts.length >> 1;
+    var fresh = (from === undefined || from === null);
+    var i = fresh ? 0 : Math.max(0, Math.min(from | 0, n - 1));
+
+    /* A click never grew a second point, and stroking a zero-length path
+       draws nothing in every browser worth naming. Paint the cap by hand. */
+    if(fresh){ g.beginPath(); g.arc(pts[0], pts[1], r, 0, Math.PI * 2); g.fill(); }
+
+    g.lineWidth = r * 2;
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    for(var j = i; j < n - 1; j++){
+      g.beginPath();
+      g.moveTo(pts[j * 2], pts[j * 2 + 1]);
+      g.lineTo(pts[j * 2 + 2], pts[j * 2 + 3]);
+      g.stroke();
+    }
+  }
+
   /* One stroke into a mask context that is already the right size.
      Both rasterise() and applyStroke() go through here, so a replayed
      mask and an appended one cannot possibly draw a stroke differently. */
-  function drawStroke(g, s, w, h){
+  function drawStroke(g, s, w, h, from){
     /* destination-out erases what is already there — that is a reveal.
        source-over paints opaque black back — that is a hide. */
     g.globalCompositeOperation = s.reveal ? "destination-out" : "source-over";
@@ -95,6 +157,10 @@
                  Math.abs(s.x1 - s.x0), Math.abs(s.y1 - s.y0));
       return;
     }
+
+    /* `from` passes straight through: 0 is a meaningful tail index and
+       undefined means draw the whole thing, so it must not be defaulted. */
+    if(s.k === "path"){ strokePath(g, s.pts, from, s.r); return; }
 
     if(s.k === "line"){
       /* A click is a zero-length line, and stroking one draws nothing
@@ -110,15 +176,36 @@
     }
   }
 
+  /* ── how big the mask actually is ─────────────────────────────────
+     The mask is drawn over the map on every single frame, and at full map
+     resolution that one call is the whole cost of the frame: about 40–60 ms
+     for a 6.5 megapixel map, against 4 ms for the map itself. Capping its
+     long side makes a frame proportional to the screen instead of to the
+     map, which is what the DM is actually looking at.
+
+     The STROKES ARE NOT SCALED — the raster is. Every coordinate in this
+     file, in both pages, in storage and on the channel stays image space;
+     the mask context simply carries the scale. Getting that backwards
+     would put the fog in the wrong place the moment a map got large
+     enough to be capped, and small test maps would never show it. */
+  var MASK_CAP = 2048;
+
+  function maskDims(w, h, cap){
+    var c = cap || MASK_CAP;
+    var s = Math.min(1, c / Math.max(w || 1, h || 1));
+    return { w: Math.max(1, Math.round(w * s)), h: Math.max(1, Math.round(h * s)), s: s };
+  }
+
   /* Draw the strokes, in order, into an alpha mask of w×h.
      Starts fully fogged; a reveal erases, a hide paints back. */
   function rasterise(strokes, w, h, canvas){
     var cv = canvas || document.createElement("canvas");
-    if(cv.width !== w) cv.width = w;
-    if(cv.height !== h) cv.height = h;
+    var d = maskDims(w, h);
+    if(cv.width !== d.w) cv.width = d.w;
+    if(cv.height !== d.h) cv.height = d.h;
     var g = cv.getContext("2d");
 
-    g.setTransform(1,0,0,1,0,0);
+    g.setTransform(d.s, 0, 0, d.s, 0, 0);
     g.globalCompositeOperation = "source-over";
     g.clearRect(0, 0, w, h);
     g.fillStyle = "#000";
@@ -138,13 +225,33 @@
      O(n²) over a mask that may be twenty-four megapixels. The canvas is
      NEVER resized here: assigning width or height clears it, which would
      throw away the very thing being appended to. */
-  function applyStroke(stroke, w, h, canvas){
+  function applyStroke(stroke, w, h, canvas, from){
     if(!canvas || !stroke) return canvas;
     var g = canvas.getContext("2d");
-    g.setTransform(1,0,0,1,0,0);
-    drawStroke(g, stroke, w, h);
+    var d = maskDims(w, h);
+    g.setTransform(d.s, 0, 0, d.s, 0, 0);
+    drawStroke(g, stroke, w, h, from);
     g.globalCompositeOperation = "source-over";
     return canvas;
+  }
+
+  /* Run `work` at most once per scheduled frame, however many times it is
+     asked for in between.
+
+     redraw() used to run synchronously inside every wheel tick and every
+     pointermove. A 125 Hz mouse therefore asked for 125 full repaints a
+     second; at tens of milliseconds each the queue never drained, and
+     that backlog — not the drawing itself — is what "not smooth" was.
+
+     `schedule` is requestAnimationFrame in both pages, and a plain list
+     in the suite, which is the only reason this is testable at all. */
+  function coalesce(schedule, work){
+    var pending = false;
+    return function(){
+      if(pending) return;
+      pending = true;
+      schedule(function(){ pending = false; work(); });
+    };
   }
 
   /* Rotate strokes 90° clockwise for an image that was `oldH` tall.
@@ -153,6 +260,14 @@
   function rotateStrokes(strokes, oldH){
     return (strokes || []).map(function(s){
       if(s.k === "fill") return s;
+      if(s.k === "path"){
+        var p = new Array(s.pts.length);
+        for(var i = 0; i < s.pts.length; i += 2){
+          p[i] = oldH - s.pts[i + 1];
+          p[i + 1] = s.pts[i];
+        }
+        return {k:"path", pts:p, r:s.r, reveal:s.reveal};
+      }
       var o = {k:s.k, reveal:s.reveal};
       o.x0 = oldH - s.y0; o.y0 = s.x0;
       o.x1 = oldH - s.y1; o.y1 = s.x1;
@@ -261,12 +376,16 @@
     fitView: fitView,
     viewRect: viewRect,
     viewFromRect: viewFromRect,
+    SCREEN_ZOOM: SCREEN_ZOOM,
     zoomAt: zoomAt,
     line: line,
     rect: rect,
     fill: fill,
+    path: path,
+    maskDims: maskDims,
     rasterise: rasterise,
     applyStroke: applyStroke,
+    coalesce: coalesce,
     emptyMessage: emptyMessage,
     rotateStrokes: rotateStrokes,
     rotateImage: rotateImage,

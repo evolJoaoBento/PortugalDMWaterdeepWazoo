@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="wazoo-build" content="20260808n">
+<meta name="wazoo-build" content="20260813b">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>The Map Table &mdash; Waterdeep</title>
@@ -30,15 +30,11 @@ body{margin:0;background:#0b0805;overflow:hidden}
 #bar .said{font:400 14px/1.4 "EB Garamond",Georgia,serif;color:#8d7a5b}
 #table{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
 </style>
-<script src="assets/fog.js?v=20260808n"></script>
+<script src="assets/fog.js?v=20260813b"></script>
 </head>
 <body>
 <div id="bar">
   <button id="open-map" type="button">Load a map&hellip;</button>
-  <span class="rule"></span>
-  <button id="t-brush" type="button" class="on">Brush</button>
-  <button id="t-rect" type="button">Rectangle</button>
-  <input id="brush" type="range" min="4" max="240" value="40" title="Brush size">
   <span class="rule"></span>
   <button id="a-reveal" type="button" class="on">Reveal</button>
   <button id="a-hide" type="button">Hide</button>
@@ -83,6 +79,30 @@ function sizeCanvas(){
   return cv;
 }
 
+/* The drag in progress, or null: two image-space corners and what letting
+   go would do. It is the table's own business — the projector is told
+   nothing until the stroke is committed, because a box swimming about the
+   players' screen would give away where the DM is thinking of looking. */
+let preview = null;
+
+/* Those two corners as a canvas-space box, normalised so a drag up or to
+   the left is still positive: a negative width strokes and fills nothing.
+   It goes through the same view the map is drawn with, so the outline
+   promises exactly the ground the stroke will take. */
+function previewBox(v, a, b){
+  const p = Fog.imageToCanvas(v, Math.min(a.x, b.x), Math.min(a.y, b.y));
+  const q = Fog.imageToCanvas(v, Math.max(a.x, b.x), Math.max(a.y, b.y));
+  return { x:p.x, y:p.y, w:q.x - p.x, h:q.y - p.y };
+}
+
+/* Worth committing? A bare click is a zero-area rectangle: it paints
+   nothing, but it would still take an undo slot, an autosave and a
+   channel message. Both sides have to have moved — a rectangle with no
+   height is as empty as one with no width. */
+function bigEnough(a, b){
+  return Math.abs(b.x - a.x) >= 1 && Math.abs(b.y - a.y) >= 1;
+}
+
 function redraw(){
   const cv = document.getElementById("table");
   const g = cv.getContext("2d");
@@ -101,14 +121,61 @@ function redraw(){
   const v = state.view;
   g.imageSmoothingQuality = "high";
   g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+
+  /* The map is resampled at "high" because it is a picture and the DM
+     reads it. The fog is not a picture — it is a two-valued mask, black
+     or nothing, and the only place resampling shows at all is the couple
+     of pixels along a reveal's edge. "high" costs three to four times
+     "low" for that edge, every frame, so it does not get it. */
+  g.imageSmoothingQuality = "low";
   g.globalAlpha = FOG_ALPHA;
   g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z);
   g.globalAlpha = 1;
+
+  /* The rectangle as it is being dragged, shown as the result rather than
+     as an outline around it: a reveal redraws the map inside the box with
+     no fog over it, a hide lays another coat on. The DM sees the finished
+     stroke before letting go, which is the whole point — a rectangle used
+     to be committed sight unseen. The outline stays as well, because a
+     reveal over already-clear ground would otherwise be invisible. */
+  if(preview){
+    const b = previewBox(v, preview.a, preview.b);
+    if(b.w >= 1 && b.h >= 1){
+      const dpr = window.devicePixelRatio || 1;
+      g.save();
+      g.beginPath(); g.rect(b.x, b.y, b.w, b.h); g.clip();
+      if(preview.reveal){
+        g.imageSmoothingQuality = "high";
+        g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z);
+      }else{
+        /* The same black at the same alpha the mask is drawn with, so a
+           hide previews as the fog it will actually become. */
+        g.globalAlpha = FOG_ALPHA;
+        g.fillStyle = "#000";
+        g.fillRect(b.x, b.y, b.w, b.h);
+      }
+      g.restore();
+
+      g.save();
+      g.setLineDash([7 * dpr, 5 * dpr]);
+      g.lineWidth = Math.max(1, Math.round(dpr));
+      g.strokeStyle = preview.reveal ? "#e8d9b8" : "#8d7a5b";
+      g.strokeRect(b.x, b.y, b.w, b.h);
+      g.restore();
+    }
+  }
 }
+
+/* Every handler asks for a paint; none of them paints. A wheel notch, a
+   pan sample and a drag sample all arrive faster than the screen
+   refreshes, and painting inside each of them queued work the frame
+   could never drain — which is what the table being unsmooth actually
+   was, rather than any one drawing being slow. */
+const requestPaint = Fog.coalesce(requestAnimationFrame, redraw);
 
 function remask(){
   if(state.w && state.h) Fog.rasterise(state.strokes, state.w, state.h, mask);
-  redraw();
+  requestPaint();
 }
 
 /* Swap in a stored map: decode it, fit it, and pick its fog back up. */
@@ -157,7 +224,7 @@ function wireView(){
     const dpr = window.devicePixelRatio || 1;
     const f = e.deltaY < 0 ? 1.15 : 1/1.15;
     state.view = Fog.zoomAt(state.view, e.offsetX*dpr, e.offsetY*dpr, f, ZMIN, ZMAX);
-    redraw();
+    requestPaint();
     sendView();
   }, {passive:false});
 
@@ -174,7 +241,7 @@ function wireView(){
     state.view.tx += (e.clientX - lx) * dpr;
     state.view.ty += (e.clientY - ly) * dpr;
     lx = e.clientX; ly = e.clientY;
-    redraw();
+    requestPaint();
     sendView();
   });
   cv.addEventListener("pointerup", function(){ panning = false; });
@@ -183,7 +250,7 @@ function wireView(){
 
   window.addEventListener("resize", function(){
     sizeCanvas();
-    redraw();
+    requestPaint();
     sendView();
   });
 }
@@ -201,11 +268,8 @@ function wire(){
     const on = document.getElementById(onId), off = document.getElementById(offId);
     on.addEventListener("click", function(){ set(); on.classList.add("on"); off.classList.remove("on"); });
   };
-  pick("t-brush", "t-rect", () => tool = "brush");
-  pick("t-rect", "t-brush", () => tool = "rect");
   pick("a-reveal", "a-hide", () => reveal = true);
   pick("a-hide", "a-reveal", () => reveal = false);
-  document.getElementById("brush").addEventListener("input", function(){ brush = +this.value; });
   document.getElementById("all-reveal").addEventListener("click", () => pushStroke(Fog.fill(true)));
   document.getElementById("all-fog").addEventListener("click", () => pushStroke(Fog.fill(false)));
   document.getElementById("rotate").addEventListener("click", rotate);
@@ -242,7 +306,13 @@ function applyRedo(st){
 
 const LAST_KEY = "waterdeep-table.last";
 const stack = { strokes: state.strokes, undone: [] };
-let tool = "brush", reveal = true, brush = 40;
+/* Left-drag is always a rectangle. The brush was here too, and it was
+   the wrong instrument for the job: fog is lifted street by street and a
+   freehand smear neither follows a street nor lands the same twice.
+   Reveal/Hide is the only choice left, which is why there is no longer a
+   tool button to press. Fog painted by the old brush is still `path`
+   strokes in IndexedDB, and Fog.rasterise still draws them. */
+let reveal = true;
 
 let saveT = null;
 function saveFog(){
@@ -296,13 +366,13 @@ function sendView(){
 function pushStroke(s){
   applyPush(stack, s);
   state.strokes = stack.strokes;
-  /* Just this stroke onto the mask as it stands. A brush drag pushes one
-     stroke per pointermove, so replaying the whole list each time is
-     O(n²) over a full-resolution mask. Undo, redo, sync, rotate and map
+  /* Just this stroke onto the mask as it stands, rather than replaying
+     the list, which is O(n²) over a session's worth of strokes on a mask
+     that may be twenty-four megapixels. Undo, redo, sync, rotate and map
      loading still replay from zero — that is what the spec's O(n)
-     rasterise is for, and none of them happen per pointer event. */
+     rasterise is for, and none of them happen mid-drag. */
   if(state.w && state.h) Fog.applyStroke(s, state.w, state.h, mask);
-  redraw(); saveFog();
+  requestPaint(); saveFog();
   send({t:"stroke", stroke:s});
 }
 
@@ -317,49 +387,62 @@ function redo(){
   send({t:"undo", strokes:state.strokes});
 }
 
-/* ── painting ──────────────────────────────────────────────────────── */
+/* ── painting ──────────────────────────────────────────────────────
+   A drag is ONE stroke, decided on pointerup: two corners and an action.
+   Nothing goes on the mask, into the undo stack or across the channel
+   while the pointer is down — the drag is drawn as a preview on this
+   canvas only, and the projector hears about the rectangle once, when
+   the DM lets go. That keeps a drag out of the players' sight and keeps
+   an undo meaning one rectangle. */
 function wirePaint(){
   const cv = document.getElementById("table");
-  let drawing = false, prev = null, start = null;
+  let drawing = false, start = null;
 
-  const at = e => {
+  const at = (x, y) => {
     const dpr = window.devicePixelRatio || 1;
-    return Fog.canvasToImage(state.view, e.offsetX*dpr, e.offsetY*dpr);
+    const r = cv.getBoundingClientRect();
+    return Fog.canvasToImage(state.view, (x - r.left) * dpr, (y - r.top) * dpr);
   };
+
+  /* Ending a drag from anywhere: the preview goes, and the canvas is
+     asked for the frame that no longer has it. */
+  function stop(){
+    drawing = false; start = null; preview = null;
+    requestPaint();
+  }
 
   cv.addEventListener("pointerdown", function(e){
     if(e.button !== 0 || !state.img) return;
     drawing = true; cv.setPointerCapture(e.pointerId);
-    const p = at(e);
-    if(tool === "brush"){ prev = p; pushStroke(Fog.line(p.x,p.y,p.x,p.y,brush,reveal)); }
-    else start = p;
+    start = at(e.clientX, e.clientY);
+    preview = { a:start, b:start, reveal:reveal };
   });
 
   cv.addEventListener("pointermove", function(e){
-    if(!drawing) return;
-    const p = at(e);
-    if(tool === "brush"){
-      pushStroke(Fog.line(prev.x, prev.y, p.x, p.y, brush, reveal));
-      prev = p;
-    }
+    if(!drawing || !start) return;
+    /* Only the corner the pointer is at — the samples the browser
+       buffered between frames say nothing a rectangle needs. One repaint
+       per frame, not one per event, or a 125 Hz mouse queues 125 full
+       redraws a second and the drag stutters. */
+    preview = { a:start, b:at(e.clientX, e.clientY), reveal:reveal };
+    requestPaint();
   });
 
   cv.addEventListener("pointerup", function(e){
-    if(!drawing) return;
-    drawing = false;
-    if(tool === "rect" && start){
-      const p = at(e);
-      pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
-      start = null;
-    }
+    if(!drawing || !start) return;
+    const p = at(e.clientX, e.clientY);
+    /* A click paints nothing, so it must not cost an undo, a save and a
+       message. Only a box with both sides to it is committed. */
+    if(bigEnough(start, p)) pushStroke(Fog.rect(start.x, start.y, p.x, p.y, reveal));
+    stop();
   });
 
   /* A lost pointer capture (e.g. the OS steals the gesture) must not
-     strand a half-drawn stroke — end it without committing a rectangle. */
+     strand a preview on the canvas or commit a rectangle the DM never
+     finished drawing. */
   cv.addEventListener("pointercancel", function(){
     if(!drawing) return;
-    drawing = false;
-    start = null;
+    stop();
   });
 }
 
@@ -439,6 +522,24 @@ function runTests(){
      shown.y0 <= vr.y0 + 0.001 && shown.y1 >= vr.y1 - 0.001 &&
      near((shown.y0 + shown.y1) / 2, (vr.y0 + vr.y1) / 2),
      "sent " + JSON.stringify(vr) + " but the screen would show " + JSON.stringify(shown));
+  /* That contain-fit is the framing maths. What the projector then does
+     with it is a deliberate crop: a bare fit letterboxes the slack axis,
+     and black bars across a room read as a small map. The overscan keeps
+     the same centre and shows a tenth less. */
+  ok("the projector overscans by a tenth", Fog.SCREEN_ZOOM === 1.1, String(Fog.SCREEN_ZOOM));
+
+  const over = Fog.viewFromRect(vr, 800, 600, Fog.SCREEN_ZOOM);
+  const oShown = Fog.viewRect(over, 800, 600);
+  ok("an overscanned fit is a tenth tighter",
+     near((oShown.x1 - oShown.x0) * Fog.SCREEN_ZOOM, vr.x1 - vr.x0) &&
+     near((oShown.y1 - oShown.y0) * Fog.SCREEN_ZOOM, vr.y1 - vr.y0),
+     JSON.stringify(oShown));
+  ok("an overscanned fit keeps the same ground centred",
+     near((oShown.x0 + oShown.x1) / 2, (vr.x0 + vr.x1) / 2) &&
+     near((oShown.y0 + oShown.y1) / 2, (vr.y0 + vr.y1) / 2),
+     "zooming about a corner would drift the map off the projector");
+  ok("no zoom means the plain contain-fit",
+     near(Fog.viewFromRect(vr, 800, 600).z, Fog.viewFromRect(vr, 800, 600, 1).z));
 
   const z = Fog.zoomAt({z:1,tx:0,ty:0}, 200, 100, 2, 0.05, 40);
   ok("zoom holds the cursor still",
@@ -531,6 +632,103 @@ function runTests(){
   ok("sync survives the channel", JSON.parse(JSON.stringify(payload)).strokes[0].reveal === true,
      "the payload must be structured-clonable");
 
+  /* ── the mask is capped, so a frame costs a screen and not a map ──
+     Drawing a full-resolution mask over the map was the whole cost of a
+     frame: 40–60 ms for a 6.5 megapixel map, against 4 ms for the map
+     itself. The strokes stay in image space; only the raster they are
+     drawn into is capped. */
+  const dims = Fog.maskDims(1780, 3628);
+  ok("a big mask is capped on its long side", dims.w === 1005 && dims.h === 2048,
+     JSON.stringify(dims));
+  ok("the cap carries the scale that keeps strokes image-space",
+     near(dims.s, 2048 / 3628), String(dims.s));
+  ok("a map smaller than the cap is not blown up",
+     Fog.maskDims(40, 40).s === 1 && Fog.maskDims(40, 40).w === 40);
+
+  const capped = Fog.rasterise([Fog.rect(100, 100, 900, 900, true)], 1780, 3628);
+  ok("a capped mask is raster-sized, not map-sized",
+     capped.width === 1005 && capped.height === 2048, capped.width + "x" + capped.height);
+  ok("a stroke still lands where image space says it should",
+     alphaAt(capped, Math.round(500 * dims.s), Math.round(500 * dims.s)) === 0 &&
+     alphaAt(capped, Math.round(1400 * dims.s), Math.round(1400 * dims.s)) === 255,
+     "the cap must scale the drawing, not the coordinates");
+
+  /* ── paths, which the table no longer draws ───────────────────────
+     The brush is gone from the toolbar, but every fog saved while it was
+     there is a list of `path` strokes sitting in IndexedDB, and they are
+     replayed on every load, sync and rotate. These cases are what keeps
+     those maps opening as they were left. */
+  const dotP = Fog.rasterise([Fog.path([20, 20], 6, true)], 40, 40);
+  ok("a path of one point leaves a dot", alphaAt(dotP, 20, 20) === 0,
+     "a click is a path that never grew");
+
+  const dragP = Fog.rasterise([Fog.path([5, 20, 20, 20, 35, 20], 4, true)], 40, 40);
+  ok("a path reveals along every segment",
+     alphaAt(dragP, 20, 20) === 0 && alphaAt(dragP, 33, 20) === 0 && alphaAt(dragP, 20, 2) === 255);
+
+  /* The live drag draws only what has just been added. If that ever
+     stopped matching a replay, the projector and the table would drift
+     apart over a long stroke and only a reload would show it. */
+  const grown = Fog.path([5, 20], 4, true);
+  const live = Fog.rasterise([], 40, 40);
+  Fog.applyStroke(grown, 40, 40, live);
+  grown.pts.push(20, 20);
+  Fog.applyStroke(grown, 40, 40, live, 0);
+  grown.pts.push(35, 20);
+  Fog.applyStroke(grown, 40, 40, live, 1);
+  const whole = Fog.rasterise([grown], 40, 40);
+  const g1 = pixels(live), g2 = pixels(whole);
+  let grownSame = g1.length === g2.length;
+  for(let k = 0; grownSame && k < g1.length; k++) if(g1[k] !== g2[k]) grownSame = false;
+  ok("a path grown a tail at a time matches replaying it whole", grownSame,
+     "the tail must start at the last point already drawn, or the joins gap");
+
+  const rotP = Fog.rotateStrokes([Fog.path([10, 20, 30, 40], 5, true)], 100)[0];
+  ok("rotate maps every point of a path",
+     rotP.k === "path" && rotP.pts[0] === 80 && rotP.pts[1] === 10 &&
+     rotP.pts[2] === 60 && rotP.pts[3] === 30, JSON.stringify(rotP));
+
+  /* ── the rectangle's preview ──────────────────────────────────────
+     A rectangle used to be invisible until it was committed: the DM let
+     go and then found out what had been revealed. The box is drawn while
+     the drag is live, which means turning two image-space points into a
+     canvas-space box — through the same view the map is drawn with, or
+     the outline sits somewhere other than the ground it promises. */
+  const pv = {z:2, tx:30, ty:-10};
+  const pb = previewBox(pv, {x:10, y:20}, {x:60, y:70});
+  ok("the preview box follows the view",
+     near(pb.x, 50) && near(pb.y, 30) && near(pb.w, 100) && near(pb.h, 100),
+     JSON.stringify(pb));
+
+  const back2 = previewBox(pv, {x:60, y:70}, {x:10, y:20});
+  ok("a drag up and to the left previews the same box",
+     near(back2.x, pb.x) && near(back2.y, pb.y) &&
+     near(back2.w, pb.w) && near(back2.h, pb.h),
+     "a negative width draws nothing, so the corners are normalised first");
+
+  /* With the brush gone, a bare click is no longer a dot — it is a
+     zero-area rectangle. Committing one would spend an undo slot, an
+     autosave and a channel message on a stroke that paints nothing. */
+  ok("a click is not a rectangle", bigEnough({x:10,y:10}, {x:10.5,y:10.5}) === false);
+  ok("a real drag is", bigEnough({x:10,y:10}, {x:40,y:12}) === true);
+  ok("a drag along one axis only is not a rectangle",
+     bigEnough({x:10,y:10}, {x:40,y:10}) === false,
+     "no height means fillRect paints nothing");
+
+  /* ── one paint per frame ──────────────────────────────────────────
+     redraw() used to run inside every wheel tick and every pointermove.
+     A 125 Hz mouse asked for 125 full repaints a second; at 50 ms each
+     the queue never drained, which is what "not smooth" actually was. */
+  let painted = 0; const queued = [];
+  const askPaint = Fog.coalesce(fn => queued.push(fn), () => painted++);
+  askPaint(); askPaint(); askPaint();
+  ok("many requests inside one frame schedule one paint",
+     queued.length === 1 && painted === 0, queued.length + " scheduled, " + painted + " painted");
+  queued.shift()();
+  ok("the paint happens when the frame comes", painted === 1);
+  askPaint();
+  ok("the frame after that can be scheduled again", queued.length === 1);
+
   const el=document.getElementById("tests");
   el.style.display="block";
   el.textContent = "Map Table self-tests\n"+"=".repeat(46)+"\n"+out.join("\n")+
@@ -538,8 +736,98 @@ function runTests(){
   document.title = (fail? "FAIL " : "PASS ")+pass+"/"+(pass+fail)+" — Map Table tests";
 }
 
+/* =========================================================================
+   Frame cost:  map-table.html?bench=1
+
+   The suite proves the fog is right; this says what a frame costs, which
+   is the other thing that has to hold. It runs against whatever map the
+   table last had, or a synthetic one the size of the Waterdeep map.
+
+   Canvas 2D queues work for the GPU, so timing a loop of draws measures
+   almost nothing unless something forces it through. A one-pixel
+   getImageData does; it is why the numbers here are honest and also why
+   they are a shade pessimistic.
+   ========================================================================= */
+async function runBench(){
+  const cv = sizeCanvas();
+  const g = cv.getContext("2d");
+  const flush = () => g.getImageData(0, 0, 1, 1);
+  const ms = (fn, n) => { fn(); flush();
+    const t = performance.now();
+    for(let i = 0; i < n; i++){ fn(); flush(); }
+    return +((performance.now() - t) / n).toFixed(2); };
+
+  if(!state.img){
+    const c = document.createElement("canvas");
+    c.width = 1780; c.height = 3628;
+    const cg = c.getContext("2d");
+    cg.fillStyle = "#4a3b28"; cg.fillRect(0, 0, c.width, c.height);
+    state.img = await createImageBitmap(c);
+    state.w = c.width; state.h = c.height;
+    state.view = Fog.fitView(state.w, state.h, cv.width, cv.height);
+    state.strokes = []; stack.strokes = state.strokes;
+  }
+
+  /* A map's worth of painting, so the mask is not trivially empty. */
+  const drag = Fog.path([], 40, true);
+  for(let i = 0; i < 400; i++) drag.pts.push((i * 137) % state.w, (i * 271) % state.h);
+  state.strokes = [drag]; stack.strokes = state.strokes;
+
+  const d = Fog.maskDims(state.w, state.h);
+  const rows = [];
+  const line = (name, v, note) => rows.push(("  " + name).padEnd(34) + String(v).padStart(8) +
+    (note ? "   " + note : ""));
+
+  rows.push("map            " + state.w + "×" + state.h +
+            "   (" + (state.w * state.h / 1e6).toFixed(1) + " MP)");
+  rows.push("mask           " + d.w + "×" + d.h +
+            "   (" + (d.w * d.h / 1e6).toFixed(1) + " MP, cap " + Fog.maskDims(9e9, 1).w + ")");
+  rows.push("canvas         " + cv.width + "×" + cv.height + "   dpr " + (window.devicePixelRatio || 1));
+  rows.push("");
+
+  const v = state.view;
+  Fog.rasterise(state.strokes, state.w, state.h, mask);
+  line("clear", ms(() => { g.setTransform(1,0,0,1,0,0); g.fillStyle = "#0b0805";
+                           g.fillRect(0, 0, cv.width, cv.height); }, 20));
+  /* The same resampling qualities redraw() uses, or the two lines below
+     would not add up to the frame beneath them. */
+  line("draw the map", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
+       g.drawImage(state.img, v.tx, v.ty, state.w * v.z, state.h * v.z); }, 20));
+  line("draw the fog", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "low";
+       g.globalAlpha = FOG_ALPHA;
+       g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
+       "this was the whole cost of a frame");
+  line("the fog at \"high\"", ms(() => { g.setTransform(1,0,0,1,0,0); g.imageSmoothingQuality = "high";
+       g.globalAlpha = FOG_ALPHA;
+       g.drawImage(mask, v.tx, v.ty, state.w * v.z, state.h * v.z); g.globalAlpha = 1; }, 20),
+       "what resampling a mask well would cost");
+  const frame = ms(redraw, 20);
+  line("a whole frame", frame, frame < 16.7 ? "under one refresh at 60 Hz" : "OVER a 60 Hz refresh");
+  rows.push("");
+  line("rasterise 400 points", ms(() => Fog.rasterise(state.strokes, state.w, state.h, mask), 10),
+       "undo, reload, rotate");
+  const tail = Fog.path([100, 100, 140, 140], 40, true);
+  line("one drag tail", ms(() => Fog.applyStroke(tail, state.w, state.h, mask, 0), 20),
+       "per frame while painting");
+
+  const el = document.getElementById("tests");
+  el.style.display = "block";
+  el.textContent = "Map Table frame cost\n" + "=".repeat(60) + "\n" +
+    rows.join("\n") + "\n" + "=".repeat(60) +
+    "\nEvery figure is milliseconds, forced through with getImageData.\n" +
+    "A frame has 16.7 ms at 60 Hz, and the fog used to take 40–60 of them.\n";
+  document.title = frame.toFixed(1) + " ms/frame — Map Table";
+}
+
 (async function boot(){
   if(/[?&]test=1/.test(location.search)){ runTests(); return; }
+  if(/[?&]bench=1/.test(location.search)){
+    wire();
+    let id = null; try{ id = localStorage.getItem(LAST_KEY); }catch(e){}
+    if(id){ const rec = await Fog.getMap(id).catch(() => null); if(rec) await loadMapRecord(rec); }
+    await runBench();
+    return;
+  }
   sizeCanvas();
   wire();
   if(!ch) say("This browser cannot link the two windows — the players' screen will not follow.");
