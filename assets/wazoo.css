@@ -301,9 +301,11 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   transform:translateX(-50%);
   background:linear-gradient(180deg,#6b4726,#33200e);
 }
+@media(min-width:901px){
 .shop:hover .plate,.shop:focus-within .plate{
   border-color:var(--brass);
   box-shadow:0 8px 20px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,220,170,.3);
+}
 }
 
 /* ── the sign, swung out only when the stall is pointed at ─────── */
@@ -315,15 +317,22 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   opacity:0;visibility:hidden;pointer-events:none;
   transition:opacity .16s ease,transform .24s cubic-bezier(.22,1.4,.4,1),visibility 0s .18s;
 }
-.shop:hover,.shop:focus-within{z-index:9}
-.shop:hover .signs,.shop:focus-within .signs{
-  opacity:1;visibility:visible;pointer-events:auto;
-  transform:translate(-50%,16px);
-  transition-delay:0s;
+/* The swinging out is scoped to the square, not merely undone below it.
+   A tap on a phone leaves :hover stuck on what was tapped, so any rule
+   written for pointing at a stall has to be unable to reach the card
+   layout at all — overriding it there means every new hover rule is one
+   more thing to remember to override. */
+@media(min-width:901px){
+  .shop:hover,.shop:focus-within{z-index:9}
+  .shop:hover .signs,.shop:focus-within .signs{
+    opacity:1;visibility:visible;pointer-events:auto;
+    transform:translate(-50%,16px);
+    transition-delay:0s;
+  }
+  .shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
+  .shop.p3:hover .lot,.shop.p3:focus-within .lot,
+  .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
 }
-.shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
-.shop.p3:hover .lot,.shop.p3:focus-within .lot,
-.shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
 .shop:focus-visible{outline:none}
 
 .sign{
@@ -397,15 +406,11 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 .shop-pair .sign h2{font-size:15px}
 .shop-pair .sign p{font-size:14px}
 
-/* ── no hover to give, or no square to stand on ─────────────────── */
-/* A reveal nobody can trigger is a link nobody can read, so anything
-   without a hover gets its sign open from the start. */
-@media (hover:none),(pointer:coarse){
-  .signs{
-    position:static;opacity:1;visibility:visible;pointer-events:auto;
-    transform:none;width:auto;max-width:none;
-  }
-}
+/* A touch device wide enough for the square keeps the reveal closed
+   rather than forced open: the first tap on a stall follows its link, so
+   a sign that only a hover can open is not a link anyone loses — the name
+   board over the stall is already readable. Forcing them open here would
+   drop six sign boards into the middle of the painting. */
 
 /* ── the square on a phone ──────────────────────────────────────── */
 /* Six stalls placed on a painting is a desktop idea: at 400px the
@@ -451,13 +456,10 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
     border-radius:4px;
     box-shadow:0 10px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
   }
-  .shop:hover,.shop:focus-within{z-index:auto}
 
   /* the drawing keeps its own square of the board */
   .lot{width:100%;margin:0;grid-row:span 2}
-  .shop.p3 .lot,.shop.p6 .lot,
-  .shop:hover .lot,.shop:focus-within .lot,
-  .shop.p3:hover .lot,.shop.p6:hover .lot{transform:none}
+  .shop.p3 .lot,.shop.p6 .lot{transform:none}
 
   /* the name is a heading now, not a board on a post */
   .plate{
@@ -468,9 +470,8 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   .plate h2{font-size:clamp(15px,4.4vw,18px);letter-spacing:.03em}
 
   /* and the sign is the rest of the card, with no chains to hang from.
-     It has to be talked out of the reveal it was in: a narrow window on a
-     desktop still reports a hover, so (hover:none) alone would leave the
-     text hidden here. */
+     It has to be talked out of the reveal it sits in on the square, since
+     that state is written on .signs itself and not on a hover. */
   .signs{
     position:static;opacity:1;visibility:visible;pointer-events:auto;transform:none;
     grid-column:2;align-self:start;display:flex;flex-direction:column;gap:8px;
@@ -497,6 +498,8 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 
 @media(prefers-reduced-motion:reduce){
   .lot,.signs,.plate{transition:none}
+}
+@media(min-width:901px) and (prefers-reduced-motion:reduce){
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
   .shop.p3:hover .lot,.shop.p3:focus-within .lot,
   .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1)}
