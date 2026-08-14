@@ -157,6 +157,7 @@ touching the forge.
 
 ### AI Manifesto
 Hello, my name is João Bento,
+
 I started making this website as a centralized place to keep everything about the D&D Sessions I'm running in Waterdeep. For this I used a lot of AI, both in the development of the site and the image creation. I know that this is very controversial to use in the hobby, and I agree that It takes away from the authenticity and human connection that is at the core of playing games like these. However i chose to do it because i would not be able to do it otherwise. There was a vision of what i wanted to do and i do not have the means to commission artists to cover the art i needed to materialize it. I am by trade a programmer and was for a short time a bad one at that (but arrogant enough to think i wasn't) before AI came along and became much better then I ever was and had to start thinking what as the purpose of what i was doing with my career. The reason I went to university for Computer Science in the first place was to get more tools which i could use to create, at the time in the game development industry, and with time i forgot that. The core of what I wanted to do was create and when I got the tools to create i no longer had the time to do it and then suddenly i didn't even have the skills to compete and be able to fill accomplished in what i was doing. The soul of what i did was fading away. Instead of continuing to pursue professional goals I came back to the root of what i wanted to do. Create. I started using AI to fulfill my ideas. Filling in the gaps of what i wanted to do without deviating from what i wanted to do. The result are a dozen or so projects that come closer to materializing my ideas then ever before. Selfishly this makes me proud but I know that is not the full story.
 Even if my ideas and projects are working the way I got there is not sustainable in a holistic sense. People need to make a living and if my ideas that are human centered arrive there by taking humans out of the loop and it becomes the case that they are more used/paid for than the ones by humans than i have achieved nothing. Worse I took away the very thing i was trying to create. 
 On one side i do not have the means these things without AI, and on the other side if I use AI i will be killing the purpose of the things in the first place.
@@ -165,6 +166,7 @@ The only way this hurts other creators is if this becomes popular. And popularit
 I'm still on the fence about the way my effort in maintaining these ideas come into part, because its genuine effort. but ill figure that out on a later date.
 
 Signed João Bento, the Creator.
+
 ---
 
 ## Credits
