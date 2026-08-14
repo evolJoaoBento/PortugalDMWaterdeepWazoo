@@ -186,11 +186,17 @@ html{
    because a reveal you cannot trigger is a link you cannot read. */
 .shops{
   position:relative;
-  width:min(100%,941px);margin:clamp(40px,5vw,68px) auto 0;padding:0;
-  aspect-ratio:941/1672;
-  background:url("market-plaza.jpg") center/contain no-repeat;
-  border-radius:5px;
-  box-shadow:0 26px 64px rgba(0,0,0,.62),0 0 0 1px rgba(230,201,126,.16);
+  width:100%;margin:0;padding:0;
+  aspect-ratio:3/2;
+  /* Edge to edge, and cropped by a ratio rather than by the window: the
+     crop has to be the same at every width or the stalls would drift off
+     the cobbles they were placed on. Cover on a fixed aspect keeps it
+     fixed — the painting is portrait, so what shows is the open middle
+     of the square. */
+  background:url("market-plaza.jpg") center/cover no-repeat;
+  box-shadow:
+    inset 0 22px 40px -18px rgba(10,7,4,.95),
+    inset 0 -22px 40px -18px rgba(10,7,4,.95);
   list-style:none;
 }
 html.webp .shops{background-image:url("market-plaza.webp")}
@@ -198,21 +204,23 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 .shop{
   position:absolute;z-index:1;
   display:flex;flex-direction:column;align-items:center;
-  width:24%;transform:translate(-50%,-50%);
+  width:min(21%,340px);transform:translate(-50%,-50%);
   text-decoration:none;color:inherit;
   /* the canvas over the stall, per trade — a market's awnings are dyed
      cloth, so the run is greens, brick reds and ochres, not roof tiles */
   --tile:#93392f;--tile-lit:#b85a48;--tile-dark:#65231c;
 }
-/* where each stall stands on the square, clear of what is painted there */
-.shop.p1{left:28%;top:25%}
-.shop.p2{left:72%;top:19%}
-.shop.p3{left:19%;top:47%}
-.shop.p4{left:81%;top:43%}
-.shop.p5{left:31%;top:70%}
-.shop.p6{left:70%;top:65%}
+/* Where each stall stands on the square: two ranks around the open
+   middle, clear of the cypresses, lanterns and planters the painting
+   already has along both edges. */
+.shop.p1{left:24%;top:27%}
+.shop.p2{left:50%;top:18%}
+.shop.p3{left:76%;top:26%}
+.shop.p4{left:20%;top:61%}
+.shop.p5{left:50%;top:65%}
+.shop.p6{left:80%;top:59%}
 /* the far side of the square turns back to face it */
-.shop.p2 .lot,.shop.p4 .lot,.shop.p6 .lot{transform:scaleX(-1)}
+.shop.p3 .lot,.shop.p6 .lot{transform:scaleX(-1)}
 .shop.copper{--tile:#4d7a55;--tile-lit:#6d9c73;--tile-dark:#325238}
 .shop.thatch{--tile:#c07a34;--tile-lit:#dd9a4f;--tile-dark:#82521f}
 .shop.slate {--tile:#56687e;--tile-lit:#7589a0;--tile-dark:#374557}
@@ -224,7 +232,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
    walls are held 8% inside it, which is what gives the eaves something
    to overhang — without that a building reads as a packing crate. */
 .lot{
-  position:relative;width:min(76%,224px);aspect-ratio:1/1.05;
+  position:relative;width:84%;aspect-ratio:1/1.05;
   margin-bottom:-34px;                  /* the beam bolts across the frontage */
   filter:drop-shadow(0 14px 16px rgba(0,0,0,.5));
   transition:transform .3s cubic-bezier(.22,1.4,.4,1);
@@ -301,7 +309,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
    rides a plank nailed to the ridge and never hides. */
 .plate{
   position:relative;z-index:3;margin-bottom:1px;max-width:100%;
-  padding:6px 12px 7px;text-align:center;
+  padding:7px 14px 8px;text-align:center;
   background:
     linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
     linear-gradient(180deg,#7a5230,#4c2f19);
@@ -311,7 +319,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 }
 .plate h2{
   margin:0;font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(10px,1.2vw,13.5px);letter-spacing:.05em;line-height:1.25;
+  font-size:clamp(11px,1.05vw,16px);letter-spacing:.05em;line-height:1.25;
   color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.7);
 }
 /* the post it stands on, landing on the ridge of the canvas below */
@@ -341,8 +349,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
   transition-delay:0s;
 }
 .shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
-.shop.p2:hover .lot,.shop.p2:focus-within .lot,
-.shop.p4:hover .lot,.shop.p4:focus-within .lot,
+.shop.p3:hover .lot,.shop.p3:focus-within .lot,
 .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
 .shop:focus-visible{outline:none}
 
@@ -447,8 +454,8 @@ html.webp .shops{background-image:url("market-plaza.webp")}
     margin-top:46px;width:100%;
   }
   .shop{position:static;transform:none;width:min(100%,420px)}
-  .shop.p2 .lot,.shop.p4 .lot,.shop.p6 .lot{transform:none}
-  .shop.p2:hover .lot,.shop.p4:hover .lot,.shop.p6:hover .lot{transform:translateY(-5px)}
+  .shop.p3 .lot,.shop.p6 .lot{transform:none}
+  .shop.p3:hover .lot,.shop.p6:hover .lot{transform:translateY(-5px)}
   .signs{
     position:static;opacity:1;visibility:visible;pointer-events:auto;
     transform:none;margin-top:18px;width:100%;max-width:none;flex-wrap:wrap;
@@ -466,8 +473,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 @media(prefers-reduced-motion:reduce){
   .lot,.signs,.plate{transition:none}
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
-  .shop.p2:hover .lot,.shop.p2:focus-within .lot,
-  .shop.p4:hover .lot,.shop.p4:focus-within .lot,
+  .shop.p3:hover .lot,.shop.p3:focus-within .lot,
   .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1)}
   .shop:hover .signs,.shop:focus-within .signs{transform:translate(-50%,16px)}
 }
