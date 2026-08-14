@@ -225,56 +225,58 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   display:flex;flex-direction:column;align-items:center;
   width:min(25%,430px);transform:translate(-50%,-50%);
   text-decoration:none;color:inherit;
-  /* the canvas over the stall, per trade — a market's awnings are dyed
-     cloth, so the run is greens, brick reds and ochres, not roof tiles */
-  --tile:#93392f;--tile-lit:#b85a48;--tile-dark:#65231c;
+  /* the edge colour on a phone card, taken off each painting's own canvas */
+  --tile:#575e73;
 }
-/* Where each stall stands on the square: two ranks around the open
-   middle, clear of the cypresses, lanterns and planters the painting
-   already has along both edges. */
-.shop.p1{left:30%;top:26%}
-.shop.p2{left:52%;top:20%}
-.shop.p3{left:74%;top:27%}
-.shop.p4{left:24%;top:64%}
-.shop.p5{left:50%;top:69%}
-.shop.p6{left:76%;top:63%}
-/* the far side of the square turns back to face it */
-.shop.p3 .lot,.shop.p6 .lot{transform:scaleX(-1)}
-.shop.copper{--tile:#4d7a55;--tile-lit:#6d9c73;--tile-dark:#325238}
-.shop.thatch{--tile:#c07a34;--tile-lit:#dd9a4f;--tile-dark:#82521f}
-.shop.slate {--tile:#56687e;--tile-lit:#7589a0;--tile-dark:#374557}
-.shop.ochre {--tile:#3f6b4a;--tile-lit:#5c8c66;--tile-dark:#2a4832}
-.shop.wine  {--tile:#a04a2c;--tile-lit:#c16b45;--tile-dark:#6d2f18}
+/* Where each stall stands on the square, and how much of it each takes.
+   The statue holds the middle — it is a monument, not a trade, and the
+   painted circle in the cobbles was already a plinth waiting for it. The
+   five that sell something stand around it, none of them on the
+   cypresses, lanterns or planters already painted along the edges. */
+/* which painting each stall is, and its proportions — needed at every
+   width, since the phone shows the same six paintings in a list */
+.shop.p1{--art:url("stalls/press.webp");        --art-ratio:1.391}
+.shop.p2{--art:url("stalls/cartographer.webp"); --art-ratio:1.183}
+.shop.p3{--art:url("stalls/notice-board.webp"); --art-ratio:0.927}
+.shop.p4{--art:url("stalls/statue.webp");       --art-ratio:0.877}
+.shop.p5{--art:url("stalls/contracts.webp");    --art-ratio:1.447}
+.shop.p6{--art:url("stalls/portal.webp");       --art-ratio:1.256}
+/* Where each stands on the square, and how much of it each takes. Kept
+   behind the same query as everything else about the square: a per-stall
+   rule outweighs the card layout's own .shop, so a width left out here
+   would squeeze every card on a phone down to a quarter of the screen. */
+@media(min-width:901px){
+  .shop.p1{left:20%;top:29%;width:min(26%,440px)}
+  .shop.p2{left:79%;top:28%;width:min(23%,400px)}
+  .shop.p3{left:13%;top:65%;width:min(20%,340px)}
+  .shop.p4{left:50%;top:53%;width:min(18%,300px)}
+  .shop.p5{left:86%;top:63%;width:min(25%,420px)}
+  .shop.p6{left:49%;top:84%;width:min(26%,430px)}
+}
+.shop.copper{--tile:#46563d}
+.shop.thatch{--tile:#705a4a}
+.shop.slate{--tile:#756454}
+.shop.ochre{--tile:#a57968}
+.shop.wine{--tile:#897969}
 
 /* ── the stall ─────────────────────────────────────────────────── */
-/* A stall, not a shed: a counter under a canvas on four posts, open to
-   the square, with the goods out on the boards.
+/* Each stall is a painting of its own trade, cut out and stood on the
+   square: assets/stalls/*.webp, cropped to what is actually drawn so a
+   width here means the width of the stall and not of its empty margin.
+   Every one has its own proportions, so each carries its own ratio; the
+   box is the art and nothing is drawn around it.
 
-   The frame — posts, counter, cloth, wares, the shadow it throws — is one
-   SVG behind one element. It used to be nine spans of clip-path and
-   gradient per stall, fifty-four across the square, every one of them a
-   separate paint. The canvas stays in CSS because its colour is the one
-   thing that differs from stall to stall. */
+   WebP only, and deliberately: these are cut-outs, alpha is the whole
+   point of them, and a JPEG cannot hold it. A PNG set would have been
+   14MB. */
 .lot{
-  position:relative;width:88%;aspect-ratio:200/190;
-  margin-bottom:-30px;                  /* the beam bolts across the front */
+  position:relative;width:100%;
+  aspect-ratio:var(--art-ratio,1);
+  background:var(--art) center bottom/contain no-repeat;
+  filter:drop-shadow(0 12px 14px rgba(0,0,0,.5));
+  /* the portal is cut into the ground, not standing on it, so it casts
+     almost nothing */
   transition:transform .3s cubic-bezier(.22,1.4,.4,1);
-}
-.lot>span{position:absolute;inset:0;display:block}
-.lot .frame{
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='190' viewBox='0 0 200 190'%3E%3Cellipse cx='100' cy='179' rx='84' ry='12' fill='%23000' opacity='.32'/%3E%3Cpath d='M95 38h9v58h-9z' fill='%2331200e'/%3E%3Cpath d='M12 47h9v88h-9z' fill='%234c3318'/%3E%3Cpath d='M179 47h9v88h-9z' fill='%233b2711'/%3E%3Cpath d='M16 133 100 175v15L16 148z' fill='%232d1d0c'/%3E%3Cpath d='M184 133 100 175v15l84-42z' fill='%23412c13'/%3E%3Cpath d='M100 91 184 133 100 175 16 133z' fill='%236d4b25'/%3E%3Cpath d='M100 97 174 134 100 171 26 134z' fill='%237f5b2f'/%3E%3Cpath d='M100 97 174 134 100 171z' fill='%238a6636'/%3E%3Cellipse cx='60' cy='127' rx='10' ry='6' fill='%23a8763a'/%3E%3Cellipse cx='60' cy='124' rx='10' ry='6' fill='%23c08f4d'/%3E%3Cellipse cx='80' cy='138' rx='9' ry='5' fill='%237f9b6a'/%3E%3Cellipse cx='80' cy='135' rx='9' ry='5' fill='%2396b47f'/%3E%3Cpath d='M104 129 122 138 104 147 86 138z' fill='%239c5b4a'/%3E%3Cpath d='M104 123 122 132 104 141 86 132z' fill='%23b8705c'/%3E%3Cpath d='M130 122 148 131v11l-18-9z' fill='%235d3f1c'/%3E%3Cpath d='M148 131 166 122v11l-18 9z' fill='%23744f26'/%3E%3Cpath d='M130 122 148 113 166 122 148 131z' fill='%238a6231'/%3E%3Cellipse cx='142' cy='146' rx='8' ry='4.6' fill='%236f4a92' opacity='.85'/%3E%3Cellipse cx='142' cy='143' rx='8' ry='4.6' fill='%238a63ad' opacity='.9'/%3E%3Cpath d='M95 96h9v76h-9z' fill='%23573a1b'/%3E%3Cpath d='M95 96h4v76h-4z' fill='%236b4a24'/%3E%3C/svg%3E") center/100% 100% no-repeat;
-}
-/* the canvas, and the valance hanging off its near edges */
-.lot .tarp{
-  clip-path:polygon(50% 2%,98% 26%,50% 50%,2% 26%);
-  background:
-    repeating-linear-gradient(26.57deg,rgba(0,0,0,.12) 0 8px,rgba(255,255,255,.06) 8px 17px),
-    linear-gradient(160deg,var(--tile-lit),var(--tile) 54%,var(--tile-dark));
-}
-.lot .frill{
-  clip-path:polygon(2% 26%,50% 50%,98% 26%,98% 34%,50% 58%,2% 34%);
-  background:repeating-linear-gradient(90deg,var(--tile-dark) 0 13px,#e6d9bb 13px 26px);
-  opacity:.94;
 }
 
 /* ── the name board over the roof ──────────────────────────────── */
@@ -330,8 +332,6 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
     transition-delay:0s;
   }
   .shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
-  .shop.p3:hover .lot,.shop.p3:focus-within .lot,
-  .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
 }
 .shop:focus-visible{outline:none}
 
@@ -447,7 +447,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   .shop{
     position:static;transform:none;opacity:1;width:100%;
     display:grid;grid-template-columns:clamp(84px,24vw,118px) 1fr;
-    align-items:center;column-gap:clamp(12px,3.5vw,18px);
+    align-items:center;column-gap:clamp(11px,3vw,16px);
     padding:12px 14px 12px 11px;
     background:
       linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
@@ -457,9 +457,20 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
     box-shadow:0 10px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
   }
 
-  /* the drawing keeps its own square of the board */
-  .lot{width:100%;margin:0;grid-row:span 2}
-  .shop.p3 .lot,.shop.p6 .lot{transform:none}
+  /* the drawing keeps its own square of the board, at a size worth
+     sending to a phone — the same six paintings at 300px are 175KB
+     against 811KB */
+  .lot{
+    width:100%;margin:0;grid-row:span 2;align-self:center;
+    aspect-ratio:1;background-image:var(--art-sm);background-position:center;
+    filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));
+  }
+  .shop.p1{--art-sm:url("stalls/press-sm.webp")}
+  .shop.p2{--art-sm:url("stalls/cartographer-sm.webp")}
+  .shop.p3{--art-sm:url("stalls/notice-board-sm.webp")}
+  .shop.p4{--art-sm:url("stalls/statue-sm.webp")}
+  .shop.p5{--art-sm:url("stalls/contracts-sm.webp")}
+  .shop.p6{--art-sm:url("stalls/portal-sm.webp")}
 
   /* the name is a heading now, not a board on a post */
   .plate{
@@ -483,7 +494,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   .sign::before,.sign::after,.sign .beam,.sign .ring,.sign .logo{display:none}
   .sign .trade{margin:0 0 3px;font-size:9px}
   .sign h2{font-size:14px;margin:0 0 3px}
-  .sign p{font-size:14.5px;line-height:1.45}
+  .sign p{font-size:14px;line-height:1.45}
   .sign .go{padding-top:7px;margin-top:0}
 
   /* two doors: two rows of one board */
@@ -501,8 +512,6 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 }
 @media(min-width:901px) and (prefers-reduced-motion:reduce){
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
-  .shop.p3:hover .lot,.shop.p3:focus-within .lot,
-  .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1)}
   .shop:hover .signs,.shop:focus-within .signs{transform:translate(-50%,16px)}
 }
 

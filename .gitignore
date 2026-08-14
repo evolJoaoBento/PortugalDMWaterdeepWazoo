@@ -13,3 +13,9 @@ Laeral_Silverhand_Arunsun.webp
 WalkingStatuesofWaterdeep5e.webp
 f01a5a4d-3dfd-4e43-b7ab-f93a2338b30b.webp
 fireworks.webp
+
+# Stall paintings, as drawn: ~2.3MB each and the site never serves them.
+# What ships is assets/stalls/*.webp — cropped to the drawn edge and
+# re-encoded, a tenth of the weight. Keep these originals locally; redraw
+# from them, not from the webp.
+assets/*.png
