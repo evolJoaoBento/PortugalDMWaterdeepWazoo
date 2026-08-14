@@ -246,12 +246,12 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
    rule outweighs the card layout's own .shop, so a width left out here
    would squeeze every card on a phone down to a quarter of the screen. */
 @media(min-width:901px){
-  .shop.p1{left:20%;top:29%;width:min(26%,440px)}
-  .shop.p2{left:79%;top:28%;width:min(23%,400px)}
-  .shop.p3{left:13%;top:65%;width:min(20%,340px)}
-  .shop.p4{left:50%;top:53%;width:min(18%,300px)}
-  .shop.p5{left:86%;top:63%;width:min(25%,420px)}
-  .shop.p6{left:49%;top:84%;width:min(26%,430px)}
+  .shop.p1{left:24%;top:25%;width:min(26%,440px)}   /* the press */
+  .shop.p2{left:75%;top:24%;width:min(23%,400px)}   /* the chart house */
+  .shop.p5{left:19%;top:63%;width:min(25%,420px)}   /* the contracts stall */
+  .shop.p4{left:52%;top:50%;width:min(18%,300px)}   /* the statue, on the circle */
+  .shop.p3{left:81%;top:62%;width:min(20%,340px)}   /* the notice board */
+  .shop.p6{left:49%;top:84%;width:min(20%,330px)}   /* the portal */
 }
 .shop.copper{--tile:#46563d}
 .shop.thatch{--tile:#705a4a}
