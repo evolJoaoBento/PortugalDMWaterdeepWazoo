@@ -16,7 +16,6 @@ install — every page is HTML you can open directly.
 |---|---|
 | `index.html` | The street. The city from the sea, then a shop sign for every door. |
 | `press-room.html` | The Waterdeep Wazoo — current issue and back numbers. |
-| `cartographer.html` | The aidedd.org atlas of Waterdeep, full-bleed. |
 | `The-Notice-Board.html` | Postings nailed to a plank board; click one to read it. |
 | `The-Waterdeep-Wazoo-<month>-<day>-<year>.html` | A published issue. |
 
