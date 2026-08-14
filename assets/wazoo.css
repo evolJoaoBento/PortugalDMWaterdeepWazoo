@@ -153,7 +153,7 @@ html{
    around it is only the dark it stands in. Nothing here draws ground any
    more: the shops are set down on the painted square instead. */
 .street{
-  position:relative;color:#f0e3cd;overflow:hidden;
+  position:relative;color:#f0e3cd;
   background:linear-gradient(180deg,#1b1710 0%,#171308 42%,#100c06 100%);
   box-shadow:0 18px 40px rgba(0,0,0,.5);
   padding:0 0 clamp(44px,6vw,76px);
@@ -187,24 +187,37 @@ html{
 .shops{
   position:relative;
   width:100%;margin:0;padding:0;
-  aspect-ratio:3/2;
-  /* Edge to edge, and cropped by a ratio rather than by the window: the
-     crop has to be the same at every width or the stalls would drift off
-     the cobbles they were placed on. Cover on a fixed aspect keeps it
-     fixed — the painting is portrait, so what shows is the open middle
-     of the square. */
-  background:url("market-plaza.jpg") center/cover no-repeat;
+  aspect-ratio:5/4;
+  list-style:none;
+}
+/* The painting lives on its own layer inside the square, because it is
+   the layer that scales on arrival. Scaling the square itself would mean
+   clipping the square to keep the overflow off the page — and the sign a
+   stall swings out is a fixed height while the square scales with the
+   width, so at around a thousand pixels the clip would cut the sign in
+   half. The picture is clipped; nothing else is.
+
+   Edge to edge, cropped by a ratio rather than by the window: the crop
+   has to be the same at every width or the stalls would drift off the
+   cobbles they were placed on. */
+.shops .ground{
+  position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
   box-shadow:
     inset 0 22px 40px -18px rgba(10,7,4,.95),
     inset 0 -22px 40px -18px rgba(10,7,4,.95);
-  list-style:none;
 }
-html.webp .shops{background-image:url("market-plaza.webp")}
+.shops .ground::before{
+  content:"";position:absolute;inset:0;
+  background:url("market-plaza.jpg") center/cover no-repeat;
+  transform:scale(calc(1.1 - .1 * var(--here,1)));
+  transform-origin:50% 40%;
+}
+html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 
 .shop{
   position:absolute;z-index:1;
   display:flex;flex-direction:column;align-items:center;
-  width:min(21%,340px);transform:translate(-50%,-50%);
+  width:min(25%,430px);transform:translate(-50%,-50%);
   text-decoration:none;color:inherit;
   /* the canvas over the stall, per trade — a market's awnings are dyed
      cloth, so the run is greens, brick reds and ochres, not roof tiles */
@@ -213,12 +226,12 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 /* Where each stall stands on the square: two ranks around the open
    middle, clear of the cypresses, lanterns and planters the painting
    already has along both edges. */
-.shop.p1{left:33%;top:26%}
-.shop.p2{left:54%;top:18%}
-.shop.p3{left:75%;top:27%}
-.shop.p4{left:23%;top:58%}
-.shop.p5{left:50%;top:62%}
-.shop.p6{left:77%;top:57%}
+.shop.p1{left:30%;top:20%}
+.shop.p2{left:52%;top:13%}
+.shop.p3{left:74%;top:21%}
+.shop.p4{left:24%;top:64%}
+.shop.p5{left:50%;top:69%}
+.shop.p6{left:76%;top:63%}
 /* the far side of the square turns back to face it */
 .shop.p3 .lot,.shop.p6 .lot{transform:scaleX(-1)}
 .shop.copper{--tile:#4d7a55;--tile-lit:#6d9c73;--tile-dark:#325238}
@@ -227,81 +240,35 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 .shop.ochre {--tile:#3f6b4a;--tile-lit:#5c8c66;--tile-dark:#2a4832}
 .shop.wine  {--tile:#a04a2c;--tile-lit:#c16b45;--tile-dark:#6d2f18}
 
-/* ── the building ──────────────────────────────────────────────── */
-/* The box the block is drawn in. The roof takes the full width and the
-   walls are held 8% inside it, which is what gives the eaves something
-   to overhang — without that a building reads as a packing crate. */
+/* ── the stall ─────────────────────────────────────────────────── */
+/* A stall, not a shed: a counter under a canvas on four posts, open to
+   the square, with the goods out on the boards.
+
+   The frame — posts, counter, cloth, wares, the shadow it throws — is one
+   SVG behind one element. It used to be nine spans of clip-path and
+   gradient per stall, fifty-four across the square, every one of them a
+   separate paint. The canvas stays in CSS because its colour is the one
+   thing that differs from stall to stall. */
 .lot{
-  position:relative;width:84%;aspect-ratio:1/1.05;
-  margin-bottom:-34px;                  /* the beam bolts across the frontage */
-  filter:drop-shadow(0 14px 16px rgba(0,0,0,.5));
+  position:relative;width:88%;aspect-ratio:200/190;
+  margin-bottom:-30px;                  /* the beam bolts across the front */
   transition:transform .3s cubic-bezier(.22,1.4,.4,1);
 }
 .lot>span{position:absolute;inset:0;display:block}
-
-/* The canvas over the stall. Its near edges are the line the walls stop
-   on: a wall's top corner sits ON that edge, never below it, or the roof
-   floats off the building. The overhang is the canvas carrying past the
-   corner along the same line. */
-.lot .roof{
-  clip-path:polygon(50% 0,100% 24%,50% 48%,0 24%);
+.lot .frame{
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='190' viewBox='0 0 200 190'%3E%3Cellipse cx='100' cy='179' rx='84' ry='12' fill='%23000' opacity='.32'/%3E%3Cpath d='M95 38h9v58h-9z' fill='%2331200e'/%3E%3Cpath d='M12 47h9v88h-9z' fill='%234c3318'/%3E%3Cpath d='M179 47h9v88h-9z' fill='%233b2711'/%3E%3Cpath d='M16 133 100 175v15L16 148z' fill='%232d1d0c'/%3E%3Cpath d='M184 133 100 175v15l84-42z' fill='%23412c13'/%3E%3Cpath d='M100 91 184 133 100 175 16 133z' fill='%236d4b25'/%3E%3Cpath d='M100 97 174 134 100 171 26 134z' fill='%237f5b2f'/%3E%3Cpath d='M100 97 174 134 100 171z' fill='%238a6636'/%3E%3Cellipse cx='60' cy='127' rx='10' ry='6' fill='%23a8763a'/%3E%3Cellipse cx='60' cy='124' rx='10' ry='6' fill='%23c08f4d'/%3E%3Cellipse cx='80' cy='138' rx='9' ry='5' fill='%237f9b6a'/%3E%3Cellipse cx='80' cy='135' rx='9' ry='5' fill='%2396b47f'/%3E%3Cpath d='M104 129 122 138 104 147 86 138z' fill='%239c5b4a'/%3E%3Cpath d='M104 123 122 132 104 141 86 132z' fill='%23b8705c'/%3E%3Cpath d='M130 122 148 131v11l-18-9z' fill='%235d3f1c'/%3E%3Cpath d='M148 131 166 122v11l-18 9z' fill='%23744f26'/%3E%3Cpath d='M130 122 148 113 166 122 148 131z' fill='%238a6231'/%3E%3Cellipse cx='142' cy='146' rx='8' ry='4.6' fill='%236f4a92' opacity='.85'/%3E%3Cellipse cx='142' cy='143' rx='8' ry='4.6' fill='%238a63ad' opacity='.9'/%3E%3Cpath d='M95 96h9v76h-9z' fill='%23573a1b'/%3E%3Cpath d='M95 96h4v76h-4z' fill='%236b4a24'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+}
+/* the canvas, and the valance hanging off its near edges */
+.lot .tarp{
+  clip-path:polygon(50% 2%,98% 26%,50% 50%,2% 26%);
   background:
-    /* folds in the canvas, along the fall of the cloth */
-    repeating-linear-gradient(26.57deg,rgba(0,0,0,.13) 0 7px,rgba(255,255,255,.055) 7px 15px),
+    repeating-linear-gradient(26.57deg,rgba(0,0,0,.12) 0 8px,rgba(255,255,255,.06) 8px 17px),
     linear-gradient(160deg,var(--tile-lit),var(--tile) 54%,var(--tile-dark));
 }
-.lot .face{                              /* the wall that fronts the road */
-  clip-path:polygon(50% 48%,92% 27.8%,92% 63.8%,50% 84%);
-  background:
-    repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 2px,transparent 2px 24px),
-    linear-gradient(180deg,#7a5230,#54351c);
-}
-.lot .side{                              /* the flank, out of the light */
-  clip-path:polygon(8% 27.8%,50% 48%,50% 84%,8% 63.8%);
-  background:
-    repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 2px,transparent 2px 24px),
-    linear-gradient(180deg,#4a3018,#2c1b0c);
-}
-/* the striped valance hung off the canvas, over the road-facing wall.
-   Not .canopy — the parade up top already owns that name, and its 32px
-   height would collapse this box. */
-.lot .awn{
-  clip-path:polygon(50% 48%,92% 27.8%,92% 37.8%,50% 58%);
-  background:repeating-linear-gradient(90deg,#9c3b2c 0 12px,#e2d5b8 12px 24px);
-  opacity:.9;
-}
-/* the open door, and the light coming out of it */
-.lot .door{
-  clip-path:polygon(60% 58%,76% 50%,76% 70%,60% 78%);
-  background:linear-gradient(180deg,#f6e2b0,#b8862f 62%,#5d3f12);
-}
-/* a shuttered window on the flank, so the two walls are not both blank */
-.lot .win{
-  clip-path:polygon(18% 42%,34% 50%,34% 62%,18% 54%);
-  /* the frame reads as the lit edge of the opening rather than a hole
-     punched in the wall */
-  background:radial-gradient(closest-side,#150c04 58%,#553a1b 100%);
-}
-/* The market's clutter, standing on the ground in front of the stall: a
-   barrel by the door and a crate on the shaded side. Drawn, not clipped
-   — a clip-path of this size reads as a stilt under the building, and a
-   barrel needs its staves and hoops to read as a barrel at all. */
-.lot .barrel,.lot .crate{
-  inset:auto;background-repeat:no-repeat;background-size:100% 100%;
-}
-.lot .barrel{
-  right:1%;bottom:11%;width:17%;aspect-ratio:1/1.2;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='48' viewBox='0 0 40 48'%3E%3Cpath d='M6 12c0-4 28-4 28 0v24c0 5-28 5-28 0z' fill='%236b4720'/%3E%3Cpath d='M20 10c8 0 14 1 14 2v24c0 2-6 3-14 3z' fill='%23855a29'/%3E%3Cellipse cx='20' cy='12' rx='14' ry='4' fill='%23a5763b'/%3E%3Cellipse cx='20' cy='12' rx='9' ry='2.4' fill='%236e4a1f'/%3E%3Cpath d='M6 18c9 3 19 3 28 0v3c-9 3-19 3-28 0z' fill='%232b1c0a'/%3E%3Cpath d='M6 31c9 3 19 3 28 0v3c-9 3-19 3-28 0z' fill='%232b1c0a'/%3E%3C/svg%3E");
-}
-.lot .crate{
-  left:0;bottom:14%;width:15%;aspect-ratio:1/.86;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='34' viewBox='0 0 40 34'%3E%3Cpath d='M4 10 20 18v14L4 24z' fill='%234a3116'/%3E%3Cpath d='M20 18 36 10v14L20 32z' fill='%235e3f1c'/%3E%3Cpath d='M20 4 36 10 20 18 4 10z' fill='%23795126'/%3E%3Cpath d='M4 15 20 23v2L4 17z' fill='%232a1a08'/%3E%3Cpath d='M36 15 20 23v2l16-8z' fill='%23301f0b'/%3E%3C/svg%3E");
-}
-.lot .lamp{
-  background:
-    radial-gradient(ellipse 30% 17% at 68% 66%,rgba(246,223,166,.42),transparent 70%),
-    radial-gradient(ellipse 36% 7% at 50% 87%,rgba(0,0,0,.55),transparent 72%);
-  pointer-events:none;
+.lot .frill{
+  clip-path:polygon(2% 26%,50% 50%,98% 26%,98% 34%,50% 58%,2% 34%);
+  background:repeating-linear-gradient(90deg,var(--tile-dark) 0 13px,#e6d9bb 13px 26px);
+  opacity:.94;
 }
 
 /* ── the name board over the roof ──────────────────────────────── */
@@ -319,7 +286,7 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 }
 .plate h2{
   margin:0;font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(11px,1.05vw,16px);letter-spacing:.05em;line-height:1.25;
+  font-size:clamp(11px,1.1vw,17px);letter-spacing:.05em;line-height:1.25;
   color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.7);
 }
 /* the post it stands on, landing on the ridge of the canvas below */
@@ -435,10 +402,12 @@ html.webp .shops{background-image:url("market-plaza.webp")}
   }
 }
 @media(max-width:900px){
+  /* a phone gets the small plate — a fifth of the bytes for a backdrop
+     it renders at 430px wide and dims to a quarter anyway */
   .street{
     background-image:
       linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
-      url("market-plaza.jpg");
+      url("market-plaza-sm.jpg");
     background-size:auto,cover;
     background-position:center,center;
     background-repeat:no-repeat,no-repeat;
@@ -446,10 +415,11 @@ html.webp .shops{background-image:url("market-plaza.webp")}
   html.webp .street{
     background-image:
       linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
-      url("market-plaza.webp");
+      url("market-plaza-sm.webp");
   }
+  .shops .ground{display:none}
   .shops{
-    aspect-ratio:auto;background:none;box-shadow:none;border-radius:0;
+    aspect-ratio:auto;box-shadow:none;
     display:flex;flex-direction:column;align-items:center;gap:46px;
     margin-top:46px;width:100%;
   }
@@ -462,12 +432,12 @@ html.webp .shops{background-image:url("market-plaza.webp")}
   }
   .sign{width:100%}
   .shop-pair .sign{width:calc(50% - 7px)}
-  .lot{width:min(58%,190px)}
+  .lot{width:min(62%,210px)}
   .plate h2{font-size:14px}
 }
 @media(max-width:520px){
   .shop-pair .sign{width:100%}
-  .lot{width:min(64%,168px)}
+  .lot{width:min(70%,190px)}
   .sign{padding:20px 16px 18px}
 }
 @media(prefers-reduced-motion:reduce){
@@ -505,10 +475,6 @@ html.webp .shops{background-image:url("market-plaza.webp")}
 }
 .hero .descend{opacity:calc(1 - 2 * var(--gone,0))}
 
-.shops{
-  transform:scale(calc(1.1 - .1 * var(--here,1)));
-  transform-origin:50% 40%;
-}
 /* the square lifts out of the dark the same way, and under the stalls so
    they are lit by the time they have settled */
 .shops::after{
@@ -519,8 +485,11 @@ html.webp .shops{background-image:url("market-plaza.webp")}
   opacity:var(--here,1);
   transform:translate(-50%,-50%) translateY(calc((1 - var(--here,1)) * 34px));
 }
+/* Stacked, the stalls do not fade in: the square they would rise out of
+   is not drawn at this width, and a stall left half-faded because nobody
+   scrolled is worse than no arrival at all. */
 @media(max-width:900px){
-  .shop{transform:translateY(calc((1 - var(--here,1)) * 26px))}
+  .shop{opacity:1;transform:none}
 }
 
 /* ═══ THE PARADE — slim street, every other page ═════════════════ */

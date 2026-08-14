@@ -31,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/wazoo.css?v=20260814p">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260814q">
 </head>
 <body>
 
@@ -118,12 +118,12 @@
   </div>
 
   <nav class="shops" aria-label="Places on the square">
+    <span class="ground" aria-hidden="true"></span>
 
     <a class="shop p1" href="press-room.html">
       <span class="plate"><h2>The Waterdeep Wazoo</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <span class="sign">
@@ -139,8 +139,7 @@
     <a class="shop p2 copper" href="https://www.aidedd.org/atlas/waterdeep" target="_blank" rel="noopener">
       <span class="plate"><h2>The Cartographer</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <span class="sign">
@@ -156,8 +155,7 @@
     <a class="shop p3 thatch" href="The-Notice-Board.html">
       <span class="plate"><h2>The Notice Board</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <span class="sign">
@@ -173,8 +171,7 @@
     <a class="shop p4 slate" href="adventurers.html">
       <span class="plate"><h2>The Adventurers&rsquo; Company</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <span class="sign">
@@ -190,8 +187,7 @@
     <div class="shop shop-pair p5 ochre">
       <span class="plate"><h2>The Campaign</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <a class="sign" href="https://www.dndbeyond.com/campaigns/join/79837994000601072" target="_blank" rel="noopener">
@@ -216,8 +212,7 @@
     <a class="shop p6 wine" href="https://www.dndbeyond.com/games/7983799" target="_blank" rel="noopener">
       <span class="plate"><h2>The Game Table</h2></span>
       <span class="lot" aria-hidden="true">
-        <span class="roof"></span><span class="side"></span><span class="face"></span>
-        <span class="awn"></span><span class="win"></span><span class="door"></span><span class="barrel"></span><span class="crate"></span><span class="lamp"></span>
+        <span class="frame"></span><span class="tarp"></span><span class="frill"></span>
       </span>
       <span class="signs">
         <span class="sign">
@@ -252,34 +247,56 @@
    sinking of the sea view, the square lifting out of the dark, each stall
    settling as it comes up the page.
 
-   Measured straight in the handler rather than deferred to a frame:
-   eight rects cost less than the bookkeeping would, and the numbers stay
-   honest during a fling. Reduced motion never starts it, and the CSS
-   defaults are the finished state, so the page simply stands still. */
+   Every rect is read before any custom property is written. Reading a
+   rect after a write forces the layout to be recalculated on the spot,
+   and interleaving the two — as the first draft of this did — pays that
+   cost eight times per scroll event instead of none.
+
+   The window height is cached rather than asked for per event, values are
+   rounded so an unchanged number never invalidates style, and once the
+   square is behind you the whole thing returns on its first line.
+
+   Reduced motion never starts it, and the CSS defaults are the finished
+   state, so the page simply stands still. */
 (function () {
   var hero = document.querySelector('.hero'),
       square = document.querySelector('.shops');
   if (!hero || !square) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  var stalls = [].slice.call(square.querySelectorAll('.shop'));
+  var stalls = [].slice.call(square.querySelectorAll('.shop')),
+      rects = new Array(stalls.length),
+      stacked = matchMedia('(max-width: 900px)'),
+      vh = window.innerHeight || 1,
+      settled = false;
+
   function clamp(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
 
   function walk() {
-    var vh = window.innerHeight || 1, r = hero.getBoundingClientRect();
-    hero.style.setProperty('--gone', clamp(-r.top / (r.height || 1)).toFixed(3));
+    /* read */
+    var h = hero.getBoundingClientRect(),
+        s = square.getBoundingClientRect(),
+        i;
+    if (settled && s.bottom < 0) return;          /* the square is behind you */
+    var risen = stacked.matches;                  /* stacked: no stall to raise */
+    if (!risen) for (i = 0; i < stalls.length; i++) rects[i] = stalls[i].getBoundingClientRect();
 
-    r = square.getBoundingClientRect();
-    square.style.setProperty('--here', clamp((vh - r.top) / (vh * 0.8)).toFixed(3));
-
-    for (var i = 0; i < stalls.length; i++) {
-      var s = stalls[i].getBoundingClientRect();
-      stalls[i].style.setProperty('--here', clamp((vh - s.top) / (vh * 0.55)).toFixed(3));
+    /* write */
+    hero.style.setProperty('--gone', clamp(-h.top / (h.height || 1)).toFixed(2));
+    var here = clamp((vh - s.top) / (vh * 0.8));
+    square.style.setProperty('--here', here.toFixed(2));
+    if (!risen) for (i = 0; i < stalls.length; i++) {
+      stalls[i].style.setProperty('--here', clamp((vh - rects[i].top) / (vh * 0.55)).toFixed(2));
     }
+    settled = here === 1;
   }
 
   addEventListener('scroll', walk, { passive: true });
-  addEventListener('resize', walk);
+  /* the first pass runs before the painting has loaded, so measure again
+     once it has — otherwise a visitor who never scrolls keeps whatever
+     the page looked like mid-load */
+  addEventListener('load', walk);
+  addEventListener('resize', function () { vh = window.innerHeight || 1; settled = false; walk(); });
   walk();
 })();
 </script>
