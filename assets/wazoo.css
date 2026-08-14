@@ -96,30 +96,6 @@ html.webp .backdrop{background-image:
   position:absolute;right:14px;bottom:8px;z-index:2;
   font-size:11px;letter-spacing:.05em;color:rgba(225,236,244,.4);
 }
-/* the way down off the ship — the prospect is a full screen, and without
-   a cue the street below it can be missed entirely */
-.hero .wrap{padding-bottom:clamp(30px,6vh,58px)}
-.hero .descend{
-  position:absolute;left:50%;bottom:clamp(16px,4vh,36px);z-index:2;
-  display:grid;place-items:center;width:46px;height:46px;
-  color:var(--brass-lit);text-decoration:none;
-  border:1px solid rgba(230,201,126,.45);border-radius:50%;
-  background:rgba(12,18,24,.32);
-  box-shadow:0 2px 14px rgba(0,0,0,.6);
-  animation:descend-bob 2.8s ease-in-out infinite;
-}
-.hero .descend svg{width:19px;height:19px}
-.hero .descend:hover,.hero .descend:focus-visible{
-  color:#fff6e4;border-color:var(--brass);background:rgba(12,18,24,.5);outline:none;
-}
-@keyframes descend-bob{
-  0%,100%{transform:translate(-50%,0)}
-  50%    {transform:translate(-50%,7px)}
-}
-@media(prefers-reduced-motion:reduce){
-  .hero .descend{animation:none;transform:translateX(-50%)}
-}
-
 .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
 @media(max-width:640px){.wrap{padding:0 15px}}
 
@@ -252,7 +228,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 @media(min-width:901px){
   .shop.p1{left:24%;top:25%;width:min(26%,440px)}   /* the press */
   .shop.p2{left:75%;top:24%;width:min(23%,400px)}   /* the chart house */
-  .shop.p5{left:24%;top:63%;width:min(25%,420px)}   /* the contracts stall */
+  .shop.p5{left:24%;top:63%;width:min(30%,510px)}   /* the contracts stall */
   .shop.p4{left:52%;top:50%;width:min(18%,300px)}   /* the statue, on the circle */
   .shop.p3{left:76%;top:62%;width:min(20%,340px)}   /* the notice board */
   .shop.p6{left:49%;top:84%;width:min(20%,330px)}   /* the portal */
@@ -337,6 +313,18 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   }
   .shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
   .shop.p5:hover .lot,.shop.p5:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
+
+  /* The three at the front of the square swing their signs up instead of
+     down. Below them is the foot of the painting and then the page: a
+     board that opens downward there hangs off the picture. */
+  .shop.p3 .signs,.shop.p5 .signs,.shop.p6 .signs{
+    top:auto;bottom:100%;transform:translate(-50%,6px);
+  }
+  .shop.p3:hover .signs,.shop.p3:focus-within .signs,
+  .shop.p5:hover .signs,.shop.p5:focus-within .signs,
+  .shop.p6:hover .signs,.shop.p6:focus-within .signs{
+    transform:translate(-50%,-16px);
+  }
 }
 .shop:focus-visible{outline:none}
 
@@ -519,35 +507,20 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
   .shop.p5:hover .lot,.shop.p5:focus-within .lot{transform:scaleX(-1)}
   .shop:hover .signs,.shop:focus-within .signs{transform:translate(-50%,16px)}
+  .shop.p3:hover .signs,.shop.p3:focus-within .signs,
+  .shop.p5:hover .signs,.shop.p5:focus-within .signs,
+  .shop.p6:hover .signs,.shop.p6:focus-within .signs{transform:translate(-50%,-16px)}
 }
 
 /* ═══ WALKING IN — the prospect gives way to the square ══════════ */
-/* Two numbers drive the whole transition, both set by the scroll driver
-   at the foot of index.html: --gone, how far the prospect has left the
-   window, and --here, how far the square has arrived in it. Everything
-   below is arithmetic on those.
+/* One number drives it, set by the scroll driver at the foot of
+   index.html: --here, how far the square has arrived in the window.
+   Everything below is arithmetic on that.
 
-   Both default to the finished state (--gone:0, --here:1), so with the
-   script absent — or with reduced motion, where it never runs — the page
-   renders exactly as it did before any of this existed. */
-/* The dimming is a veil rather than a filter: brightness() on an image
-   this size is a repaint every frame, an opacity change is not. It sits
-   over the painting and under the words, so the name stays readable
-   while the sea goes dark. */
-.hero::before{
-  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:#120c06;opacity:calc(.58 * var(--gone,0));
-}
-.hero picture{
-  transform:scale(calc(1 + .14 * var(--gone,0)));
-  transform-origin:50% 60%;
-}
-.hero .wrap{
-  opacity:calc(1 - 1.5 * var(--gone,0));
-  transform:translateY(calc(var(--gone,0) * -46px));
-}
-.hero .descend{opacity:calc(1 - 2 * var(--gone,0))}
-
+   The prospect is left alone. It was sinking and dimming as it left, and
+   the title is better plain — it defaults to --here:1, the finished
+   state, so with the script absent or with reduced motion the page
+   renders as though none of this existed. */
 /* the square lifts out of the dark the same way, and under the stalls so
    they are lit by the time they have settled */
 .shops::after{
