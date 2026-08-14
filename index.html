@@ -31,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/wazoo.css?v=20260814n">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260814p">
 </head>
 <body>
 
@@ -245,5 +245,43 @@
 </footer>
 
 <script src="assets/backdrop.js?v=20260808n"></script>
+<script>
+/* The walk in. Two numbers: --gone, how far the prospect has left the
+   window, and --here, how far the square has arrived in it. Both live on
+   the elements themselves and assets/wazoo.css does the arithmetic — the
+   sinking of the sea view, the square lifting out of the dark, each stall
+   settling as it comes up the page.
+
+   Measured straight in the handler rather than deferred to a frame:
+   eight rects cost less than the bookkeeping would, and the numbers stay
+   honest during a fling. Reduced motion never starts it, and the CSS
+   defaults are the finished state, so the page simply stands still. */
+(function () {
+  var hero = document.querySelector('.hero'),
+      square = document.querySelector('.shops');
+  if (!hero || !square) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var stalls = [].slice.call(square.querySelectorAll('.shop'));
+  function clamp(n) { return n < 0 ? 0 : n > 1 ? 1 : n; }
+
+  function walk() {
+    var vh = window.innerHeight || 1, r = hero.getBoundingClientRect();
+    hero.style.setProperty('--gone', clamp(-r.top / (r.height || 1)).toFixed(3));
+
+    r = square.getBoundingClientRect();
+    square.style.setProperty('--here', clamp((vh - r.top) / (vh * 0.8)).toFixed(3));
+
+    for (var i = 0; i < stalls.length; i++) {
+      var s = stalls[i].getBoundingClientRect();
+      stalls[i].style.setProperty('--here', clamp((vh - s.top) / (vh * 0.55)).toFixed(3));
+    }
+  }
+
+  addEventListener('scroll', walk, { passive: true });
+  addEventListener('resize', walk);
+  walk();
+})();
+</script>
 </body>
 </html>
