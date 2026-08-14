@@ -16,11 +16,6 @@
   --timber-dark:#2a1a0d;
   --plaster:#3a2c1d;
   --night:#101820;
-  /* One tile of cobblestone, drawn once and used by both the market
-     floor and the road winding through it. Rounded stones in staggered
-     courses, squashed 2:1 so they lie flat under isometric buildings,
-     with moss coming up where the traffic misses. */
-  --cobbles:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='66' viewBox='0 0 120 66'%3E%3Crect width='120' height='66' fill='%233a332a'/%3E%3Cellipse cx='20' cy='11' rx='20' ry='10.6' fill='%23574f40'/%3E%3Cellipse cx='60' cy='11' rx='19.4' ry='10.2' fill='%23615948'/%3E%3Cellipse cx='100' cy='11' rx='20.4' ry='10.8' fill='%23524a3c'/%3E%3Cellipse cx='0' cy='33' rx='20' ry='10.4' fill='%235d5544'/%3E%3Cellipse cx='40' cy='33' rx='20.4' ry='10.8' fill='%23554d3f'/%3E%3Cellipse cx='80' cy='33' rx='19.6' ry='10.2' fill='%23635b49'/%3E%3Cellipse cx='120' cy='33' rx='20' ry='10.4' fill='%235d5544'/%3E%3Cellipse cx='20' cy='55' rx='19.6' ry='10.6' fill='%23605845'/%3E%3Cellipse cx='60' cy='55' rx='20.4' ry='10.4' fill='%23554d3f'/%3E%3Cellipse cx='100' cy='55' rx='19.8' ry='10.6' fill='%235a5241'/%3E%3Cellipse cx='40' cy='22' rx='5' ry='2.4' fill='%234e5c36' opacity='.5'/%3E%3Cellipse cx='92' cy='45' rx='4.4' ry='2.2' fill='%234e5c36' opacity='.42'/%3E%3C/svg%3E");
 }
 
 *{box-sizing:border-box}
@@ -153,66 +148,16 @@ html{
 ::-webkit-scrollbar-corner{background:transparent}
 
 /* ═══ THE STREET ═════════════════════════════════════════════════ */
-/* Ground, not a wall. The whole section is the market floor seen from the
-   same angle as the buildings standing on it: cobblestone, worn dark
-   where the traffic goes, moss between the stones, lantern light washing
-   down from the awning overhead. */
+/* The square itself is a painting — `assets/market-plaza.*`, lit and
+   cobbled and dressed with lanterns, benches and bunting. The section
+   around it is only the dark it stands in. Nothing here draws ground any
+   more: the shops are set down on the painted square instead. */
 .street{
   position:relative;color:#f0e3cd;
-  background:
-    /* lantern pools off the canopy */
-    radial-gradient(58% 30% at 18% 0%,rgba(230,201,126,.20),transparent 70%),
-    radial-gradient(58% 30% at 82% 0%,rgba(230,201,126,.16),transparent 70%),
-    /* a settled patch under the words at the top of the street */
-    radial-gradient(46% 16% at 50% 4%,rgba(18,12,7,.55),transparent 72%),
-    /* where the market has worn the paving */
-    radial-gradient(42% 14% at 26% 34%,rgba(20,13,7,.42),transparent 74%),
-    radial-gradient(34% 12% at 78% 58%,rgba(20,13,7,.38),transparent 74%),
-    radial-gradient(38% 13% at 44% 84%,rgba(20,13,7,.34),transparent 74%),
-    /* dusk over the whole floor, so the stones sit in the site's night */
-    linear-gradient(180deg,rgba(18,12,7,.34),rgba(18,12,7,.64)),
-    var(--cobbles),
-    linear-gradient(180deg,#3a3227 0%,#332b21 55%,#241d15 100%);
-  background-size:auto,auto,auto,auto,auto,auto,auto,62px 34px,100% 100%;
+  background:linear-gradient(180deg,#1b1710 0%,#171308 42%,#100c06 100%);
   box-shadow:0 18px 40px rgba(0,0,0,.5);
+  padding:0 0 clamp(44px,6vw,76px);
 }
-
-/* cobbles at the foot of the street */
-.street .cobbles{
-  position:absolute;left:0;right:0;bottom:0;height:26px;
-  background:
-    radial-gradient(ellipse 15px 8px at 12px 6px,#463a2c 60%,transparent 62%),
-    radial-gradient(ellipse 15px 8px at 40px 15px,#3d3226 60%,transparent 62%),
-    radial-gradient(ellipse 15px 8px at 68px 6px,#4a3d2e 60%,transparent 62%),
-    linear-gradient(180deg,#241b12,#191309);
-  background-size:80px 22px,80px 22px,80px 22px,100% 100%;
-  box-shadow:inset 0 4px 10px rgba(0,0,0,.55);
-}
-
-/* awning body + scalloped valance, over the whole street */
-.awning::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:34px;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.26),rgba(255,255,255,.10) 55%,rgba(0,0,0,.18)),
-    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
-  z-index:2;
-}
-.awning::after{
-  content:"";position:absolute;top:34px;left:0;right:0;height:13px;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.34)),
-    repeating-linear-gradient(90deg,#9c3b2c 0 44px,#e2d5b8 44px 88px);
-  -webkit-mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
-  mask-image:radial-gradient(circle 12px at 11px 0,#000 99%,transparent 100%);
-  -webkit-mask-size:22px 13px;mask-size:22px 13px;
-  -webkit-mask-repeat:repeat-x;mask-repeat:repeat-x;
-  filter:drop-shadow(0 5px 7px rgba(0,0,0,.5));
-  z-index:2;
-}
-.awning>*{position:relative;z-index:1}
-
-/* ═══ THE STREET BELOW THE PROSPECT — index ══════════════════════ */
-.frontage{padding:0 0 calc(clamp(38px,6vw,64px) + 26px)}
 
 .street-intro{padding-top:clamp(74px,8vw,100px);text-align:center}
 .street-intro .here{
@@ -225,76 +170,49 @@ html{
   color:#c9b391;margin:14px auto 0;max-width:52ch;font-size:17px;
 }
 
-/* ═══ THE MARKET ROAD — index ════════════════════════════════════ */
-/* Six plots along one road, three to a side, the far frontage set half
-   a plot down the street so the eye walks it rather than reading a grid.
+/* ═══ THE MARKET SQUARE — index ══════════════════════════════════ */
+/* The square is the painting; the shops are set down on it. `.shops` is
+   the plate that holds `assets/market-plaza.*` at its own proportions,
+   and every shop is placed on it by percentage, so the whole scene scales
+   with the page and each stall keeps the patch of cobble it was put on.
+   The six are spread around the open middle — the painted lanterns,
+   benches, planters and fountain are what they are spread around.
 
-   The buildings are true isometric — parallel projection, no vanishing
-   point, every block at the same 2:1 angle. Each is three clip-path
-   polygons sharing one box: roof rhombus, the wall that fronts the road,
-   and the flank turned away from the light. Vertical edges stay vertical
-   in this projection, which is why the awning stripes are drawn at 90deg
-   and the roof courses at 26.57deg (atan .5) — the angles of the box
-   itself.
-
-   Nothing readable is ever drawn on a skewed face. Every word hangs on
-   the sign below the eaves, upright and square to the reader: that is
-   what keeps 30-degree geometry legible, and what makes a sign belong to
-   the shop above it instead of floating on its own. A plot with two
-   doors hangs two signs off the same frontage. */
+   Each stall carries its name on a board over the roof, always readable.
+   The sign with the rest of it — trade, what the place is, where the link
+   goes — swings out underneath only when the stall is pointed at or
+   tabbed to. Below 900px, and on anything without a hover, the plaza
+   becomes a backdrop, the stalls stack, and every sign is simply open,
+   because a reveal you cannot trigger is a link you cannot read. */
 .shops{
   position:relative;
-  display:grid;grid-template-columns:1fr 1fr;
-  column-gap:clamp(84px,11vw,168px);
-  row-gap:clamp(44px,6vw,76px);
-  margin:78px 0 0;padding:0;list-style:none;
+  width:min(100%,941px);margin:clamp(40px,5vw,68px) auto 0;padding:0;
+  aspect-ratio:941/1672;
+  background:url("market-plaza.jpg") center/contain no-repeat;
+  border-radius:5px;
+  box-shadow:0 26px 64px rgba(0,0,0,.62),0 0 0 1px rgba(230,201,126,.16);
+  list-style:none;
 }
-/* The road wandering between the two frontages. A market street does not
-   run straight, so the surface is a plain rectangle of cobbles and the
-   winding is cut out of it by a mask: the mask stretches to whatever
-   height the shops need, the stones inside keep their own size. Kerbs
-   cannot be inset shadows any more — they would follow the box, not the
-   bend — so the edge is a tight drop-shadow around the cut shape. */
-.shops .road{
-  position:absolute;z-index:0;top:-44px;bottom:-38px;left:50%;
-  width:min(48%,540px);transform:translateX(-50%);
-  /* the kerb: the darker band the paving is set into */
-  background:linear-gradient(180deg,#292217,#201a12);
-  -webkit-mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='38' fill='none'/%3E%3C/svg%3E"),
-    linear-gradient(180deg,transparent,#000 7%,#000 92%,transparent);
-  mask-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='38' fill='none'/%3E%3C/svg%3E"),
-    linear-gradient(180deg,transparent,#000 7%,#000 92%,transparent);
-  -webkit-mask-size:100% 100%,100% 100%;mask-size:100% 100%,100% 100%;
-  -webkit-mask-repeat:no-repeat,no-repeat;mask-repeat:no-repeat,no-repeat;
-  -webkit-mask-composite:source-in;mask-composite:intersect;
-}
-/* the road surface itself, set inside the kerb: finer stones than the
-   floor either side, walked pale, with the lanterns on it */
-.shops .road::before{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(180deg,rgba(240,214,168,.20),rgba(240,214,168,.07) 46%,rgba(240,214,168,.17)),
-    var(--cobbles),
-    linear-gradient(180deg,#4c4232,#3d3427);
-  background-size:auto,54px 30px,100% 100%;
-  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='28' fill='none'/%3E%3C/svg%3E");
-  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='28' fill='none'/%3E%3C/svg%3E");
-  -webkit-mask-size:100% 100%;mask-size:100% 100%;
-  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
-}
+html.webp .shops{background-image:url("market-plaza.webp")}
 
 .shop{
-  position:relative;z-index:1;
+  position:absolute;z-index:1;
   display:flex;flex-direction:column;align-items:center;
+  width:24%;transform:translate(-50%,-50%);
   text-decoration:none;color:inherit;
   /* the canvas over the stall, per trade — a market's awnings are dyed
      cloth, so the run is greens, brick reds and ochres, not roof tiles */
   --tile:#93392f;--tile-lit:#b85a48;--tile-dark:#65231c;
 }
-.shop.left{grid-column:1}
-.shop.right{grid-column:2;margin-top:clamp(52px,7vw,104px)}
+/* where each stall stands on the square, clear of what is painted there */
+.shop.p1{left:28%;top:25%}
+.shop.p2{left:72%;top:19%}
+.shop.p3{left:19%;top:47%}
+.shop.p4{left:81%;top:43%}
+.shop.p5{left:31%;top:70%}
+.shop.p6{left:70%;top:65%}
+/* the far side of the square turns back to face it */
+.shop.p2 .lot,.shop.p4 .lot,.shop.p6 .lot{transform:scaleX(-1)}
 .shop.copper{--tile:#4d7a55;--tile-lit:#6d9c73;--tile-dark:#325238}
 .shop.thatch{--tile:#c07a34;--tile-lit:#dd9a4f;--tile-dark:#82521f}
 .shop.slate {--tile:#56687e;--tile-lit:#7589a0;--tile-dark:#374557}
@@ -311,8 +229,6 @@ html{
   filter:drop-shadow(0 14px 16px rgba(0,0,0,.5));
   transition:transform .3s cubic-bezier(.22,1.4,.4,1);
 }
-/* the far frontage is turned back across the road */
-.shop.right .lot{transform:scaleX(-1)}
 .lot>span{position:absolute;inset:0;display:block}
 
 /* The canvas over the stall. Its near edges are the line the walls stop
@@ -380,31 +296,67 @@ html{
   pointer-events:none;
 }
 
-/* ── the sign under it ─────────────────────────────────────────── */
+/* ── the name board over the roof ──────────────────────────────── */
+/* The name is the one thing that must be legible without asking, so it
+   rides a plank nailed to the ridge and never hides. */
+.plate{
+  position:relative;z-index:3;margin-bottom:1px;max-width:100%;
+  padding:6px 12px 7px;text-align:center;
+  background:
+    linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
+    linear-gradient(180deg,#7a5230,#4c2f19);
+  border:1.5px solid var(--timber-dark);border-radius:2px;
+  box-shadow:0 6px 16px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.2);
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.plate h2{
+  margin:0;font-family:"Cinzel",serif;font-weight:700;
+  font-size:clamp(10px,1.2vw,13.5px);letter-spacing:.05em;line-height:1.25;
+  color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.7);
+}
+/* the post it stands on, landing on the ridge of the canvas below */
+.plate::after{
+  content:"";position:absolute;top:100%;left:50%;width:4px;height:13px;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg,#6b4726,#33200e);
+}
+.shop:hover .plate,.shop:focus-within .plate{
+  border-color:var(--brass);
+  box-shadow:0 8px 20px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,220,170,.3);
+}
+
+/* ── the sign, swung out only when the stall is pointed at ─────── */
+.signs{
+  position:absolute;top:100%;left:50%;z-index:8;
+  display:flex;gap:14px;justify-content:center;
+  width:max-content;max-width:min(430px,84vw);
+  transform:translate(-50%,-6px);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .16s ease,transform .24s cubic-bezier(.22,1.4,.4,1),visibility 0s .18s;
+}
+.shop:hover,.shop:focus-within{z-index:9}
+.shop:hover .signs,.shop:focus-within .signs{
+  opacity:1;visibility:visible;pointer-events:auto;
+  transform:translate(-50%,16px);
+  transition-delay:0s;
+}
+.shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
+.shop.p2:hover .lot,.shop.p2:focus-within .lot,
+.shop.p4:hover .lot,.shop.p4:focus-within .lot,
+.shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
+.shop:focus-visible{outline:none}
+
 .sign{
-  position:relative;width:100%;max-width:392px;margin-top:34px;
+  position:relative;width:264px;
   display:flex;flex-direction:column;text-decoration:none;color:inherit;
   background:
     linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
     linear-gradient(180deg,#7a5230,#5b3a20 55%,#4a2e18);
   border:2px solid var(--timber-dark);border-radius:3px;
-  padding:22px 20px 20px;
-  box-shadow:0 16px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
-  transform-origin:top center;
-  transition:transform .3s cubic-bezier(.22,1.4,.4,1),box-shadow .22s ease;
+  padding:20px 18px 18px;
+  box-shadow:0 18px 30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.16);
 }
-/* On five of the six plots the link is the shop itself, so a keyboard
-   lands on .shop and never on .sign — both have to carry the treatment
-   or tabbing falls back to the browser's own ring. */
-.shop:hover .sign,.shop:focus-visible .sign,.sign:hover,.sign:focus-visible{
-  transform:rotate(-1.1deg);
-  box-shadow:0 22px 38px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.24);
-  outline:none;
-}
-.shop:hover .lot,.shop:focus-visible .lot{transform:translateY(-4px)}
-.shop.right:hover .lot,.shop.right:focus-visible .lot{transform:scaleX(-1) translateY(-4px)}
-.shop:focus-visible{outline:none}
-.shop:focus-visible .sign,.sign:focus-visible{border-color:var(--brass)}
+.sign:hover,.sign:focus-visible{border-color:var(--brass);outline:none}
 /* the chains */
 .sign::before,.sign::after{
   content:"";position:absolute;top:-22px;width:3px;height:22px;
@@ -435,23 +387,21 @@ html{
 .sign .ring.r{right:20px}
 
 .sign .logo{
-  width:54px;height:54px;display:block;margin:0 0 14px;
+  width:46px;height:46px;display:block;margin:0 0 12px;
   color:var(--brass-lit);
   filter:drop-shadow(0 2px 3px rgba(0,0,0,.6));
-  transition:color .2s ease,transform .2s ease;
 }
-.shop:hover .logo{transform:scale(1.05);color:#f6dfa6}
 .sign .trade{
   font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;
   color:var(--brass);display:block;margin:0 0 6px;
 }
 .sign h2{
-  font-family:"Cinzel",serif;font-weight:700;font-size:20px;letter-spacing:.03em;
-  margin:0 0 9px;color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.6);
+  font-family:"Cinzel",serif;font-weight:700;font-size:17px;letter-spacing:.03em;
+  margin:0 0 8px;color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.6);
 }
-.sign p{margin:0;color:#dcc9a8;font-size:16px;line-height:1.5}
+.sign p{margin:0;color:#dcc9a8;font-size:15px;line-height:1.5}
 .sign .go{
-  display:inline-block;margin-top:auto;padding-top:15px;
+  display:inline-block;margin-top:auto;padding-top:14px;
   font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--brass-lit);
 }
@@ -459,40 +409,67 @@ html{
 
 /* ── two doors, two signs ──────────────────────────────────────── */
 /* The roll is only open to those already on it, so newcomers get the
-   register itself rather than a locked page: one frontage, one sign for
-   each door under it. */
+   register itself rather than a locked page: one stall, one sign for
+   each door swung out under it. */
 .shop-pair{cursor:default}
-.shop-pair .signs{display:flex;gap:clamp(12px,1.6vw,20px);width:100%;justify-content:center}
-.shop-pair .sign{flex:1 1 0;max-width:none;padding:20px 16px 18px}
-.shop-pair .sign .logo{width:44px;height:44px;margin-bottom:12px}
-.shop-pair .sign h2{font-size:17px}
-.shop-pair .sign p{font-size:14.5px}
-/* the pair's frontage lifts only when a sign under it is picked up */
-.shop-pair:hover .sign{transform:none;box-shadow:0 16px 28px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16)}
-.shop-pair .sign:hover,.shop-pair .sign:focus-visible{
-  transform:rotate(-1.1deg);
-  box-shadow:0 22px 38px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.24);
-}
+.shop-pair .sign{width:206px;padding:18px 15px 16px}
+.shop-pair .sign .logo{width:38px;height:38px;margin-bottom:10px}
+.shop-pair .sign h2{font-size:15px}
+.shop-pair .sign p{font-size:14px}
 
-/* ── one frontage to a row, once the road has no room ───────────── */
-@media(max-width:820px){
-  .shops{grid-template-columns:1fr;row-gap:clamp(40px,7vw,64px);margin-top:62px}
-  .shop.left,.shop.right{grid-column:1;margin-top:0}
-  .shops .road{width:min(88%,430px)}
-  .lot{width:min(56%,186px)}
+/* ── no hover to give, or no square to stand on ─────────────────── */
+/* A reveal nobody can trigger is a link nobody can read, so anything
+   without hover gets every sign open, and under 900px the painting drops
+   behind the stalls and they stack down the page. */
+@media (hover:none),(pointer:coarse){
+  .signs{
+    position:static;opacity:1;visibility:visible;pointer-events:auto;
+    transform:none;margin-top:18px;width:100%;max-width:none;flex-wrap:wrap;
+  }
+}
+@media(max-width:900px){
+  .street{
+    background-image:
+      linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
+      url("market-plaza.jpg");
+    background-size:auto,cover;
+    background-position:center,center;
+    background-repeat:no-repeat,no-repeat;
+  }
+  html.webp .street{
+    background-image:
+      linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
+      url("market-plaza.webp");
+  }
+  .shops{
+    aspect-ratio:auto;background:none;box-shadow:none;border-radius:0;
+    display:flex;flex-direction:column;align-items:center;gap:46px;
+    margin-top:46px;width:100%;
+  }
+  .shop{position:static;transform:none;width:min(100%,420px)}
+  .shop.p2 .lot,.shop.p4 .lot,.shop.p6 .lot{transform:none}
+  .shop.p2:hover .lot,.shop.p4:hover .lot,.shop.p6:hover .lot{transform:translateY(-5px)}
+  .signs{
+    position:static;opacity:1;visibility:visible;pointer-events:auto;
+    transform:none;margin-top:18px;width:100%;max-width:none;flex-wrap:wrap;
+  }
+  .sign{width:100%}
+  .shop-pair .sign{width:calc(50% - 7px)}
+  .lot{width:min(58%,190px)}
+  .plate h2{font-size:14px}
 }
 @media(max-width:520px){
-  .shop-pair .signs{flex-direction:column}
+  .shop-pair .sign{width:100%}
   .lot{width:min(64%,168px)}
   .sign{padding:20px 16px 18px}
 }
 @media(prefers-reduced-motion:reduce){
-  .sign,.lot,.sign .logo{transition:none}
-  .shop:hover .sign,.shop:focus-visible .sign,.sign:hover,.sign:focus-visible,
-  .shop-pair .sign:hover,.shop-pair .sign:focus-visible{transform:none}
-  .shop:hover .lot,.shop:focus-visible .lot{transform:none}
-  .shop.right:hover .lot,.shop.right:focus-visible .lot{transform:scaleX(-1)}
-  .shop:hover .logo{transform:none}
+  .lot,.signs,.plate{transition:none}
+  .shop:hover .lot,.shop:focus-within .lot{transform:none}
+  .shop.p2:hover .lot,.shop.p2:focus-within .lot,
+  .shop.p4:hover .lot,.shop.p4:focus-within .lot,
+  .shop.p6:hover .lot,.shop.p6:focus-within .lot{transform:scaleX(-1)}
+  .shop:hover .signs,.shop:focus-within .signs{transform:translate(-50%,16px)}
 }
 
 /* ═══ THE PARADE — slim street, every other page ═════════════════ */
