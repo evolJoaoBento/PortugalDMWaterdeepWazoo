@@ -61,7 +61,9 @@ html.webp .backdrop{background-image:
   background:
     linear-gradient(180deg,rgba(18,28,38,.18) 0%,rgba(18,28,38,0) 30%),
     radial-gradient(44% 32% at 50% 46%,rgba(10,16,22,.52),transparent 74%),
-    linear-gradient(0deg,rgba(12,19,26,.70) 0%,rgba(12,19,26,.16) 22%,rgba(12,19,26,0) 46%);
+    /* the foot of the picture goes to the exact dark the street starts
+       in, so the two do not meet at a drawn line */
+    linear-gradient(0deg,rgba(23,16,9,.55) 0%,rgba(20,15,10,.34) 12%,rgba(12,19,26,.16) 28%,rgba(12,19,26,0) 48%);
 }
 .hero .wrap{position:relative;z-index:2;width:100%}
 
@@ -152,22 +154,24 @@ html{
    cobbled and dressed with lanterns, benches and bunting. The section
    around it is only the dark it stands in. Nothing here draws ground any
    more: the shops are set down on the painted square instead. */
+/* There is no join. Two darks meeting, however carefully matched, draw a
+   line across the page at the exact pixel one ends — so the street does
+   not begin under the prospect, it begins over it, transparent, and its
+   own dark comes up through the last of the picture. */
 .street{
-  position:relative;color:#f0e3cd;
-  background:linear-gradient(180deg,#1b1710 0%,#171308 42%,#100c06 100%);
-  box-shadow:0 18px 40px rgba(0,0,0,.5);
-  padding:0 0 clamp(44px,6vw,76px);
+  position:relative;z-index:1;color:#f0e3cd;
+  padding:clamp(26px,3.5vw,56px) 0 clamp(44px,6vw,76px);
+  background:linear-gradient(180deg,#171009 0%,#191308 34%,#140f07 80%,#0e0a05 100%);
 }
-
-.street-intro{padding-top:clamp(74px,8vw,100px);text-align:center}
-.street-intro .here{
-  font-family:"Cinzel",serif;font-weight:700;
-  font-size:clamp(15px,2.4vw,21px);letter-spacing:.2em;text-transform:uppercase;
-  color:#fbf1dd;margin:0;text-shadow:0 1px 0 rgba(0,0,0,.55);
-}
-.street-intro .blurb{
-  font-family:"IM Fell English",serif;font-style:italic;
-  color:#c9b391;margin:14px auto 0;max-width:52ch;font-size:17px;
+/* The street's dark reaches up over the foot of the prospect rather than
+   starting beneath it: two darks meeting draw a line across the page at
+   the exact pixel one ends, however carefully they are matched. It hands
+   pointer events straight through, or it would swallow the chevron that
+   sits down there. */
+.street::before{
+  content:"";position:absolute;left:0;right:0;pointer-events:none;
+  height:clamp(80px,10vw,150px);top:calc(-1 * clamp(80px,10vw,150px));
+  background:linear-gradient(180deg,rgba(23,16,9,0),rgba(23,16,9,.66) 52%,#171009 100%);
 }
 
 /* ═══ THE MARKET SQUARE — index ══════════════════════════════════ */
@@ -202,9 +206,11 @@ html{
    cobbles they were placed on. */
 .shops .ground{
   position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
-  box-shadow:
-    inset 0 22px 40px -18px rgba(10,7,4,.95),
-    inset 0 -22px 40px -18px rgba(10,7,4,.95);
+  /* No edges. The painting comes up out of the dark and goes back down
+     into it, which is what lets the words above sit on the dusk rather
+     than on a seam between two pictures. */
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.5) 9%,#000 21%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(180deg,transparent 0,rgba(0,0,0,.5) 9%,#000 21%,#000 93%,transparent 100%);
 }
 .shops .ground::before{
   content:"";position:absolute;inset:0;
@@ -226,9 +232,9 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 /* Where each stall stands on the square: two ranks around the open
    middle, clear of the cypresses, lanterns and planters the painting
    already has along both edges. */
-.shop.p1{left:30%;top:20%}
-.shop.p2{left:52%;top:13%}
-.shop.p3{left:74%;top:21%}
+.shop.p1{left:30%;top:26%}
+.shop.p2{left:52%;top:20%}
+.shop.p3{left:74%;top:27%}
 .shop.p4{left:24%;top:64%}
 .shop.p5{left:50%;top:69%}
 .shop.p6{left:76%;top:63%}
@@ -463,7 +469,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
    while the sea goes dark. */
 .hero::before{
   content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:#080d13;opacity:calc(.58 * var(--gone,0));
+  background:#120c06;opacity:calc(.58 * var(--gone,0));
 }
 .hero picture{
   transform:scale(calc(1 + .14 * var(--gone,0)));
