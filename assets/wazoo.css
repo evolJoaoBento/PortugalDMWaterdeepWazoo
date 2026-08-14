@@ -261,8 +261,12 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 
 /* ── the name board over the roof ──────────────────────────────── */
 /* The name is the one thing that must be legible without asking, so it
-   rides a plank nailed to the ridge and never hides. */
-.plate{
+   rides a plank nailed to the ridge and never hides.
+
+   Scoped to .shop, and it must stay that way: .parade .plate is the
+   masthead at the top of every other page, and an unscoped .plate here
+   nailed a wooden board and a post around it on all of them. */
+.shop .plate{
   position:relative;z-index:3;margin-bottom:1px;max-width:100%;
   padding:7px 14px 8px;text-align:center;
   background:
@@ -272,13 +276,13 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   box-shadow:0 6px 16px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.2);
   transition:border-color .18s ease,box-shadow .18s ease;
 }
-.plate h2{
+.shop .plate h2{
   margin:0;font-family:"Cinzel",serif;font-weight:700;
   font-size:clamp(11px,1.1vw,17px);letter-spacing:.05em;line-height:1.25;
   color:#fbf1dd;text-shadow:0 1px 0 rgba(0,0,0,.7);
 }
 /* the post it stands on, landing on the ridge of the canvas below */
-.plate::after{
+.shop .plate::after{
   content:"";position:absolute;top:100%;left:50%;width:4px;height:13px;
   transform:translateX(-50%);
   background:linear-gradient(180deg,#6b4726,#33200e);
@@ -466,12 +470,12 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
   .shop.p6{--art-sm:url("stalls/portal-sm.webp")}
 
   /* the name is a heading now, not a board on a post */
-  .plate{
+  .shop .plate{
     grid-column:2;margin:0;padding:0;background:none;border:0;box-shadow:none;
     text-align:left;align-self:end;
   }
-  .plate::after{display:none}
-  .plate h2{font-size:clamp(15px,4.4vw,18px);letter-spacing:.03em}
+  .shop .plate::after{display:none}
+  .shop .plate h2{font-size:clamp(15px,4.4vw,18px);letter-spacing:.03em}
 
   /* and the sign is the rest of the card, with no chains to hang from.
      It has to be talked out of the reveal it sits in on the square, since
@@ -569,7 +573,10 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
 }
 
 /* the corner plate: which city you are standing in */
-.parade .plate{text-decoration:none;display:block;padding-bottom:6px}
+.parade .plate{
+  text-decoration:none;display:block;padding-bottom:6px;
+  transition:filter .25s ease;
+}
 .parade .plate .city{
   display:block;font-family:"Cinzel",serif;font-weight:700;
   font-size:clamp(19px,2.8vw,27px);letter-spacing:.08em;color:#fdf7ea;
@@ -580,7 +587,19 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
   font-size:13px;color:var(--brass-lit);margin-top:2px;
   text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 16px rgba(0,0,0,.8);
 }
-.parade .plate:hover .city{color:#fff6e4}
+/* pointing at the city's name lights it, and nothing else happens */
+.parade .plate:hover .city,.parade .plate:focus-visible .city{
+  color:#fff6e4;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 24px rgba(230,201,126,.8),0 0 44px rgba(201,162,74,.45);
+}
+.parade .plate:hover .sub,.parade .plate:focus-visible .sub{
+  color:#f6dfa6;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 18px rgba(230,201,126,.6);
+}
+.parade .plate .city,.parade .plate .sub{transition:color .25s ease,text-shadow .25s ease}
+@media(prefers-reduced-motion:reduce){
+  .parade .plate,.parade .plate .city,.parade .plate .sub{transition:none}
+}
 
 /* One shop canopy over the links alone, then the rail the signs swing
    from. The awning belongs to this stretch of frontage, not to the
