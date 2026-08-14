@@ -348,14 +348,18 @@ html{
   transform-origin:top center;
   transition:transform .3s cubic-bezier(.22,1.4,.4,1),box-shadow .22s ease;
 }
-.shop:hover .sign,.sign:hover,.sign:focus-visible{
+/* On five of the six plots the link is the shop itself, so a keyboard
+   lands on .shop and never on .sign — both have to carry the treatment
+   or tabbing falls back to the browser's own ring. */
+.shop:hover .sign,.shop:focus-visible .sign,.sign:hover,.sign:focus-visible{
   transform:rotate(-1.1deg);
   box-shadow:0 22px 38px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,170,.24);
   outline:none;
 }
-.shop:hover .lot{transform:translateY(-4px)}
-.shop.right:hover .lot{transform:scaleX(-1) translateY(-4px)}
-.sign:focus-visible{border-color:var(--brass)}
+.shop:hover .lot,.shop:focus-visible .lot{transform:translateY(-4px)}
+.shop.right:hover .lot,.shop.right:focus-visible .lot{transform:scaleX(-1) translateY(-4px)}
+.shop:focus-visible{outline:none}
+.shop:focus-visible .sign,.sign:focus-visible{border-color:var(--brass)}
 /* the chains */
 .sign::before,.sign::after{
   content:"";position:absolute;top:-22px;width:3px;height:22px;
@@ -431,10 +435,10 @@ html{
 }
 @media(prefers-reduced-motion:reduce){
   .sign,.lot,.sign .logo{transition:none}
-  .shop:hover .sign,.sign:hover,.sign:focus-visible,
+  .shop:hover .sign,.shop:focus-visible .sign,.sign:hover,.sign:focus-visible,
   .shop-pair .sign:hover,.shop-pair .sign:focus-visible{transform:none}
-  .shop:hover .lot{transform:none}
-  .shop.right:hover .lot{transform:scaleX(-1)}
+  .shop:hover .lot,.shop:focus-visible .lot{transform:none}
+  .shop.right:hover .lot,.shop.right:focus-visible .lot{transform:scaleX(-1)}
   .shop:hover .logo{transform:none}
 }
 
