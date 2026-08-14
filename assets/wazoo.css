@@ -148,21 +148,51 @@ html{
 ::-webkit-scrollbar-corner{background:transparent}
 
 /* ═══ THE STREET ═════════════════════════════════════════════════ */
-/* plaster wall, half-timber uprights, lantern light from above */
+/* Ground, not a wall. The whole section is the market floor seen from
+   the same angle as the buildings standing on it: flagstones laid as iso
+   diamonds, worn dark where the traffic goes, lantern light washing down
+   from the awning overhead. */
 .street{
   position:relative;color:#f0e3cd;
   background:
-    /* lantern pools */
-    radial-gradient(60% 34% at 18% 0%,rgba(230,201,126,.16),transparent 70%),
-    radial-gradient(60% 34% at 82% 0%,rgba(230,201,126,.13),transparent 70%),
-    /* half-timber uprights */
-    repeating-linear-gradient(90deg,
-      rgba(28,18,9,.85) 0 13px,
-      rgba(0,0,0,0) 13px 168px),
-    /* plaster */
-    linear-gradient(180deg,#3f3021 0%,#33271a 55%,#241b12 100%);
+    /* lantern pools off the canopy */
+    radial-gradient(58% 30% at 18% 0%,rgba(230,201,126,.20),transparent 70%),
+    radial-gradient(58% 30% at 82% 0%,rgba(230,201,126,.16),transparent 70%),
+    /* a settled patch under the words at the top of the street */
+    radial-gradient(46% 16% at 50% 4%,rgba(18,12,7,.55),transparent 72%),
+    /* where the market has worn the paving */
+    radial-gradient(42% 14% at 26% 34%,rgba(20,13,7,.42),transparent 74%),
+    radial-gradient(34% 12% at 78% 58%,rgba(20,13,7,.38),transparent 74%),
+    radial-gradient(38% 13% at 44% 84%,rgba(20,13,7,.34),transparent 74%),
+    /* the flagstones: the joints between them, not the slabs themselves —
+       two runs of mortar at the angle the buildings are drawn at
+       (26.57deg, atan .5), which is what makes the ground lie flat under
+       them instead of quilting up at the viewer */
+    repeating-linear-gradient(26.57deg,rgba(255,235,196,.045) 0 1px,transparent 1px 2px,transparent 2px 52px),
+    repeating-linear-gradient(26.57deg,rgba(0,0,0,.30) 0 1.5px,transparent 1.5px 52px),
+    repeating-linear-gradient(-26.57deg,rgba(0,0,0,.26) 0 1.5px,transparent 1.5px 52px),
+    linear-gradient(180deg,#463a2a 0%,#382e22 55%,#281f16 100%);
   box-shadow:0 18px 40px rgba(0,0,0,.5);
 }
+
+/* Stalls down the far margins, past the shops on both sides — the rest
+   of the market, too far off to read. One drawn stall tiled down each
+   edge, dimmed and fading into the dark, and gone entirely once the
+   window is too narrow to have margins worth dressing. */
+.street .stalls{
+  position:absolute;top:96px;bottom:34px;width:min(15%,164px);z-index:0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='150' viewBox='0 0 104 150'%3E%3Cpath d='M20 60 52 76 52 108 20 92Z' fill='%233b2a17'/%3E%3Cpath d='M52 76 84 60 84 92 52 108Z' fill='%234f3820'/%3E%3Cpath d='M52 34 92 54 52 74 12 54Z' fill='%238d3d2f'/%3E%3Cpath d='M52 34 92 54 52 74Z' fill='%23cabb99'/%3E%3Cpath d='M12 54 20 58 20 92 12 88Z' fill='%23241708'/%3E%3Cpath d='M84 60 92 56 92 88 84 92Z' fill='%23241708'/%3E%3Cpath d='M30 84 42 90 42 104 30 98Z' fill='%23171004'/%3E%3Cpath d='M58 96 72 89 72 99 58 106Z' fill='%232d1f0f'/%3E%3C/svg%3E")
+    repeat-y center top;
+  background-size:104px 150px;
+  opacity:.55;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 14%,#000 84%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 14%,#000 84%,transparent);
+  pointer-events:none;
+}
+.street .stalls.l{left:0}
+.street .stalls.r{right:0;transform:scaleX(-1)}
+@media(max-width:1240px){.street .stalls{display:none}}
 /* cobbles at the foot of the street */
 .street .cobbles{
   position:absolute;left:0;right:0;bottom:0;height:26px;
