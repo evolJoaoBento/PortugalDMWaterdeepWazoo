@@ -31,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/wazoo.css?v=20260814w">
+<link rel="stylesheet" href="assets/wazoo.css?v=20260814x">
 </head>
 <body>
 
@@ -78,9 +78,6 @@
     <path d="M33 20l5 5-5 5"/>
     <path d="M13 41h22"/>
   </symbol>
-  <symbol id="i-descend" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 18l12 12 12-12"/>
-  </symbol>
 </svg>
 
 <!-- ══ THE PROSPECT — the city from the sea ═══════════════════════ -->
@@ -95,9 +92,6 @@
     <p class="splendours">The City of Splendours</p>
     <div class="rule"></div>
   </div>
-  <a class="descend" href="#street" aria-label="Down into the street">
-    <svg aria-hidden="true"><use href="#i-descend"/></svg>
-  </a>
 </header>
 
 <!-- ══ THE SQUARE — the painting, and the stalls standing on it ═══ -->
@@ -220,11 +214,10 @@
 
 <script src="assets/backdrop.js?v=20260808n"></script>
 <script>
-/* The walk in. Two numbers: --gone, how far the prospect has left the
-   window, and --here, how far the square has arrived in it. Both live on
-   the elements themselves and assets/wazoo.css does the arithmetic — the
-   sinking of the sea view, the square lifting out of the dark, each stall
-   settling as it comes up the page.
+/* The walk in. One number, --here: how far the square has arrived in the
+   window. It lives on the elements themselves and assets/wazoo.css does
+   the arithmetic — the square lifting out of the dark, each stall
+   settling as it comes up the page. The prospect above it is left alone.
 
    Every rect is read before any custom property is written. Reading a
    rect after a write forces the layout to be recalculated on the spot,
@@ -238,9 +231,8 @@
    Reduced motion never starts it, and the CSS defaults are the finished
    state, so the page simply stands still. */
 (function () {
-  var hero = document.querySelector('.hero'),
-      square = document.querySelector('.shops');
-  if (!hero || !square) return;
+  var square = document.querySelector('.shops');
+  if (!square) return;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   var stalls = [].slice.call(square.querySelectorAll('.shop')),
@@ -253,15 +245,12 @@
 
   function walk() {
     /* read */
-    var h = hero.getBoundingClientRect(),
-        s = square.getBoundingClientRect(),
-        i;
+    var s = square.getBoundingClientRect(), i;
     if (settled && s.bottom < 0) return;          /* the square is behind you */
     var risen = stacked.matches;                  /* stacked: no stall to raise */
     if (!risen) for (i = 0; i < stalls.length; i++) rects[i] = stalls[i].getBoundingClientRect();
 
     /* write */
-    hero.style.setProperty('--gone', clamp(-h.top / (h.height || 1)).toFixed(2));
     var here = clamp((vh - s.top) / (vh * 0.8));
     square.style.setProperty('--here', here.toFixed(2));
     if (!risen) for (i = 0; i < stalls.length; i++) {
