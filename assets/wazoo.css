@@ -234,12 +234,16 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
    five that sell something stand around it, none of them on the
    cypresses, lanterns or planters already painted along the edges. */
 /* which painting each stall is, and its proportions — needed at every
-   width, since the phone shows the same six paintings in a list */
+   width, since the phone shows the same six paintings in a list. The
+   contracts stall is turned about: it was drawn opening to the left, and
+   it stands on the left of the square now, so it would be showing the
+   square its back. */
 .shop.p1{--art:url("stalls/press.webp");        --art-ratio:1.391}
 .shop.p2{--art:url("stalls/cartographer.webp"); --art-ratio:1.183}
 .shop.p3{--art:url("stalls/notice-board.webp"); --art-ratio:0.927}
 .shop.p4{--art:url("stalls/statue.webp");       --art-ratio:0.877}
 .shop.p5{--art:url("stalls/contracts.webp");    --art-ratio:1.447}
+.shop.p5 .lot{transform:scaleX(-1)}
 .shop.p6{--art:url("stalls/portal.webp");       --art-ratio:1.256}
 /* Where each stands on the square, and how much of it each takes. Kept
    behind the same query as everything else about the square: a per-stall
@@ -248,9 +252,9 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 @media(min-width:901px){
   .shop.p1{left:24%;top:25%;width:min(26%,440px)}   /* the press */
   .shop.p2{left:75%;top:24%;width:min(23%,400px)}   /* the chart house */
-  .shop.p5{left:19%;top:63%;width:min(25%,420px)}   /* the contracts stall */
+  .shop.p5{left:24%;top:63%;width:min(25%,420px)}   /* the contracts stall */
   .shop.p4{left:52%;top:50%;width:min(18%,300px)}   /* the statue, on the circle */
-  .shop.p3{left:81%;top:62%;width:min(20%,340px)}   /* the notice board */
+  .shop.p3{left:76%;top:62%;width:min(20%,340px)}   /* the notice board */
   .shop.p6{left:49%;top:84%;width:min(20%,330px)}   /* the portal */
 }
 .shop.copper{--tile:#46563d}
@@ -332,6 +336,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
     transition-delay:0s;
   }
   .shop:hover .lot,.shop:focus-within .lot{transform:translateY(-5px)}
+  .shop.p5:hover .lot,.shop.p5:focus-within .lot{transform:scaleX(-1) translateY(-5px)}
 }
 .shop:focus-visible{outline:none}
 
@@ -512,6 +517,7 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 }
 @media(min-width:901px) and (prefers-reduced-motion:reduce){
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
+  .shop.p5:hover .lot,.shop.p5:focus-within .lot{transform:scaleX(-1)}
   .shop:hover .signs,.shop:focus-within .signs{transform:translate(-50%,16px)}
 }
 
