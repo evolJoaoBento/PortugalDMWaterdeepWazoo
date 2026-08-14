@@ -399,53 +399,102 @@ html.webp .shops .ground::before{background-image:url("market-plaza.webp")}
 
 /* ── no hover to give, or no square to stand on ─────────────────── */
 /* A reveal nobody can trigger is a link nobody can read, so anything
-   without hover gets every sign open, and under 900px the painting drops
-   behind the stalls and they stack down the page. */
+   without a hover gets its sign open from the start. */
 @media (hover:none),(pointer:coarse){
   .signs{
     position:static;opacity:1;visibility:visible;pointer-events:auto;
-    transform:none;margin-top:18px;width:100%;max-width:none;flex-wrap:wrap;
+    transform:none;width:auto;max-width:none;
   }
 }
+
+/* ── the square on a phone ──────────────────────────────────────── */
+/* Six stalls placed on a painting is a desktop idea: at 400px the
+   painting is a smear and the stalls are thumbnails. So the phone gets
+   the square once, across the top, and then the market as a list — each
+   stall a board of its own, its canvas colour down the edge, the drawing
+   beside the words rather than above them. Half the height of the
+   stacked version, and every link is legible without a tap. */
 @media(max-width:900px){
-  /* a phone gets the small plate — a fifth of the bytes for a backdrop
-     it renders at 430px wide and dims to a quarter anyway */
   .street{
+    padding:clamp(20px,4vw,34px) 0 clamp(40px,7vw,64px);
     background-image:
-      linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
+      linear-gradient(180deg,#171009 0,rgba(23,16,9,.72) 9%,rgba(20,14,8,.34) 20%,rgba(17,11,6,.8) 40%,#120d07 56%,#0e0a05 100%),
       url("market-plaza-sm.jpg");
-    background-size:auto,cover;
-    background-position:center,center;
+    background-size:auto,100% auto;
+    background-position:center,center top;
     background-repeat:no-repeat,no-repeat;
   }
   html.webp .street{
     background-image:
-      linear-gradient(180deg,rgba(14,10,6,.76),rgba(14,10,6,.92)),
+      linear-gradient(180deg,#171009 0,rgba(23,16,9,.72) 9%,rgba(20,14,8,.34) 20%,rgba(17,11,6,.8) 40%,#120d07 56%,#0e0a05 100%),
       url("market-plaza-sm.webp");
   }
   .shops .ground{display:none}
   .shops{
     aspect-ratio:auto;box-shadow:none;
-    display:flex;flex-direction:column;align-items:center;gap:46px;
-    margin-top:46px;width:100%;
+    display:flex;flex-direction:column;align-items:stretch;
+    gap:14px;width:100%;
+    margin:clamp(150px,44vw,260px) auto 0;   /* the square shows above the list */
+    padding:0 clamp(14px,4vw,22px);max-width:560px;
   }
-  .shop{position:static;transform:none;width:min(100%,420px)}
-  .shop.p3 .lot,.shop.p6 .lot{transform:none}
-  .shop.p3:hover .lot,.shop.p6:hover .lot{transform:translateY(-5px)}
+
+  /* each stall is its own board */
+  .shop{
+    position:static;transform:none;opacity:1;width:100%;
+    display:grid;grid-template-columns:clamp(84px,24vw,118px) 1fr;
+    align-items:center;column-gap:clamp(12px,3.5vw,18px);
+    padding:12px 14px 12px 11px;
+    background:
+      linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.18)),
+      linear-gradient(180deg,#6f4a29,#4b3018);
+    border:1px solid var(--timber-dark);border-left:5px solid var(--tile);
+    border-radius:4px;
+    box-shadow:0 10px 20px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,220,170,.16);
+  }
+  .shop:hover,.shop:focus-within{z-index:auto}
+
+  /* the drawing keeps its own square of the board */
+  .lot{width:100%;margin:0;grid-row:span 2}
+  .shop.p3 .lot,.shop.p6 .lot,
+  .shop:hover .lot,.shop:focus-within .lot,
+  .shop.p3:hover .lot,.shop.p6:hover .lot{transform:none}
+
+  /* the name is a heading now, not a board on a post */
+  .plate{
+    grid-column:2;margin:0;padding:0;background:none;border:0;box-shadow:none;
+    text-align:left;align-self:end;
+  }
+  .plate::after{display:none}
+  .plate h2{font-size:clamp(15px,4.4vw,18px);letter-spacing:.03em}
+
+  /* and the sign is the rest of the card, with no chains to hang from.
+     It has to be talked out of the reveal it was in: a narrow window on a
+     desktop still reports a hover, so (hover:none) alone would leave the
+     text hidden here. */
   .signs{
-    position:static;opacity:1;visibility:visible;pointer-events:auto;
-    transform:none;margin-top:18px;width:100%;max-width:none;flex-wrap:wrap;
+    position:static;opacity:1;visibility:visible;pointer-events:auto;transform:none;
+    grid-column:2;align-self:start;display:flex;flex-direction:column;gap:8px;
+    width:auto;max-width:none;margin-top:5px;
   }
-  .sign{width:100%}
-  .shop-pair .sign{width:calc(50% - 7px)}
-  .lot{width:min(62%,210px)}
-  .plate h2{font-size:14px}
+  .sign{
+    width:100%;padding:0;background:none;border:0;box-shadow:none;border-radius:0;
+  }
+  .sign::before,.sign::after,.sign .beam,.sign .ring,.sign .logo{display:none}
+  .sign .trade{margin:0 0 3px;font-size:9px}
+  .sign h2{font-size:14px;margin:0 0 3px}
+  .sign p{font-size:14.5px;line-height:1.45}
+  .sign .go{padding-top:7px;margin-top:0}
+
+  /* two doors: two rows of one board */
+  .shop-pair .signs{gap:10px}
+  .shop-pair .sign{
+    padding-top:9px;border-top:1px solid rgba(230,201,126,.22);
+  }
+  .shop-pair .sign:first-child{border-top:0;padding-top:0}
+  .shop-pair .sign p{display:none}            /* the heading says it already */
+  .shop-pair .sign h2{font-size:14px}
 }
-@media(max-width:520px){
-  .shop-pair .sign{width:100%}
-  .lot{width:min(70%,190px)}
-  .sign{padding:20px 16px 18px}
-}
+
 @media(prefers-reduced-motion:reduce){
   .lot,.signs,.plate{transition:none}
   .shop:hover .lot,.shop:focus-within .lot{transform:none}
