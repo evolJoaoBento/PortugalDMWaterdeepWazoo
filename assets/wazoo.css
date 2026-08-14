@@ -16,6 +16,11 @@
   --timber-dark:#2a1a0d;
   --plaster:#3a2c1d;
   --night:#101820;
+  /* One tile of cobblestone, drawn once and used by both the market
+     floor and the road winding through it. Rounded stones in staggered
+     courses, squashed 2:1 so they lie flat under isometric buildings,
+     with moss coming up where the traffic misses. */
+  --cobbles:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='66' viewBox='0 0 120 66'%3E%3Crect width='120' height='66' fill='%233a332a'/%3E%3Cellipse cx='20' cy='11' rx='20' ry='10.6' fill='%23574f40'/%3E%3Cellipse cx='60' cy='11' rx='19.4' ry='10.2' fill='%23615948'/%3E%3Cellipse cx='100' cy='11' rx='20.4' ry='10.8' fill='%23524a3c'/%3E%3Cellipse cx='0' cy='33' rx='20' ry='10.4' fill='%235d5544'/%3E%3Cellipse cx='40' cy='33' rx='20.4' ry='10.8' fill='%23554d3f'/%3E%3Cellipse cx='80' cy='33' rx='19.6' ry='10.2' fill='%23635b49'/%3E%3Cellipse cx='120' cy='33' rx='20' ry='10.4' fill='%235d5544'/%3E%3Cellipse cx='20' cy='55' rx='19.6' ry='10.6' fill='%23605845'/%3E%3Cellipse cx='60' cy='55' rx='20.4' ry='10.4' fill='%23554d3f'/%3E%3Cellipse cx='100' cy='55' rx='19.8' ry='10.6' fill='%235a5241'/%3E%3Cellipse cx='40' cy='22' rx='5' ry='2.4' fill='%234e5c36' opacity='.5'/%3E%3Cellipse cx='92' cy='45' rx='4.4' ry='2.2' fill='%234e5c36' opacity='.42'/%3E%3C/svg%3E");
 }
 
 *{box-sizing:border-box}
@@ -148,10 +153,10 @@ html{
 ::-webkit-scrollbar-corner{background:transparent}
 
 /* ═══ THE STREET ═════════════════════════════════════════════════ */
-/* Ground, not a wall. The whole section is the market floor seen from
-   the same angle as the buildings standing on it: flagstones laid as iso
-   diamonds, worn dark where the traffic goes, lantern light washing down
-   from the awning overhead. */
+/* Ground, not a wall. The whole section is the market floor seen from the
+   same angle as the buildings standing on it: cobblestone, worn dark
+   where the traffic goes, moss between the stones, lantern light washing
+   down from the awning overhead. */
 .street{
   position:relative;color:#f0e3cd;
   background:
@@ -164,35 +169,14 @@ html{
     radial-gradient(42% 14% at 26% 34%,rgba(20,13,7,.42),transparent 74%),
     radial-gradient(34% 12% at 78% 58%,rgba(20,13,7,.38),transparent 74%),
     radial-gradient(38% 13% at 44% 84%,rgba(20,13,7,.34),transparent 74%),
-    /* the flagstones: the joints between them, not the slabs themselves —
-       two runs of mortar at the angle the buildings are drawn at
-       (26.57deg, atan .5), which is what makes the ground lie flat under
-       them instead of quilting up at the viewer */
-    repeating-linear-gradient(26.57deg,rgba(255,235,196,.045) 0 1px,transparent 1px 2px,transparent 2px 52px),
-    repeating-linear-gradient(26.57deg,rgba(0,0,0,.30) 0 1.5px,transparent 1.5px 52px),
-    repeating-linear-gradient(-26.57deg,rgba(0,0,0,.26) 0 1.5px,transparent 1.5px 52px),
-    linear-gradient(180deg,#463a2a 0%,#382e22 55%,#281f16 100%);
+    /* dusk over the whole floor, so the stones sit in the site's night */
+    linear-gradient(180deg,rgba(18,12,7,.34),rgba(18,12,7,.64)),
+    var(--cobbles),
+    linear-gradient(180deg,#3a3227 0%,#332b21 55%,#241d15 100%);
+  background-size:auto,auto,auto,auto,auto,auto,auto,62px 34px,100% 100%;
   box-shadow:0 18px 40px rgba(0,0,0,.5);
 }
 
-/* Stalls down the far margins, past the shops on both sides — the rest
-   of the market, too far off to read. One drawn stall tiled down each
-   edge, dimmed and fading into the dark, and gone entirely once the
-   window is too narrow to have margins worth dressing. */
-.street .stalls{
-  position:absolute;top:96px;bottom:34px;width:min(15%,164px);z-index:0;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='150' viewBox='0 0 104 150'%3E%3Cpath d='M20 60 52 76 52 108 20 92Z' fill='%233b2a17'/%3E%3Cpath d='M52 76 84 60 84 92 52 108Z' fill='%234f3820'/%3E%3Cpath d='M52 34 92 54 52 74 12 54Z' fill='%238d3d2f'/%3E%3Cpath d='M52 34 92 54 52 74Z' fill='%23cabb99'/%3E%3Cpath d='M12 54 20 58 20 92 12 88Z' fill='%23241708'/%3E%3Cpath d='M84 60 92 56 92 88 84 92Z' fill='%23241708'/%3E%3Cpath d='M30 84 42 90 42 104 30 98Z' fill='%23171004'/%3E%3Cpath d='M58 96 72 89 72 99 58 106Z' fill='%232d1f0f'/%3E%3C/svg%3E")
-    repeat-y center top;
-  background-size:104px 150px;
-  opacity:.55;
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 14%,#000 84%,transparent);
-  mask-image:linear-gradient(180deg,transparent,#000 14%,#000 84%,transparent);
-  pointer-events:none;
-}
-.street .stalls.l{left:0}
-.street .stalls.r{right:0;transform:scaleX(-1)}
-@media(max-width:1240px){.street .stalls{display:none}}
 /* cobbles at the foot of the street */
 .street .cobbles{
   position:absolute;left:0;right:0;bottom:0;height:26px;
@@ -265,47 +249,57 @@ html{
   row-gap:clamp(44px,6vw,76px);
   margin:78px 0 0;padding:0;list-style:none;
 }
-/* the road between the two frontages — iso cobbles, a diamond grid
-   squashed to the same 2:1 as the buildings standing on it */
+/* The road wandering between the two frontages. A market street does not
+   run straight, so the surface is a plain rectangle of cobbles and the
+   winding is cut out of it by a mask: the mask stretches to whatever
+   height the shops need, the stones inside keep their own size. Kerbs
+   cannot be inset shadows any more — they would follow the box, not the
+   bend — so the edge is a tight drop-shadow around the cut shape. */
 .shops .road{
-  position:absolute;z-index:0;top:-40px;bottom:-34px;left:50%;
-  width:clamp(74px,10vw,148px);transform:translateX(-50%);
-  background:
-    linear-gradient(45deg,rgba(0,0,0,.20) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.20) 75%),
-    linear-gradient(45deg,rgba(0,0,0,.13) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.13) 75%),
-    linear-gradient(180deg,#3c3226,#332a1f 58%,#241c12);
-  background-size:34px 18px,34px 18px,100% 100%;
-  background-position:0 0,17px 9px,0 0;
-  border-radius:2px;
-  /* the road runs on past both ends of the frontage rather than stopping
-     at a cut edge */
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 6%,#000 93%,transparent);
-  mask-image:linear-gradient(180deg,transparent,#000 6%,#000 93%,transparent);
-  /* kerbstones down both sides, and the gutter dark in the middle */
-  box-shadow:
-    inset 4px 0 0 rgba(30,22,13,.85),inset -4px 0 0 rgba(30,22,13,.85),
-    inset 0 0 40px rgba(0,0,0,.55),0 0 26px rgba(0,0,0,.35);
+  position:absolute;z-index:0;top:-44px;bottom:-38px;left:50%;
+  width:min(48%,540px);transform:translateX(-50%);
+  /* the kerb: the darker band the paving is set into */
+  background:linear-gradient(180deg,#292217,#201a12);
+  -webkit-mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='38' fill='none'/%3E%3C/svg%3E"),
+    linear-gradient(180deg,transparent,#000 7%,#000 92%,transparent);
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='38' fill='none'/%3E%3C/svg%3E"),
+    linear-gradient(180deg,transparent,#000 7%,#000 92%,transparent);
+  -webkit-mask-size:100% 100%,100% 100%;mask-size:100% 100%,100% 100%;
+  -webkit-mask-repeat:no-repeat,no-repeat;mask-repeat:no-repeat,no-repeat;
+  -webkit-mask-composite:source-in;mask-composite:intersect;
 }
-/* lantern light falling down the middle of it */
-.shops .road::after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(230,201,126,.16),transparent 34%,transparent 66%,rgba(230,201,126,.10));
+/* the road surface itself, set inside the kerb: finer stones than the
+   floor either side, walked pale, with the lanterns on it */
+.shops .road::before{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(240,214,168,.20),rgba(240,214,168,.07) 46%,rgba(240,214,168,.17)),
+    var(--cobbles),
+    linear-gradient(180deg,#4c4232,#3d3427);
+  background-size:auto,54px 30px,100% 100%;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='28' fill='none'/%3E%3C/svg%3E");
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='600' viewBox='0 0 100 600' preserveAspectRatio='none'%3E%3Cpath d='M50-30C14 80 86 150 50 250 14 350 86 420 50 520 34 570 46 600 50 640' stroke='%23fff' stroke-width='28' fill='none'/%3E%3C/svg%3E");
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
 }
 
 .shop{
   position:relative;z-index:1;
   display:flex;flex-direction:column;align-items:center;
   text-decoration:none;color:inherit;
-  /* roof tiles, per trade */
-  --tile:#8d4a35;--tile-lit:#b4664a;--tile-dark:#5d2d1f;
+  /* the canvas over the stall, per trade — a market's awnings are dyed
+     cloth, so the run is greens, brick reds and ochres, not roof tiles */
+  --tile:#93392f;--tile-lit:#b85a48;--tile-dark:#65231c;
 }
 .shop.left{grid-column:1}
 .shop.right{grid-column:2;margin-top:clamp(52px,7vw,104px)}
-.shop.copper{--tile:#3f7a63;--tile-lit:#5fa286;--tile-dark:#28513f}
-.shop.thatch{--tile:#a9822f;--tile-lit:#cfa64c;--tile-dark:#75561b}
-.shop.slate {--tile:#4a5c74;--tile-lit:#6d8199;--tile-dark:#2e3b4c}
-.shop.ochre {--tile:#9a6b2e;--tile-lit:#c08d44;--tile-dark:#69481c}
-.shop.wine  {--tile:#6d3450;--tile-lit:#8f4c6d;--tile-dark:#472034}
+.shop.copper{--tile:#4d7a55;--tile-lit:#6d9c73;--tile-dark:#325238}
+.shop.thatch{--tile:#c07a34;--tile-lit:#dd9a4f;--tile-dark:#82521f}
+.shop.slate {--tile:#56687e;--tile-lit:#7589a0;--tile-dark:#374557}
+.shop.ochre {--tile:#3f6b4a;--tile-lit:#5c8c66;--tile-dark:#2a4832}
+.shop.wine  {--tile:#a04a2c;--tile-lit:#c16b45;--tile-dark:#6d2f18}
 
 /* ── the building ──────────────────────────────────────────────── */
 /* The box the block is drawn in. The roof takes the full width and the
@@ -321,47 +315,68 @@ html{
 .shop.right .lot{transform:scaleX(-1)}
 .lot>span{position:absolute;inset:0;display:block}
 
+/* The canvas over the stall. Its near edges are the line the walls stop
+   on: a wall's top corner sits ON that edge, never below it, or the roof
+   floats off the building. The overhang is the canvas carrying past the
+   corner along the same line. */
 .lot .roof{
   clip-path:polygon(50% 0,100% 24%,50% 48%,0 24%);
   background:
-    repeating-linear-gradient(26.57deg,rgba(0,0,0,.20) 0 5px,rgba(255,255,255,.05) 5px 11px),
-    linear-gradient(160deg,var(--tile-lit),var(--tile) 52%,var(--tile-dark));
+    /* folds in the canvas, along the fall of the cloth */
+    repeating-linear-gradient(26.57deg,rgba(0,0,0,.13) 0 7px,rgba(255,255,255,.055) 7px 15px),
+    linear-gradient(160deg,var(--tile-lit),var(--tile) 54%,var(--tile-dark));
 }
 .lot .face{                              /* the wall that fronts the road */
-  clip-path:polygon(50% 52%,92% 32%,92% 68%,50% 88%);
+  clip-path:polygon(50% 48%,92% 27.8%,92% 63.8%,50% 84%);
   background:
     repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 2px,transparent 2px 24px),
     linear-gradient(180deg,#7a5230,#54351c);
 }
 .lot .side{                              /* the flank, out of the light */
-  clip-path:polygon(8% 32%,50% 52%,50% 88%,8% 68%);
+  clip-path:polygon(8% 27.8%,50% 48%,50% 84%,8% 63.8%);
   background:
     repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 2px,transparent 2px 24px),
     linear-gradient(180deg,#4a3018,#2c1b0c);
 }
-/* the shop's own awning, nailed under the eaves of the road-facing wall.
+/* the striped valance hung off the canvas, over the road-facing wall.
    Not .canopy — the parade up top already owns that name, and its 32px
    height would collapse this box. */
 .lot .awn{
-  clip-path:polygon(50% 52%,92% 32%,92% 42%,50% 62%);
+  clip-path:polygon(50% 48%,92% 27.8%,92% 37.8%,50% 58%);
   background:repeating-linear-gradient(90deg,#9c3b2c 0 12px,#e2d5b8 12px 24px);
   opacity:.9;
 }
 /* the open door, and the light coming out of it */
 .lot .door{
-  clip-path:polygon(60% 62%,76% 54%,76% 74%,60% 82%);
+  clip-path:polygon(60% 58%,76% 50%,76% 70%,60% 78%);
   background:linear-gradient(180deg,#f6e2b0,#b8862f 62%,#5d3f12);
 }
 /* a shuttered window on the flank, so the two walls are not both blank */
 .lot .win{
-  clip-path:polygon(18% 46%,34% 54%,34% 66%,18% 58%);
-  background:linear-gradient(180deg,#2a1a0b,#120a03);
-  box-shadow:none;
+  clip-path:polygon(18% 42%,34% 50%,34% 62%,18% 54%);
+  /* the frame reads as the lit edge of the opening rather than a hole
+     punched in the wall */
+  background:radial-gradient(closest-side,#150c04 58%,#553a1b 100%);
+}
+/* The market's clutter, standing on the ground in front of the stall: a
+   barrel by the door and a crate on the shaded side. Drawn, not clipped
+   — a clip-path of this size reads as a stilt under the building, and a
+   barrel needs its staves and hoops to read as a barrel at all. */
+.lot .barrel,.lot .crate{
+  inset:auto;background-repeat:no-repeat;background-size:100% 100%;
+}
+.lot .barrel{
+  right:1%;bottom:11%;width:17%;aspect-ratio:1/1.2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='48' viewBox='0 0 40 48'%3E%3Cpath d='M6 12c0-4 28-4 28 0v24c0 5-28 5-28 0z' fill='%236b4720'/%3E%3Cpath d='M20 10c8 0 14 1 14 2v24c0 2-6 3-14 3z' fill='%23855a29'/%3E%3Cellipse cx='20' cy='12' rx='14' ry='4' fill='%23a5763b'/%3E%3Cellipse cx='20' cy='12' rx='9' ry='2.4' fill='%236e4a1f'/%3E%3Cpath d='M6 18c9 3 19 3 28 0v3c-9 3-19 3-28 0z' fill='%232b1c0a'/%3E%3Cpath d='M6 31c9 3 19 3 28 0v3c-9 3-19 3-28 0z' fill='%232b1c0a'/%3E%3C/svg%3E");
+}
+.lot .crate{
+  left:0;bottom:14%;width:15%;aspect-ratio:1/.86;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='34' viewBox='0 0 40 34'%3E%3Cpath d='M4 10 20 18v14L4 24z' fill='%234a3116'/%3E%3Cpath d='M20 18 36 10v14L20 32z' fill='%235e3f1c'/%3E%3Cpath d='M20 4 36 10 20 18 4 10z' fill='%23795126'/%3E%3Cpath d='M4 15 20 23v2L4 17z' fill='%232a1a08'/%3E%3Cpath d='M36 15 20 23v2l16-8z' fill='%23301f0b'/%3E%3C/svg%3E");
 }
 .lot .lamp{
   background:
-    radial-gradient(ellipse 30% 17% at 68% 70%,rgba(246,223,166,.42),transparent 70%),
-    radial-gradient(ellipse 34% 6% at 50% 90%,rgba(0,0,0,.55),transparent 72%);
+    radial-gradient(ellipse 30% 17% at 68% 66%,rgba(246,223,166,.42),transparent 70%),
+    radial-gradient(ellipse 36% 7% at 50% 87%,rgba(0,0,0,.55),transparent 72%);
   pointer-events:none;
 }
 
@@ -403,6 +418,14 @@ html{
   background:linear-gradient(180deg,#8a6038,#5c3c1f 60%,#3c2612);
   border:1px solid #241608;border-radius:2px;
   box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,220,170,.18);
+}
+/* a lantern hung off the end of the bracket, the way the market lights
+   its own frontage */
+.sign .beam::after{
+  content:"";position:absolute;right:16px;top:9px;width:11px;height:14px;
+  border-radius:2px 2px 3px 3px;
+  background:linear-gradient(180deg,#f7e3ab,#c9922f 62%,#7a5416);
+  box-shadow:0 0 12px 3px rgba(246,214,142,.34),0 1px 0 rgba(0,0,0,.5);
 }
 .sign .ring{
   position:absolute;top:-26px;width:10px;height:10px;
