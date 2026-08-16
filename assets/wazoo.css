@@ -92,6 +92,25 @@ html.webp .backdrop{background-image:
   content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;
   transform:translateX(-50%) rotate(45deg);background:var(--brass-lit);
 }
+/* the tip jar, under the rule. The painting behind it is bright city,
+   so lettering alone is unreadable there — it carries its own dark
+   board, the same one the hangers on every other page stand on. */
+.hero .tipjar{margin:26px 0 0}
+.hero .tipjar a{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:"Cinzel",serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:#fdf7ea;text-decoration:none;
+  padding:10px 18px;border:1px solid rgba(201,162,74,.55);border-radius:2px;
+  background:linear-gradient(180deg,rgba(20,28,36,.62),rgba(8,12,16,.80));
+  box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,220,170,.16);
+  text-shadow:0 1px 3px rgba(0,0,0,.9);
+  transition:color .25s ease,border-color .25s ease,background .25s ease;
+}
+.hero .tipjar svg{width:16px;height:16px;color:var(--brass-lit);flex:0 0 auto}
+.hero .tipjar a:hover,.hero .tipjar a:focus-visible{
+  color:#fff6e4;border-color:var(--brass-lit);outline:none;
+  background:linear-gradient(180deg,rgba(30,40,50,.70),rgba(12,18,24,.84));
+}
 .hero .credit{
   position:absolute;right:14px;bottom:8px;z-index:2;
   font-size:11px;letter-spacing:.05em;color:rgba(225,236,244,.4);
