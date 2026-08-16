@@ -623,9 +623,12 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
 /* One shop canopy over the links alone, then the rail the signs swing
    from. The awning belongs to this stretch of frontage, not to the
    whole width of the page. */
+/* Row gap first, and it is exactly the length of a chain: when the signs
+   wrap, the second row's chains span the gap and read as hanging off the
+   boards above rather than floating in air. */
 .hangers{
-  position:relative;display:flex;flex-wrap:wrap;gap:8px 10px;
-  padding:74px 16px 16px;margin:0;
+  position:relative;display:flex;flex-wrap:wrap;gap:18px 8px;
+  padding:74px 12px 16px;margin:0;
   /* the shopfront the canopy is nailed to — brown timber, so the signs
      read against wood rather than against the city behind them */
   background:
@@ -667,10 +670,10 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
 
 /* each nav item is a little painted board on two chains */
 .hangers a{
-  position:relative;display:inline-flex;align-items:center;gap:8px;
+  position:relative;display:inline-flex;align-items:center;gap:7px;
   text-decoration:none;
-  font-family:"Cinzel",serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:#f2e4c6;padding:9px 13px;
+  font-family:"Cinzel",serif;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:#f2e4c6;padding:8px 11px;
   background:
     linear-gradient(180deg,rgba(255,225,175,.10),rgba(0,0,0,.20)),
     linear-gradient(180deg,#6d4a2b,#50331b);
@@ -698,7 +701,7 @@ html.webp .parade::before{background-image:url("waterdeep-panorama.webp")}
     linear-gradient(180deg,#8a6038,#63431f);
   border-color:var(--brass);color:#fff6e4;
 }
-.hangers svg{width:17px;height:17px;color:var(--brass-lit);flex:0 0 auto}
+.hangers svg{width:15px;height:15px;color:var(--brass-lit);flex:0 0 auto}
 @media(max-width:600px){
   .hangers a .label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .hangers a{padding:10px 12px}
